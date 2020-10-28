@@ -57,6 +57,10 @@ fn max_by<I: Iterator<Item = StringResult>>(
                     max = Some((n, line));
                 }
             }
+            Err(err) if err.kind() == io::ErrorKind::InvalidData => {
+                eprintln!("warning: {}", err);
+                break;
+            }
             _ => {
                 return Some(res);
             }
@@ -95,11 +99,9 @@ fn print<I: Iterator<Item = StringResult>>(lines: I) {
             Ok(line) => {
                 println!("{}:{}", line.chars().count(), line);
             }
-            Err(err) if err.kind() == io::ErrorKind::InvalidData => {
-                eprintln!("warning: {}", err);
-            }
             Err(err) => {
                 eprintln!("error: {}", err);
+                break;
             }
         }
     }
