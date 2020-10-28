@@ -2,6 +2,10 @@
 extern crate clap;
 
 use clap::App;
+use std::io::{self, BufRead};
+use std::iter;
+
+type StringResult = io::Result<String>;
 
 #[derive(Debug)]
 struct Args {
@@ -38,7 +42,67 @@ fn parse_args() -> Args {
     }
 }
 
+fn max_by_len<I: Iterator<Item = StringResult>>(lines: I) -> Option<StringResult> {
+    let mut max: Option<(usize, String)> = None;
+    for res in lines {
+        match res {
+            Ok(line) => {
+                let n = line.chars().count();
+                if max.as_ref().map_or(true, |(m, _)| m < &n) {
+                    max = Some((n, line));
+                }
+            }
+            _ => {
+                return Some(res);
+            }
+        }
+
+    }
+    max.map(|(_, line)| Ok(line))
+}
+
+fn apply<'a, I: 'a + Iterator<Item = StringResult>>(
+    args: Args,
+    lines: I,
+) -> Box<dyn Iterator<Item = StringResult> + 'a> {
+    if args.one {
+        if args.r {
+            match max_by_len(lines) {
+                Some(res) => Box::new(iter::once(res)),
+                _ => Box::new(iter::empty()),
+            }
+        } else if args.s {
+            panic!("TODO")
+        } else {
+            Box::new(lines.take(1))
+        }
+    } else {
+        Box::new(lines)
+    }
+}
+
+fn print<I: Iterator<Item = StringResult>>(lines: I) {
+    for res in lines {
+        match res {
+            Ok(line) => {
+                println!("{}:{}", line.chars().count(), line);
+            }
+            Err(err) if err.kind() == io::ErrorKind::InvalidData => {
+                eprintln!("warning: {}", err);
+            }
+            Err(err) => {
+                eprintln!("error: {}", err);
+            }
+        }
+    }
+}
+
 fn main() {
     let args = parse_args();
-    println!("{:#?}", args);
+    if args.files.is_empty() {
+        let stdin = io::stdin();
+        print(apply(args, stdin.lock().lines()));
+    } else {
+        panic!("file parsing is not yet implemented");
+    }
 }

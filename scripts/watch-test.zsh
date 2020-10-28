@@ -10,24 +10,20 @@ ts() {
     fd --type=file --exec-batch stat -f %m
 }
 
-clear-run() {
+clear-test() {
     local run="cargo --color=always --quiet run"
     clear
-    cargo --color=always build \
-        && clear \
-        && echo "[$(date +%T)] $run" "$@" \
-        && echo \
-        && ${=run} "$@"
+    cargo --color=always test
 }
 
 ts >$a
-clear-run "$@"
+clear-test
 
 while true; do
     sleep 0.5
     ts >$b
     if ! cmp --silent $a $b; then
         mv $b $a
-        clear-run "$@"
+        clear-test
     fi
 done
