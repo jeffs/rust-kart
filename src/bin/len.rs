@@ -42,13 +42,18 @@ fn parse_args() -> Args {
     }
 }
 
-fn max_by_len<I: Iterator<Item = StringResult>>(lines: I) -> Option<StringResult> {
+// Returns None if lines is empty; the first error in lines, if any; and the longest string per the
+// specified "less" function otherwise.
+fn max_by<I: Iterator<Item = StringResult>>(
+    lines: I,
+    less: fn(usize, usize) -> bool,
+) -> Option<StringResult> {
     let mut max: Option<(usize, String)> = None;
     for res in lines {
         match res {
             Ok(line) => {
                 let n = line.chars().count();
-                if max.as_ref().map_or(true, |(m, _)| m < &n) {
+                if max.as_ref().map_or(true, |(m, _)| less(*m, n)) {
                     max = Some((n, line));
                 }
             }
@@ -56,7 +61,6 @@ fn max_by_len<I: Iterator<Item = StringResult>>(lines: I) -> Option<StringResult
                 return Some(res);
             }
         }
-
     }
     max.map(|(_, line)| Ok(line))
 }
@@ -67,16 +71,20 @@ fn apply<'a, I: 'a + Iterator<Item = StringResult>>(
 ) -> Box<dyn Iterator<Item = StringResult> + 'a> {
     if args.one {
         if args.r {
-            match max_by_len(lines) {
+            match max_by(lines, |m, n| m < n) {
                 Some(res) => Box::new(iter::once(res)),
                 _ => Box::new(iter::empty()),
             }
         } else if args.s {
-            panic!("TODO")
+            match max_by(lines, |m, n| m > n) {
+                Some(res) => Box::new(iter::once(res)),
+                _ => Box::new(iter::empty()),
+            }
         } else {
             Box::new(lines.take(1))
         }
     } else {
+        // TODO
         Box::new(lines)
     }
 }
