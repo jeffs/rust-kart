@@ -69,7 +69,7 @@ fn max_by<I: Iterator<Item = StringResult>>(
     max.map(|(_, line)| Ok(line))
 }
 
-fn apply<'a, I: 'a + Iterator<Item = StringResult>>(
+fn apply<'a, I: Iterator<Item = StringResult> + 'a>(
     args: Args,
     lines: I,
 ) -> Box<dyn Iterator<Item = StringResult> + 'a> {
