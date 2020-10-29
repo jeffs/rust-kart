@@ -1,14 +1,8 @@
-#[allow(dead_code)]
-fn greeting<S: AsRef<str>>(name: S) -> String {
-    format!("Hello, {}.", name.as_ref())
-}
+#[macro_use]
+extern crate clap;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod greet;
 
-    #[test]
-    fn greeting_works() {
-        assert_eq!(greeting("world"), "Hello, world.");
-    }
-}
+pub mod len;
+
+pub use greet::greeting;

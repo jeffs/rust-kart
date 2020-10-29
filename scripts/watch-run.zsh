@@ -11,7 +11,7 @@ ts() {
 }
 
 clear-run() {
-    local run="cargo --color=always --quiet run"
+    local run="cargo --color=always --quiet run --bin len"
     clear
     cargo --color=always build \
         && clear \

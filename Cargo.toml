@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Jeff Schwab <jeff@unbuggy.com>"]
 edition = "2018"
 
+[dependencies]
+take-until = "0.1.0"
+
 # The rev here happened to be `master` when I wrote the code.  It should be
 # replaced with a tag name once the API it supports (particularly the
 # `help_about` method) is supported by a tagged release.
