@@ -17,7 +17,7 @@ clear-run() {
         && clear \
         && echo "[$(date +%T)] $run" "$@" \
         && echo \
-        && cat tests/data/* | ${=run} "$@"
+        && cat tests/data/utf8/* tests/data/bad tests/data/utf8/* | ${=run} "$@"
 }
 
 ts >$a
