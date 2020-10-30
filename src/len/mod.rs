@@ -1,4 +1,5 @@
 mod cli;
+mod files_lines;
 
 use std::io::{self, BufRead, Write};
 use take_until::TakeUntilExt;
