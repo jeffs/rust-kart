@@ -151,8 +151,10 @@ dependencies = [
 name = "rust-kart"
 version = "0.1.0"
 dependencies = [
+ "atty",
  "clap",
  "take-until",
+ "termcolor",
 ]
 
 [[package]]

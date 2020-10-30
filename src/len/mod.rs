@@ -1,9 +1,11 @@
 mod cli;
 
-use std::io::{self, BufRead};
+use std::io::{self, BufRead, Write};
 use take_until::TakeUntilExt;
 
-fn print<I: Iterator<Item = io::Result<String>>>(lines: I) {
+use termcolor::{self, WriteColor};
+
+fn print<I: Iterator<Item = io::Result<String>>>(lines: I, color: termcolor::ColorChoice) {
     for res in lines {
         match res {
             Ok(line) => {
@@ -15,14 +17,24 @@ fn print<I: Iterator<Item = io::Result<String>>>(lines: I) {
                 } else {
                     "error"
                 };
-                eprintln!("{}: {}", prefix, err);
+                let mut stderr = termcolor::StandardStream::stderr(color);
+                let mut res = stderr
+                    .set_color(termcolor::ColorSpec::new().set_fg(Some(termcolor::Color::Red)));
+                if res.is_ok() {
+                    res = write!(&mut stderr, "{}", prefix);
+                    let _ = stderr.reset();
+                }
+                if res.is_err() {
+                    eprint!("{}", prefix);
+                }
+                eprintln!(": len: {}", err);
             }
         }
     }
 }
 
-fn execute<I: Iterator<Item = io::Result<String>>>(_command: cli::Command, line_results: I) {
-    print(line_results);
+fn execute<I: Iterator<Item = io::Result<String>>>(command: cli::Command, line_results: I) {
+    print(line_results, command.color);
 }
 
 pub fn main() {

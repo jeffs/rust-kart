@@ -15,7 +15,7 @@ clear-run() {
     clear
     cargo --color=always build \
         && clear \
-        && echo "[$(date +%T)] $run" "$@" \
+        && echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m" \
         && echo \
         && cat tests/data/utf8/* tests/data/bad tests/data/utf8/* | ${=run} "$@"
 }

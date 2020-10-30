@@ -1,5 +1,8 @@
 use std::path::PathBuf;
 
+use atty;
+use termcolor;
+
 fn new_app() -> clap::App<'static> {
     clap::App::new("Len")
         .version(crate_version!())
@@ -9,6 +12,15 @@ fn new_app() -> clap::App<'static> {
         .arg("-r 'Sort lines by decreasing length'")
         .arg("-s 'Sort lines by length'")
         .arg("[file]... 'Files to parse instead of stdin'")
+        .arg(
+            clap::Arg::new("color")
+                .about("Color diagnostics")
+                .default_value("auto")
+                .long("color")
+                .possible_values(&["always", "auto", "never"])
+                .takes_value(true)
+                .value_name("when")
+        )
 }
 
 #[derive(Debug)]
@@ -17,6 +29,7 @@ struct Args {
     pub r: bool,
     pub s: bool,
     pub files: Vec<PathBuf>,
+    pub color: String,
 }
 
 impl Args {
@@ -28,6 +41,7 @@ impl Args {
             files: matches.values_of_os("file").map_or(vec![], |values| {
                 values.map(|s| PathBuf::from(s)).collect::<Vec<_>>()
             }),
+            color: matches.value_of("color").unwrap().to_string(), // has default value
         }
     }
 
@@ -49,6 +63,21 @@ pub enum Op {
 pub struct Command {
     pub op: Op,
     pub files: Vec<PathBuf>,
+    pub color: termcolor::ColorChoice,
+}
+
+fn color_choice(when: &str) -> termcolor::ColorChoice {
+    match when {
+        "always" => termcolor::ColorChoice::Always,
+        "auto" => {
+            if atty::is(atty::Stream::Stderr) {
+                termcolor::ColorChoice::Auto
+            } else {
+                termcolor::ColorChoice::Never
+            }
+        }
+        _ => termcolor::ColorChoice::Never,
+    }
 }
 
 impl Command {
@@ -65,6 +94,7 @@ impl Command {
                 (T, T, _) => Op::Max,
             },
             files: args.files,
+            color: color_choice(&args.color),
         }
     }
 
