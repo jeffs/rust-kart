@@ -1,9 +1,9 @@
 mod cli;
 mod files_lines;
 
+use files_lines::FilesLines;
 use std::io::{self, BufRead, Write};
 use take_until::TakeUntilExt;
-
 use termcolor::{self, WriteColor};
 
 fn print<I: Iterator<Item = io::Result<String>>>(lines: I, color: termcolor::ColorChoice) {
@@ -35,6 +35,7 @@ fn print<I: Iterator<Item = io::Result<String>>>(lines: I, color: termcolor::Col
 }
 
 fn execute<I: Iterator<Item = io::Result<String>>>(command: cli::Command, line_results: I) {
+    // TODO Perform requested operation, rather than always printing all lines.
     print(line_results, command.color);
 }
 
@@ -45,6 +46,7 @@ pub fn main() {
         let lines = stdin.lock().lines().take_until(|res| res.is_err());
         execute(command, lines);
     } else {
-        panic!("file parsing is not yet implemented");
+        let lines = FilesLines::new(command.files.iter().cloned());
+        execute(command, lines);
     }
 }
