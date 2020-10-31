@@ -17,7 +17,7 @@ clear-run() {
         && clear \
         && echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m" \
         && echo \
-        && ${=run} "$@" tests/data/utf8/{fox,men}
+        && ${=run} "$@" tests/data/utf8/* tests/data/bad tests/data/utf8/*
 }
 
 ts >$a
