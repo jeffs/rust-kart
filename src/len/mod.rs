@@ -1,42 +1,35 @@
 mod cli;
 mod files_lines;
+mod log;
 
 use files_lines::FilesLines;
-use std::io::{self, BufRead, Write};
+use log::Log;
+use std::io::{self, BufRead};
 use take_until::TakeUntilExt;
-use termcolor::{self, WriteColor};
 
-fn print<I: Iterator<Item = io::Result<String>>>(lines: I, color: termcolor::ColorChoice) {
+fn print<I: Iterator<Item = io::Result<String>>>(lines: I, log: &Log) {
     for res in lines {
         match res {
             Ok(line) => {
                 println!("{}:{}", line.chars().count(), line);
             }
             Err(err) => {
-                let prefix = if err.kind() == io::ErrorKind::InvalidData {
-                    "warning"
+                if err.kind() == io::ErrorKind::InvalidData {
+                    log.warning(err);
                 } else {
-                    "error"
-                };
-                let mut stderr = termcolor::StandardStream::stderr(color);
-                let mut res = stderr
-                    .set_color(termcolor::ColorSpec::new().set_fg(Some(termcolor::Color::Red)));
-                if res.is_ok() {
-                    res = write!(&mut stderr, "{}", prefix);
-                    let _ = stderr.reset();
+                    log.error(err);
                 }
-                if res.is_err() {
-                    eprint!("{}", prefix);
-                }
-                eprintln!(": len: {}", err);
             }
         }
     }
 }
 
 fn execute<I: Iterator<Item = io::Result<String>>>(command: cli::Command, line_results: I) {
-    // TODO Perform requested operation, rather than always printing all lines.
-    print(line_results, command.color);
+    let log = Log::new(command.color);
+    match command.op {
+        cli::Op::All => print(line_results, &log),
+        _ => log.fatal(format!("Op::{:?}: not yet implemented", command.op)),
+    }
 }
 
 pub fn main() {

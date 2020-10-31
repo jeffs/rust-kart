@@ -51,6 +51,7 @@ impl Args {
 }
 
 // The three-letter ops require O(1) RAM, whereas the sorts require O(N).
+#[derive(Debug)]
 pub enum Op {
     All,         // Print all lines
     Max,         // Print the longest line
