@@ -19,7 +19,7 @@ fn new_app() -> clap::App<'static> {
                 .long("color")
                 .possible_values(&["always", "auto", "never"])
                 .takes_value(true)
-                .value_name("when")
+                .value_name("when"),
         )
 }
 
@@ -70,13 +70,7 @@ pub struct Command {
 fn color_choice(when: &str) -> termcolor::ColorChoice {
     match when {
         "always" => termcolor::ColorChoice::Always,
-        "auto" => {
-            if atty::is(atty::Stream::Stderr) {
-                termcolor::ColorChoice::Auto
-            } else {
-                termcolor::ColorChoice::Never
-            }
-        }
+        "auto" if atty::is(atty::Stream::Stderr) => termcolor::ColorChoice::Auto,
         _ => termcolor::ColorChoice::Never,
     }
 }
