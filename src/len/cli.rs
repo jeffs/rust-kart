@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use atty;
-use termcolor;
+use termcolor::ColorChoice;
 
 fn new_app() -> clap::App<'static> {
     clap::App::new("Len")
@@ -64,14 +64,14 @@ pub enum Op {
 pub struct Command {
     pub op: Op,
     pub files: Vec<PathBuf>,
-    pub color: termcolor::ColorChoice,
+    pub color: ColorChoice,
 }
 
-fn color_choice(when: &str) -> termcolor::ColorChoice {
+fn color_choice(when: &str) -> ColorChoice {
     match when {
-        "always" => termcolor::ColorChoice::Always,
-        "auto" if atty::is(atty::Stream::Stderr) => termcolor::ColorChoice::Auto,
-        _ => termcolor::ColorChoice::Never,
+        "always" => ColorChoice::Always,
+        "auto" if atty::is(atty::Stream::Stderr) => ColorChoice::Auto,
+        _ => ColorChoice::Never,
     }
 }
 
