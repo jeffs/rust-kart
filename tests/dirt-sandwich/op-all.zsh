@@ -15,6 +15,6 @@ target/debug/len --color=always \
     tests/data/bad \
     tests/data/utf8/* >& tests/dirt-sandwich/op-all-$$.out
 
-diff tests/dirt-sandwich/op-all-$$.out tests/dirt-sandwich/op-all.gold
+diff tests/dirt-sandwich/op-all.gold tests/dirt-sandwich/op-all-$$.out
 
 rm tests/dirt-sandwich/op-all-$$.out
