@@ -28,23 +28,24 @@ fn print<I: Iterator<Item = io::Result<String>>>(lines: I, log: &Log) {
     }
 }
 
-// Executes the specified command on the specified lines 
-fn execute<I: Iterator<Item = io::Result<String>>>(command: Command, line_results: I) {
-    let log = Log::new(command.color);
-    match command.op {
+/// Performs the specified operation on the specified input lines, and prints the results to
+/// stdout.  Any Error from `line_results` is printed to the specified log.
+fn execute<I: Iterator<Item = io::Result<String>>>(op: Op, line_results: I, log: Log) {
+    match op {
         Op::All => print(line_results, &log),
-        _ => log.fatal(format!("Op::{:?}: not yet implemented", command.op)),
+        _ => log.fatal(format!("Op::{:?}: not yet implemented", op)),
     }
 }
 
 pub fn main() {
     let command = Command::from_env();
+    let log = Log::new(command.color);
     if command.files.is_empty() {
         let stdin = io::stdin();
         let lines = stdin.lock().lines().take_until(|res| res.is_err());
-        execute(command, lines);
+        execute(command.op, lines, log);
     } else {
         let lines = FilesLines::new(command.files.iter().cloned());
-        execute(command, lines);
+        execute(command.op, lines, log);
     }
 }
