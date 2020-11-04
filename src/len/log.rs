@@ -29,7 +29,7 @@ impl Log {
     }
 
     pub fn error<T: Display>(&self, what: T) {
-        self.print("error: len", what);
+        self.print("error", what);
     }
 
     pub fn fatal<T: Display>(&self, what: T) {
