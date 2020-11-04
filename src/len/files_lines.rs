@@ -38,8 +38,11 @@ impl Iterator for FilesLines {
                 }
                 Some(Err(err)) => {
                     // Skip the next file, and report the error.
-                    self.paths.pop_front();
-                    return Some(Err(err));
+                    return self.paths.pop_front().map(|path| {
+                        // Prefix the error with the file name.
+                        let path = path.to_string_lossy();
+                        Err(io::Error::new(err.kind(), format!("{}: {}", path, err)))
+                    });
                 }
                 None => {
                     // There are no more files to read.
@@ -61,7 +64,7 @@ impl Iterator for FilesLines {
             // Skip the rest of the file.
             self.lines = None;
             self.paths.pop_front().map(|path| {
-                // Prefix error with file name.
+                // Prefix the error with the file name.
                 let path = path.to_string_lossy();
                 Err(io::Error::new(err.kind(), format!("{}: {}", path, err)))
             })
