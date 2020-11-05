@@ -1,19 +1,21 @@
 mod args;
 mod command;
 mod files_lines;
+mod line_iterator;
 mod log;
 mod max_line;
 mod op;
 
 use command::Command;
 use files_lines::FilesLines;
+use line_iterator::LineIterator;
 use log::Log;
 use max_line::MaxLine;
 use op::Op;
 use std::io::{self, BufRead};
 use take_until::TakeUntilExt;
 
-fn print<I: Iterator<Item = io::Result<String>>>(lines: I, log: &Log) {
+fn print<I: LineIterator>(lines: I, log: &Log) {
     for res in lines {
         match res {
             Ok(line) => {
@@ -32,9 +34,7 @@ fn print<I: Iterator<Item = io::Result<String>>>(lines: I, log: &Log) {
 
 // Returns the longest line, as well as any errors.
 #[allow(dead_code)]
-fn max_line<I: Iterator<Item = io::Result<String>>>(
-    lines: I,
-) -> impl Iterator<Item = io::Result<String>> {
+fn max_line<I: LineIterator>(lines: I) -> impl LineIterator {
     MaxLine::new(lines).take_until(|res| match res {
         Err(err) if err.kind() != io::ErrorKind::InvalidData => true,
         _ => false,
@@ -43,7 +43,7 @@ fn max_line<I: Iterator<Item = io::Result<String>>>(
 
 /// Performs the specified operation on the specified input lines, and prints the results to
 /// stdout.  Any Error from the specified lines is printed to the specified log.
-fn execute<I: Iterator<Item = io::Result<String>>>(op: Op, lines: I, log: Log) {
+fn execute<I: LineIterator>(op: Op, lines: I, log: Log) {
     match op {
         Op::All => print(lines, &log),
         Op::Max => print(max_line(lines), &log),

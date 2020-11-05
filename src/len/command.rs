@@ -1,7 +1,7 @@
+use super::args::Args;
+use super::op::Op;
 use atty;
 use std::path::PathBuf;
-use super::op::Op;
-use super::args::Args;
 use termcolor::ColorChoice;
 
 fn color_choice(when: &str) -> ColorChoice {

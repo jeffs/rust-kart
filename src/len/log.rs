@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 use std::io::Write;
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 pub struct Log {
     color: termcolor::ColorChoice,
