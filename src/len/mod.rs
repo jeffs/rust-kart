@@ -33,8 +33,10 @@ where
     }
 }
 
-// Returns the longest line, as well as any errors.
-#[allow(dead_code)]
+/// Returns the longest of the specified lines---i.e., the result having the Ok
+/// value of the greatest length---as well as any InvalidData errors.  Stops
+/// early if any other error is encountered, reporting that error as the final
+/// value of the returned iterator.
 fn max_line<I>(lines: I) -> impl Iterator<Item = io::Result<String>>
 where
     I: IntoIterator<Item = io::Result<String>>,
