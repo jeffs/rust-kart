@@ -1,9 +1,11 @@
+#![allow(dead_code, unused_variables)]
+
 mod tests;
 
 use std::io;
 
-fn len(line: &str) -> usize {
-    line.chars().count()
+fn len(opt: &Option<String>) -> Option<usize> {
+    opt.as_ref().map(|line| line.chars().count())
 }
 
 /// Iterator that yields all errors from a supplied underlying iterator,
@@ -36,15 +38,13 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(res) = self.lines.next() {
-            match res {
-                Ok(line) => {
-                    if self.max.is_none() || len(&line) > len(self.max.as_ref().unwrap()) {
-                        self.max = Some(line.clone());
-                    }
-                }
-                _ => {
-                    return Some(res);
-                }
+            if let Err(_) = res {
+                return Some(res);
+            }
+
+            let ok = res.ok();
+            if self.max.is_none() || len(&ok) > len(&self.max) {
+                self.max = ok;
             }
         }
         self.max.take().map(Ok)
