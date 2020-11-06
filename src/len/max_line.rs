@@ -4,8 +4,8 @@ fn len(line: &str) -> usize {
     line.chars().count()
 }
 
-/// Iterator that always returns the next error, if any, from a supplied
-/// sequence of line results, and the longest line seen, if any, otherwise.
+/// Iterator that yields all errors from a supplied underlying iterator,
+/// followed by the longest line (if any) yielded by the underlying iterator.
 pub struct MaxLine<I>
 where
     I: IntoIterator<Item = io::Result<String>>,
@@ -32,8 +32,6 @@ where
 {
     type Item = io::Result<String>;
 
-    /// Return the next error, or the longest line seen so far if there are no
-    /// more errors.
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(res) = self.lines.next() {
             match res {
