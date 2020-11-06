@@ -5,6 +5,11 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::{Path, PathBuf};
 
+fn prefix_error(path: &Path, err: io::Error) -> io::Error {
+    let what = format!("{}: {}", path.to_string_lossy(), err);
+    io::Error::new(err.kind(), what)
+}
+
 /// Iterates over the lines of a sequence of files.
 ///
 /// Reports all errors, but:
@@ -27,8 +32,27 @@ impl FilesLines {
         }
     }
 
-    fn next_file(&self) -> Option<io::Result<File>> {
-        self.paths.front().map(|path| File::open(path))
+    /// Opens the next file if no file is already open, and if another path is
+    /// available, assigning a line iterator to self.lines.  On failure to open
+    /// a file, returns the error prefixed with the path, but does not pop
+    /// the path from the queue.
+    fn open_lines(&mut self) -> io::Result<()> {
+        if self.lines.is_none() && !self.paths.is_empty() {
+            match File::open(&self.paths[0]) {
+                Ok(file) => {
+                    self.lines = Some(io::BufReader::new(file).lines());
+                }
+                Err(err) => {
+                    return Err(prefix_error(&self.paths[0], err));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn skip_file(&mut self) {
+        self.paths.pop_front();
+        self.lines = None;
     }
 }
 
@@ -36,46 +60,26 @@ impl Iterator for FilesLines {
     type Item = io::Result<String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.lines.is_none() {
-            match self.next_file() {
-                Some(Ok(file)) => {
-                    // Start reading the next file.
-                    self.lines = Some(io::BufReader::new(file).lines());
-                }
-                Some(Err(err)) => {
-                    // Skip the next file, and report the error.
-                    return self.paths.pop_front().map(|path| {
-                        // Prefix the error with the file name.
-                        let path = path.to_string_lossy();
-                        Err(io::Error::new(err.kind(), format!("{}: {}", path, err)))
-                    });
-                }
-                None => {
-                    // There are no more files to read.
-                }
+        loop {
+            if let Err(err) = self.open_lines() {
+                self.skip_file();
+                return Some(Err(err));
             }
-        }
 
-        let opt = self.lines.as_mut().and_then(|lines| lines.next());
-        if opt.is_none() {
-            // We've completed the current file.  Advance to the next, if any.
-            self.lines = None;
-            self.paths.pop_front();
-            if self.paths.is_empty() {
-                None
-            } else {
-                self.next()
+            if self.lines.is_none() {
+                return None;
             }
-        } else if let Some(Err(err)) = opt {
-            // Skip the rest of the file.
-            self.lines = None;
-            self.paths.pop_front().map(|path| {
-                // Prefix the error with the file name.
-                let path = path.to_string_lossy();
-                Err(io::Error::new(err.kind(), format!("{}: {}", path, err)))
-            })
-        } else {
-            opt
+
+            let opt = self.lines.as_mut().and_then(|lines| lines.next());
+            if let Some(Ok(_)) = opt {
+                return opt;
+            }
+
+            self.skip_file();
+
+            if opt.is_some() {
+                return opt;
+            }
         }
     }
 }
