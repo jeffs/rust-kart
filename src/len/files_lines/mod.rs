@@ -16,7 +16,11 @@ pub struct FilesLines {
 }
 
 impl FilesLines {
-    pub fn new<P: AsRef<Path>, I: IntoIterator<Item = P>>(paths: I) -> FilesLines {
+    pub fn new<P, I>(paths: I) -> FilesLines
+    where
+        P: AsRef<Path>,
+        I: IntoIterator<Item = P>,
+    {
         FilesLines {
             paths: paths.into_iter().map(|p| p.as_ref().to_owned()).collect(),
             lines: None,

@@ -6,12 +6,18 @@ fn len(line: &str) -> usize {
 
 // Iterator that always returns the next error, if any, from a supplied sequence of line results,
 // and the longest line seen, if any, otherwise.
-pub struct MaxLine<I: IntoIterator<Item = io::Result<String>>> {
+pub struct MaxLine<I>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     lines: I::IntoIter,
     max: Option<String>, // the longest line seen so far, if any
 }
 
-impl<I: IntoIterator<Item = io::Result<String>>> MaxLine<I> {
+impl<I> MaxLine<I>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     pub fn new(lines: I) -> MaxLine<I> {
         MaxLine {
             lines: lines.into_iter(),
@@ -20,7 +26,10 @@ impl<I: IntoIterator<Item = io::Result<String>>> MaxLine<I> {
     }
 }
 
-impl<I: IntoIterator<Item = io::Result<String>>> Iterator for MaxLine<I> {
+impl<I> Iterator for MaxLine<I>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     type Item = io::Result<String>;
 
     // Return the next error, or the longest line seen so far if there are no more errors.

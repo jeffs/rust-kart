@@ -13,7 +13,10 @@ use op::Op;
 use std::io::{self, BufRead};
 use take_until::TakeUntilExt;
 
-fn print<I: IntoIterator<Item = io::Result<String>>>(lines: I, log: &Log) {
+fn print<I>(lines: I, log: &Log)
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     for res in lines {
         match res {
             Ok(line) => {
@@ -32,18 +35,23 @@ fn print<I: IntoIterator<Item = io::Result<String>>>(lines: I, log: &Log) {
 
 // Returns the longest line, as well as any errors.
 #[allow(dead_code)]
-fn max_line<I: IntoIterator<Item = io::Result<String>>>(
-    lines: I,
-) -> impl Iterator<Item = io::Result<String>> {
+fn max_line<I>(lines: I) -> impl Iterator<Item = io::Result<String>>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     MaxLine::new(lines).take_until(|res| match res {
         Err(err) if err.kind() != io::ErrorKind::InvalidData => true,
         _ => false,
     })
 }
 
-/// Performs the specified operation on the specified input lines, and prints the results to
-/// stdout.  Any Error from the specified lines is printed to the specified log.
-fn execute<I: IntoIterator<Item = io::Result<String>>>(op: Op, lines: I, log: Log) {
+/// Performs the specified operation on the specified input lines, and prints
+/// the results to stdout.  Any Error from the specified lines is printed to
+/// the specified log.
+fn execute<I>(op: Op, lines: I, log: Log)
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
     match op {
         Op::All => print(lines, &log),
         Op::Max => print(max_line(lines), &log),

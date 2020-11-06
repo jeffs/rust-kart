@@ -20,7 +20,11 @@ fn expect_none(mut lines: FilesLines) -> Result<(), String> {
     }
 }
 
-fn read_lines<P: AsRef<Path>, I: IntoIterator<Item = P>>(paths: I) -> io::Result<Vec<String>> {
+fn read_lines<P, I>(paths: I) -> io::Result<Vec<String>>
+where
+    P: AsRef<Path>,
+    I: IntoIterator<Item = P>,
+{
     let mut lines = vec![];
     for path in paths {
         for line in io::BufReader::new(File::open(path)?).lines() {
@@ -59,7 +63,8 @@ fn utf8_files() -> io::Result<()> {
     Ok(())
 }
 
-// We should find an error, but it should be neither the first nor the last line result.
+// We should find an error, but it should be neither the first nor the last
+// line result.  TODO: Check file contents and error kind.
 #[test]
 fn good_bad_good() -> io::Result<()> {
     let paths = [
