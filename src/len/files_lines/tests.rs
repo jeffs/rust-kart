@@ -58,3 +58,18 @@ fn utf8_files() -> io::Result<()> {
     assert_eq!(read_lines(paths)?, lines);
     Ok(())
 }
+
+// We should find an error, but it should be neither the first nor the last line result.
+#[test]
+fn good_bad_good() -> io::Result<()> {
+    let paths = [
+        "tests/data/utf8/fox",
+        "tests/data/bad",
+        "tests/data/utf8/men",
+    ];
+    let lines = FilesLines::new(&paths).collect::<Vec<_>>();
+    let index = lines.iter().position(|res| res.is_err()).unwrap();
+    assert_ne!(0, index);
+    assert_ne!(lines.len() - 1, index);
+    Ok(())
+}
