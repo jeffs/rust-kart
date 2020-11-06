@@ -4,77 +4,120 @@ use super::*;
 use std::path::Path;
 use std::{fs, iter};
 
-fn expect_err(lines: &mut FilesLines) -> Result<(), String> {
-    match lines.next() {
-        None => return Err("want Some(err); got None".to_owned()),
-        Some(Ok(line)) => return Err(format!("want Some(err); got line: {}", line)),
-        Some(Err(_)) => Ok(()),
-    }
+fn list_dir<P>(dir: P) -> io::Result<Vec<PathBuf>>
+where
+    P: AsRef<Path>,
+{
+    fs::read_dir(dir)?
+        .map(|res| res.map(|entry| entry.path()))
+        .collect()
 }
 
-fn expect_none(mut lines: FilesLines) -> Result<(), String> {
-    match lines.next() {
-        None => Ok(()),
-        Some(Ok(line)) => Err(format!("unexpected line: {}", line)),
-        Some(Err(err)) => Err(format!("unexpected error: {}", err)),
-    }
+fn read_lines<P>(path: P) -> io::Result<Vec<String>>
+where
+    P: AsRef<Path>,
+{
+    io::BufReader::new(File::open(path.as_ref())?)
+        .lines()
+        .collect()
 }
 
-fn read_lines<P, I>(paths: I) -> io::Result<Vec<String>>
+fn read_lines_all<P, I>(paths: I) -> io::Result<Vec<String>>
 where
     P: AsRef<Path>,
     I: IntoIterator<Item = P>,
 {
     let mut lines = vec![];
     for path in paths {
-        for line in io::BufReader::new(File::open(path)?).lines() {
+        let file = File::open(path.as_ref())?;
+        for line in io::BufReader::new(file).lines() {
             lines.push(line?);
         }
     }
     Ok(lines)
 }
 
-#[test]
-fn no_files() -> Result<(), String> {
-    expect_none(FilesLines::new(iter::empty::<&Path>()))
+trait Expect {
+    fn expect_err(&mut self) -> io::Error;
+    fn expect_line(&mut self) -> String;
+    fn expect_none(self);
+}
+
+impl Expect for FilesLines {
+    fn expect_err(&mut self) -> io::Error {
+        match self.next() {
+            None => panic!("want Some(err); got None"),
+            Some(Ok(line)) => panic!("want Some(err); got line: {}", line),
+            Some(Err(err)) => err,
+        }
+    }
+
+    fn expect_line(&mut self) -> String {
+        match self.next() {
+            None => panic!("want Some(Ok(line)); got None"),
+            Some(Ok(line)) => line,
+            Some(Err(err)) => panic!("unexpected error: {}", err),
+        }
+    }
+
+    fn expect_none(mut self) {
+        match self.next() {
+            None => (),
+            Some(Ok(line)) => panic!("unexpected line: {}", line),
+            Some(Err(err)) => panic!("unexpected error: {}", err),
+        }
+    }
 }
 
 #[test]
-fn empty_file() -> Result<(), String> {
-    expect_none(FilesLines::new(&["tests/data/utf8/empty"]))
+fn no_files() {
+    FilesLines::new(iter::empty::<&Path>()).expect_none();
 }
 
 #[test]
-fn no_such_file() -> Result<(), String> {
+fn empty_file() {
+    FilesLines::new(&["tests/data/utf8/empty"]).expect_none();
+}
+
+#[test]
+fn no_such_file() {
     let mut lines = FilesLines::new(&["tests/data/nonesuch"]);
-    expect_err(&mut lines)?;
-    expect_none(lines)
+    lines.expect_err();
+    lines.expect_none();
 }
 
 #[test]
 fn utf8_files() -> io::Result<()> {
-    let paths = fs::read_dir("tests/data/utf8")?
-        .collect::<io::Result<Vec<_>>>()?
-        .iter()
-        .map(|entry| entry.path())
-        .collect::<Vec<_>>();
-    let lines = FilesLines::new(&paths).collect::<io::Result<Vec<_>>>()?;
-    assert_eq!(read_lines(paths)?, lines);
+    let paths = list_dir("tests/data/utf8")?;
+    let want = read_lines_all(&paths)?;
+    let got = FilesLines::new(&paths).collect::<io::Result<Vec<_>>>()?;
+    assert_eq!(want, got);
     Ok(())
 }
 
-// We should find an error, but it should be neither the first nor the last
-// line result.  TODO: Check file contents and error kind.
 #[test]
-fn good_bad_good() -> io::Result<()> {
+fn recoverable_errors() -> io::Result<()> {
     let paths = [
         "tests/data/utf8/fox",
         "tests/data/bad",
         "tests/data/utf8/men",
+        "tests/data/nonesuch",
+        "tests/data/bad",
+        "tests/data/utf8/wide.py",
     ];
-    let lines = FilesLines::new(&paths).collect::<Vec<_>>();
-    let index = lines.iter().position(|res| res.is_err()).unwrap();
-    assert_ne!(0, index);
-    assert_ne!(lines.len() - 1, index);
+    let mut got = FilesLines::new(&paths);
+    for want in read_lines(paths[0])? {
+        assert_eq!(want, got.expect_line());
+    }
+    assert_eq!(io::ErrorKind::InvalidData, got.expect_err().kind());
+    for want in read_lines(paths[2])? {
+        assert_eq!(want, got.expect_line());
+    }
+    assert_eq!(io::ErrorKind::NotFound, got.expect_err().kind());
+    assert_eq!(io::ErrorKind::InvalidData, got.expect_err().kind());
+    for want in read_lines(paths[5])? {
+        assert_eq!(want, got.expect_line());
+    }
+    got.expect_none();
     Ok(())
 }
