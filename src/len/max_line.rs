@@ -1,25 +1,26 @@
 use std::io;
 
-use super::LineIterator;
-
 fn len(line: &str) -> usize {
     line.chars().count()
 }
 
 // Iterator that always returns the next error, if any, from a supplied sequence of line results,
 // and the longest line seen, if any, otherwise.
-pub struct MaxLine<I: LineIterator> {
-    lines: I,
+pub struct MaxLine<I: IntoIterator<Item = io::Result<String>>> {
+    lines: I::IntoIter,
     max: Option<String>, // the longest line seen so far, if any
 }
 
-impl<I: LineIterator> MaxLine<I> {
+impl<I: IntoIterator<Item = io::Result<String>>> MaxLine<I> {
     pub fn new(lines: I) -> MaxLine<I> {
-        MaxLine { lines, max: None }
+        MaxLine {
+            lines: lines.into_iter(),
+            max: None,
+        }
     }
 }
 
-impl<I: LineIterator> Iterator for MaxLine<I> {
+impl<I: IntoIterator<Item = io::Result<String>>> Iterator for MaxLine<I> {
     type Item = io::Result<String>;
 
     // Return the next error, or the longest line seen so far if there are no more errors.

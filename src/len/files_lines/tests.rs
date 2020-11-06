@@ -20,7 +20,7 @@ fn expect_none(mut lines: FilesLines) -> Result<(), String> {
     }
 }
 
-fn read_lines<P: AsRef<Path>, I: Iterator<Item = P>>(paths: I) -> io::Result<Vec<String>> {
+fn read_lines<P: AsRef<Path>, I: IntoIterator<Item = P>>(paths: I) -> io::Result<Vec<String>> {
     let mut lines = vec![];
     for path in paths {
         for line in io::BufReader::new(File::open(path)?).lines() {
@@ -32,19 +32,17 @@ fn read_lines<P: AsRef<Path>, I: Iterator<Item = P>>(paths: I) -> io::Result<Vec
 
 #[test]
 fn no_files() -> Result<(), String> {
-    expect_none(FilesLines::new(iter::empty()))
+    expect_none(FilesLines::new(iter::empty::<&Path>()))
 }
 
 #[test]
 fn empty_file() -> Result<(), String> {
-    let paths = vec![PathBuf::from("tests/data/utf8/empty")];
-    expect_none(FilesLines::new(paths.into_iter()))
+    expect_none(FilesLines::new(&["tests/data/utf8/empty"]))
 }
 
 #[test]
 fn no_such_file() -> Result<(), String> {
-    let paths = vec![PathBuf::from("tests/data/nonesuch")];
-    let mut lines = FilesLines::new(paths.into_iter());
+    let mut lines = FilesLines::new(&["tests/data/nonesuch"]);
     expect_err(&mut lines)?;
     expect_none(lines)
 }
@@ -56,7 +54,7 @@ fn utf8_files() -> io::Result<()> {
         .iter()
         .map(|entry| entry.path())
         .collect::<Vec<_>>();
-    let lines = FilesLines::new(paths.clone().into_iter()).collect::<io::Result<Vec<_>>>()?;
-    assert_eq!(read_lines(paths.into_iter())?, lines);
+    let lines = FilesLines::new(&paths).collect::<io::Result<Vec<_>>>()?;
+    assert_eq!(read_lines(paths)?, lines);
     Ok(())
 }

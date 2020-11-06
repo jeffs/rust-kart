@@ -3,7 +3,7 @@ mod tests;
 use std::collections::VecDeque;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Iterates over the lines of a sequence of files.
 ///
@@ -16,9 +16,9 @@ pub struct FilesLines {
 }
 
 impl FilesLines {
-    pub fn new<I: Iterator<Item = PathBuf>>(paths: I) -> FilesLines {
+    pub fn new<P: AsRef<Path>, I: IntoIterator<Item = P>>(paths: I) -> FilesLines {
         FilesLines {
-            paths: paths.collect(),
+            paths: paths.into_iter().map(|p| p.as_ref().to_owned()).collect(),
             lines: None,
         }
     }
