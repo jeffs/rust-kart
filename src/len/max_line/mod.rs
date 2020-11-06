@@ -1,3 +1,5 @@
+mod tests;
+
 use std::io;
 
 fn len(line: &str) -> usize {
