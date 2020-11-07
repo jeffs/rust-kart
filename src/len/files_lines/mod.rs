@@ -31,26 +31,18 @@ where
     Ok(Opening { path, lines })
 }
 
-struct InitState {
-    paths: VecDeque<PathBuf>,
-}
-
 struct OpenState {
     paths: VecDeque<PathBuf>,
     open: Opening,
 }
 
 enum State {
-    Init(InitState),
+    Init { paths: VecDeque<PathBuf> },
     Open(OpenState),
     Done,
 }
 
 impl State {
-    fn init(paths: VecDeque<PathBuf>) -> State {
-        State::Init(InitState { paths })
-    }
-
     fn open(paths: VecDeque<PathBuf>, open: Opening) -> State {
         State::Open(OpenState { paths, open })
     }
@@ -61,14 +53,14 @@ impl State {
         paths: VecDeque<PathBuf>,
     ) -> (State, Option<io::Result<String>>) {
         let err = prefix_error(path, err);
-        (State::init(paths), Some(Err(err)))
+        (State::Init { paths }, Some(Err(err)))
     }
 
-    fn from_init(mut value: InitState) -> (State, Option<io::Result<String>>) {
-        match value.paths.pop_front() {
+    fn from_init(mut paths: VecDeque<PathBuf>) -> (State, Option<io::Result<String>>) {
+        match paths.pop_front() {
             Some(path) => match open_file(&path) {
-                Ok(open) => State::next(State::open(value.paths, open)),
-                Err(err) => State::error(err, &path, value.paths),
+                Ok(open) => State::next(State::open(paths, open)),
+                Err(err) => State::error(err, &path, paths),
             },
             None => (State::Done, None),
         }
@@ -78,14 +70,14 @@ impl State {
         match value.open.lines.next() {
             next @ Some(Ok(_)) => (State::Open(value), next),
             Some(Err(err)) => State::error(err, &value.open.path, value.paths),
-            None => State::from_init(InitState { paths: value.paths }),
+            None => State::from_init(value.paths),
         }
     }
 
     /// Transition state, spinning out (the result of) an action.
     fn next(state: State) -> (State, Option<io::Result<String>>) {
         match state {
-            State::Init(value) => State::from_init(value),
+            State::Init { paths } => State::from_init(paths),
             State::Open(value) => State::from_open(value),
             State::Done => (State::Done, None),
         }
@@ -114,8 +106,8 @@ impl FilesLines {
         I: IntoIterator<Item = P>,
     {
         let paths = paths.into_iter();
-        let paths = paths.map(|p| p.as_ref().to_owned());
-        let state = State::init(paths.collect());
+        let paths = paths.map(|p| p.as_ref().to_owned()).collect();
+        let state = State::Init { paths };
         FilesLines { state }
     }
 }
@@ -124,7 +116,8 @@ impl Iterator for FilesLines {
     type Item = io::Result<String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let (state, next) = State::next(mem::take(&mut self.state));
+        let state = mem::take(&mut self.state);
+        let (state, next) = State::next(state);
         self.state = state;
         next
     }
