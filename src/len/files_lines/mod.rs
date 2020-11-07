@@ -43,10 +43,6 @@ enum State {
 }
 
 impl State {
-    fn open(paths: VecDeque<PathBuf>, open: Opening) -> State {
-        State::Open(OpenState { paths, open })
-    }
-
     fn error(
         err: io::Error,
         path: &Path,
@@ -59,7 +55,7 @@ impl State {
     fn from_init(mut paths: VecDeque<PathBuf>) -> (State, Option<io::Result<String>>) {
         match paths.pop_front() {
             Some(path) => match open_file(&path) {
-                Ok(open) => State::next(State::open(paths, open)),
+                Ok(open) => State::next(State::Open(OpenState { paths, open })),
                 Err(err) => State::error(err, &path, paths),
             },
             None => (State::Done, None),
