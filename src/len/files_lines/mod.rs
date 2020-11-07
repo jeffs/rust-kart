@@ -55,48 +55,37 @@ impl State {
         State::Open(OpenState { paths, open })
     }
 
-    fn from_init(mut value: InitState) -> (State, Option<io::Error>) {
-        if let Some(path) = value.paths.pop_front() {
-            match open_file(&path) {
-                Ok(open) => (State::open(value.paths, open), None),
-                Err(err) => {
-                    let err = prefix_error(&path, err);
-                    (State::init(value.paths), Some(err))
-                }
-            }
-        } else {
-            (State::Done, None)
+    fn error(
+        err: io::Error,
+        path: &Path,
+        paths: VecDeque<PathBuf>,
+    ) -> (State, Option<io::Result<String>>) {
+        let err = prefix_error(path, err);
+        (State::init(paths), Some(Err(err)))
+    }
+
+    fn from_init(mut value: InitState) -> (State, Option<io::Result<String>>) {
+        match value.paths.pop_front() {
+            Some(path) => match open_file(&path) {
+                Ok(open) => State::next(State::open(value.paths, open)),
+                Err(err) => State::error(err, &path, value.paths),
+            },
+            None => (State::Done, None),
         }
     }
 
     fn from_open(mut value: OpenState) -> (State, Option<io::Result<String>>) {
         match value.open.lines.next() {
-            next@Some(Ok(_)) => (State::Open(value), next),
-
-            Some(Err(err)) => {
-                let err = prefix_error(&value.open.path, err);
-                (State::init(value.paths), Some(Err(err)))
-            }
-
-            None => {
-                let (state, err) = State::from_init(InitState { paths: value.paths });
-                match err {
-                    Some(err) => (state, Some(Err(err))),
-                    None => State::next(state),
-                }
-            }
+            next @ Some(Ok(_)) => (State::Open(value), next),
+            Some(Err(err)) => State::error(err, &value.open.path, value.paths),
+            None => State::from_init(InitState { paths: value.paths }),
         }
     }
 
+    /// Transition state, spinning out (the result of) an action.
     fn next(state: State) -> (State, Option<io::Result<String>>) {
         match state {
-            State::Init(value) => {
-                let (state, err) = State::from_init(value);
-                match err {
-                    Some(err) => (state, Some(Err(err))),
-                    None => State::next(state),
-                }
-            }
+            State::Init(value) => State::from_init(value),
             State::Open(value) => State::from_open(value),
             State::Done => (State::Done, None),
         }
