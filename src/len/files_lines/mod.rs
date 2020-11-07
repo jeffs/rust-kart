@@ -55,7 +55,7 @@ impl State {
     fn from_init(mut paths: VecDeque<PathBuf>) -> (State, Option<io::Result<String>>) {
         match paths.pop_front() {
             Some(path) => match open_file(&path) {
-                Ok(open) => State::next(State::Open(OpenState { paths, open })),
+                Ok(open) => (State::Open(OpenState { paths, open }), None),
                 Err(err) => State::error(err, &path, paths),
             },
             None => (State::Done, None),
@@ -66,7 +66,14 @@ impl State {
         match value.open.lines.next() {
             next @ Some(Ok(_)) => (State::Open(value), next),
             Some(Err(err)) => State::error(err, &value.open.path, value.paths),
-            None => State::from_init(value.paths),
+            None => (State::Init { paths: value.paths }, None),
+        }
+    }
+
+    fn is_done(&self) -> bool {
+        match self {
+            State::Done => true,
+            _ => false,
         }
     }
 
@@ -112,9 +119,11 @@ impl Iterator for FilesLines {
     type Item = io::Result<String>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let state = mem::take(&mut self.state);
-        let (state, next) = State::next(state);
-        self.state = state;
-        next
+        let mut state_next = State::next(mem::take(&mut self.state));
+        while !(state_next.0.is_done() || state_next.1.is_some()) {
+            state_next = State::next(state_next.0);
+        }
+        self.state = state_next.0;
+        state_next.1
     }
 }
