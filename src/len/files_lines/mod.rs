@@ -5,8 +5,11 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines};
 use std::path::{Path, PathBuf};
 
-fn prefix_error(path: &Path, err: io::Error) -> io::Error {
-    let what = format!("{}: {}", path.to_string_lossy(), err);
+fn prefix_error<P>(path: P, err: io::Error) -> io::Error
+where
+    P: AsRef<Path>,
+{
+    let what = format!("{}: {}", path.as_ref().to_string_lossy(), err);
     io::Error::new(err.kind(), what)
 }
 
@@ -34,8 +37,7 @@ impl FilesLines {
 
     /// Opens the next file if no file is already open, and if another path is
     /// available, assigning a line iterator to self.lines.  On failure to open
-    /// a file, returns the error prefixed with the path, but does not pop
-    /// the path from the queue.
+    /// a file, returns the error.
     fn open_lines(&mut self) -> io::Result<()> {
         if self.lines.is_none() && !self.paths.is_empty() {
             match File::open(&self.paths[0]) {
@@ -43,16 +45,16 @@ impl FilesLines {
                     self.lines = Some(io::BufReader::new(file).lines());
                 }
                 Err(err) => {
-                    return Err(prefix_error(&self.paths[0], err));
+                    return Err(err);
                 }
             }
         }
         Ok(())
     }
 
-    fn skip_file(&mut self) {
-        self.paths.pop_front();
+    fn skip_path(&mut self) -> PathBuf {
         self.lines = None;
+        self.paths.pop_front().unwrap()
     }
 }
 
@@ -62,8 +64,7 @@ impl Iterator for FilesLines {
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if let Err(err) = self.open_lines() {
-                self.skip_file();
-                return Some(Err(err));
+                return Some(Err(prefix_error(self.skip_path(), err)));
             }
 
             if self.lines.is_none() {
@@ -72,13 +73,14 @@ impl Iterator for FilesLines {
 
             let opt = self.lines.as_mut().and_then(|lines| lines.next());
             if let Some(Ok(_)) = opt {
+                // We got a line.  Return it.
                 return opt;
-            }
-
-            self.skip_file();
-
-            if opt.is_some() {
-                return opt;
+            } else if let Some(Err(err)) = opt {
+                // We got an error.  Return it and skip the rest of the file.
+                return Some(Err(prefix_error(self.skip_path(), err)));
+            } else {
+                // We got nothing.  Proceed to the next file, if any.
+                self.skip_path();
             }
         }
     }

@@ -69,6 +69,17 @@ impl Expect for FilesLines {
     }
 }
 
+fn expect_single_error(path: &str, kind: io::ErrorKind) {
+    let mut lines = FilesLines::new(&[path]);
+    let err = lines.expect_err();
+    assert_eq!(kind, err.kind());
+    assert!(
+        err.to_string().contains(path),
+        format!(r#"expected path "{}" in "{}""#, path, err)
+    );
+    lines.expect_none();
+}
+
 #[test]
 fn no_files() {
     FilesLines::new(iter::empty::<&Path>()).expect_none();
@@ -81,9 +92,12 @@ fn empty_file() {
 
 #[test]
 fn no_such_file() {
-    let mut lines = FilesLines::new(&["tests/data/nonesuch"]);
-    lines.expect_err();
-    lines.expect_none();
+    expect_single_error("tests/data/nonesuch", io::ErrorKind::NotFound);
+}
+
+#[test]
+fn non_utf8_file() {
+    expect_single_error("tests/data/bad", io::ErrorKind::InvalidData);
 }
 
 #[test]
