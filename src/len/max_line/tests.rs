@@ -117,3 +117,16 @@ fn recoverable_errors() {
     }
     subject.expect_none();
 }
+
+#[test]
+fn wide_chars() {
+    // MaxLine should compare length in code units, returning the latter of the
+    // following two strings.  The first string has just as many grapheme
+    // clusters as the second, and even more bytes because it uses four code
+    // points that don't fit in UTF-8 code units, whereas the latter has only
+    // one such code point: the COMBINING TILDE (U+0303).
+    let lines = ["píñátá", "piñata"];
+    let mut subject = MaxLine::new(as_lines(&lines));
+    subject.assert_line(lines[1]);
+    subject.expect_none();
+}
