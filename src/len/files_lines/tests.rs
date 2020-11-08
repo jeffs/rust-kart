@@ -1,8 +1,9 @@
 #![cfg(test)]
 
-use super::*;
+use crate::len::expect::Expect;
 use std::path::Path;
 use std::{fs, iter};
+use super::*;
 
 fn list_dir<P>(dir: P) -> io::Result<Vec<PathBuf>>
 where
@@ -35,38 +36,6 @@ where
         }
     }
     Ok(lines)
-}
-
-trait Expect {
-    fn expect_err(&mut self) -> io::Error;
-    fn expect_line(&mut self) -> String;
-    fn expect_none(self);
-}
-
-impl Expect for FilesLines {
-    fn expect_err(&mut self) -> io::Error {
-        match self.next() {
-            None => panic!("want Some(err); got None"),
-            Some(Ok(line)) => panic!("want Some(err); got line: {}", line),
-            Some(Err(err)) => err,
-        }
-    }
-
-    fn expect_line(&mut self) -> String {
-        match self.next() {
-            None => panic!("want Some(Ok(line)); got None"),
-            Some(Ok(line)) => line,
-            Some(Err(err)) => panic!("unexpected error: {}", err),
-        }
-    }
-
-    fn expect_none(mut self) {
-        match self.next() {
-            None => (),
-            Some(Ok(line)) => panic!("unexpected line: {}", line),
-            Some(Err(err)) => panic!("unexpected error: {}", err),
-        }
-    }
 }
 
 fn expect_single_error(path: &str, kind: io::ErrorKind) {

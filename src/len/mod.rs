@@ -1,5 +1,6 @@
 mod args;
 mod command;
+mod expect;
 mod files_lines;
 mod log;
 mod max_line;
