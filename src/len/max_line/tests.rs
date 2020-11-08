@@ -6,25 +6,46 @@ use std::{io, iter};
 
 type ErrorBrief = (io::ErrorKind, &'static str);
 
-fn as_errors<'a, I>(errors: I) -> impl 'a + Iterator<Item = io::Result<String>>
+fn as_error((kind, what): ErrorBrief) -> io::Result<String> {
+    Err(io::Error::new(kind, what))
+}
+
+fn as_line(line: &str) -> io::Result<String> {
+    Ok(line.to_owned())
+}
+
+fn as_result(res: &Result<&'static str, ErrorBrief>) -> io::Result<String> {
+    match *res {
+        Ok(line) => as_line(&line),
+        Err(brief) => as_error(brief),
+    }
+}
+
+fn as_errors<'a, I>(briefs: I) -> impl 'a + Iterator<Item = io::Result<String>>
 where
     I: 'a + IntoIterator<Item = &'a ErrorBrief>,
 {
-    errors
-        .into_iter()
-        .map(|&(kind, what)| Err(io::Error::new(kind, what)))
+    briefs.into_iter().copied().map(as_error)
 }
 
 fn as_lines<'a, I>(lines: I) -> impl 'a + Iterator<Item = io::Result<String>>
 where
     I: 'a + IntoIterator<Item = &'a &'static str>,
 {
-    lines.into_iter().map(|&line| Ok(line.to_owned()))
+    lines.into_iter().copied().map(as_line)
+}
+
+fn as_results<'a, I>(results: I) -> impl Iterator<Item = io::Result<String>>
+where
+    I: IntoIterator<Item = &'a Result<&'static str, ErrorBrief>>,
+{
+    results.into_iter().map(as_result)
 }
 
 trait Assert {
     fn assert_err(&mut self, want: ErrorBrief);
     fn assert_line(&mut self, want: &str);
+    fn assert_res(&mut self, want: Result<&'static str, ErrorBrief>);
 }
 
 impl<I> Assert for I
@@ -38,6 +59,13 @@ where
 
     fn assert_line(&mut self, want: &str) {
         assert_eq!(want, self.expect_line());
+    }
+
+    fn assert_res(&mut self, want: Result<&'static str, ErrorBrief>) {
+        match want {
+            Ok(line) => self.assert_line(line),
+            Err(brief) => self.assert_err(brief),
+        }
     }
 }
 
@@ -71,5 +99,21 @@ fn returns_first_line_of_max_length() {
     ];
     let mut subject = MaxLine::new(as_lines(&lines));
     subject.assert_line(lines[1]);
+    subject.expect_none();
+}
+
+#[test]
+fn recoverable_errors() {
+    let results = [
+        Err((io::ErrorKind::NotFound, "error before the lines")),
+        Ok("MaxLine should return all the errors first."),
+        Err((io::ErrorKind::InvalidData, "error between the lines")),
+        Ok("After the errors, it should return the longest line."),
+        Err((io::ErrorKind::NotFound, "error after the lines")),
+    ];
+    let mut subject = MaxLine::new(as_results(results.iter()));
+    for &i in &[0, 2, 4, 3] {
+        subject.assert_res(results[i]);
+    }
     subject.expect_none();
 }
