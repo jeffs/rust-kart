@@ -11,9 +11,11 @@ ts() {
 }
 
 clear-run() {
-    local run="cargo --color=always test"
+    # https://github.com/rust-lang/cargo/issues/1983
+    local run="cargo --color=always test --color=always -- --color=always"
     clear
-    echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m\n" && ${=run} "$@"
+    echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m\n" \
+        && ${=run} "$@" |& head -32
 }
 
 ts >$a
