@@ -101,6 +101,16 @@ fn forwards_errors() -> io::Result<()> {
     for want in read_lines(paths[5])? {
         assert_eq!(want, got.expect_line());
     }
-    got.expect_none();
-    Ok(())
+    Ok(got.expect_none())
+}
+
+#[test]
+fn recurses_on_dirs() -> io::Result<()> {
+    let paths = ["tests/data/dir"];
+    let mut lines = FilesLines::new(&paths);
+    assert_eq!("f", lines.expect_line());
+    assert_eq!("h", lines.expect_line());
+    assert_eq!("i", lines.expect_line());
+    assert_eq!("j", lines.expect_line());
+    Ok(lines.expect_none())
 }
