@@ -3,6 +3,15 @@ use std::path::PathBuf;
 /// Specifies len's command line interface to the clap argument parsing library.
 fn new_app() -> clap::App<'static> {
     clap::App::new("Len")
+        .about("Len prints line lengths, recursing on directories.")
+        .after_help(
+            "EXAMPLES:
+
+    len .       Show the lengths of all lines under this directory
+    len -1r .   Show only the longest line
+    len -1s .   Show only the shortest line
+",
+        )
         .version(crate_version!())
         .help_about("Print help information")
         .version_about("Print version information")
