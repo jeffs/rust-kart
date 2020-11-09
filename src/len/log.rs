@@ -32,6 +32,8 @@ impl Log {
         self.print("error", what);
     }
 
+    // TODO: Move Log into its own crate.
+    #[allow(dead_code)]
     pub fn fatal<T: Display>(&self, what: T) -> ! {
         self.error(what);
         std::process::exit(1);
