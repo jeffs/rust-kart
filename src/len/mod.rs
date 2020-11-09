@@ -9,10 +9,18 @@ mod op;
 use command::Command;
 use files_lines::FilesLines;
 use log::Log;
-use max_line::MaxLine;
+use max_line::{longest, shortest};
 use op::Op;
 use std::io::{self, BufRead};
+use std::path::PathBuf;
 use take_until::TakeUntilExt;
+
+fn is_hard_err(res: &io::Result<String>) -> bool {
+    res.as_ref()
+        .err()
+        .filter(|err| err.kind() != io::ErrorKind::InvalidData)
+        .is_some()
+}
 
 fn print<I>(lines: I, log: &Log)
 where
@@ -20,32 +28,11 @@ where
 {
     for res in lines {
         match res {
-            Ok(line) => {
-                println!("{}:{}", line.chars().count(), line);
-            }
-            Err(err) => {
-                if err.kind() == io::ErrorKind::InvalidData {
-                    log.warning(err);
-                } else {
-                    log.error(err);
-                }
-            }
+            Ok(line) => println!("{}:{}", line.chars().count(), line),
+            Err(err) if is_hard_err(&res) => log.error(err),
+            Err(err) => log.warning(err),
         }
     }
-}
-
-/// Returns the longest of the specified lines---i.e., the result having the Ok
-/// value of the greatest length---as well as any InvalidData errors.  Stops
-/// early if any other error is encountered, reporting that error as the final
-/// value of the returned iterator.
-fn max_line<I>(lines: I) -> impl Iterator<Item = io::Result<String>>
-where
-    I: IntoIterator<Item = io::Result<String>>,
-{
-    MaxLine::new(lines).take_until(|res| match res {
-        Err(err) if err.kind() != io::ErrorKind::InvalidData => true,
-        _ => false,
-    })
 }
 
 /// Performs the specified operation on the specified input lines, and prints
@@ -57,8 +44,8 @@ where
 {
     match op {
         Op::All => print(lines, &log),
-        Op::Max => print(max_line(lines), &log),
-        // Op::Min,
+        Op::Max => print(longest(lines).take_until(is_hard_err), &log),
+        Op::Min => print(shortest(lines).take_until(is_hard_err), &log),
         // Op::One,
         // Op::ReverseSort,
         // Op::Sort,
@@ -66,19 +53,27 @@ where
     }
 }
 
+/// Stops on the first error.
+fn execute_stdin(op: Op, log: Log) {
+    let stdin = io::stdin();
+    let lines = stdin.lock().lines().take_until(|res| res.is_err());
+    execute(op, lines, log);
+}
+
+/// Stops on the first error other than InvalidData.  Binary files cause
+/// warnings, but don't cause the program to exit, since we may still find
+/// useful data in subsequent files.
+fn execute_files(op: Op, files: Vec<PathBuf>, log: Log) {
+    let lines = FilesLines::new(files.iter()).take_until(is_hard_err);
+    execute(op, lines, log);
+}
+
 pub fn main() {
     let command = Command::from_env();
     let log = Log::new(command.color);
     if command.files.is_empty() {
-        let stdin = io::stdin();
-        let lines = stdin.lock().lines().take_until(|res| res.is_err());
-        execute(command.op, lines, log);
+        execute_stdin(command.op, log);
     } else {
-        let files = command.files.iter().cloned();
-        let lines = FilesLines::new(files).take_until(|res| match res {
-            Err(err) if err.kind() != io::ErrorKind::InvalidData => true,
-            _ => false,
-        });
-        execute(command.op, lines, log);
+        execute_files(command.op, command.files, log);
     }
 }

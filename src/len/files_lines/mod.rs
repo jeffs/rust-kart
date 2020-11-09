@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_imports)]
-
 mod tests;
 
 use std::collections::VecDeque;

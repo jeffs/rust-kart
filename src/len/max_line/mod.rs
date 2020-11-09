@@ -1,38 +1,40 @@
-#![allow(dead_code, unused_variables)]
-
+pub mod order;
 mod tests;
 
 use std::io;
-
-fn len(opt: &Option<String>) -> Option<usize> {
-    opt.as_ref().map(|line| line.chars().count())
-}
+use std::marker::PhantomData;
+use std::mem;
 
 /// Iterator that yields all errors from a supplied underlying iterator,
 /// followed by the longest line (if any) yielded by the underlying iterator.
-pub struct MaxLine<I>
+pub struct MaxLine<I, C>
 where
     I: IntoIterator<Item = io::Result<String>>,
+    C: order::Policy,
 {
     lines: I::IntoIter,
     max: Option<String>, // the longest line seen so far, if any
+    phantom: PhantomData<C>,
 }
 
-impl<I> MaxLine<I>
+impl<I, C> MaxLine<I, C>
 where
     I: IntoIterator<Item = io::Result<String>>,
+    C: order::Policy,
 {
-    pub fn new(lines: I) -> MaxLine<I> {
+    pub fn new(lines: I) -> MaxLine<I, C> {
         MaxLine {
             lines: lines.into_iter(),
             max: None,
+            phantom: PhantomData,
         }
     }
 }
 
-impl<I> Iterator for MaxLine<I>
+impl<I, C> Iterator for MaxLine<I, C>
 where
     I: IntoIterator<Item = io::Result<String>>,
+    C: order::Policy,
 {
     type Item = io::Result<String>;
 
@@ -41,12 +43,22 @@ where
             if let Err(_) = res {
                 return Some(res);
             }
-
-            let ok = res.ok();
-            if self.max.is_none() || len(&ok) > len(&self.max) {
-                self.max = ok;
-            }
+            self.max = C::max(mem::take(&mut self.max), res.ok());
         }
         self.max.take().map(Ok)
     }
+}
+
+pub fn longest<I>(lines: I) -> MaxLine<I, order::Longest>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
+    MaxLine::<I, order::Longest>::new(lines)
+}
+
+pub fn shortest<I>(lines: I) -> MaxLine<I, order::Shortest>
+where
+    I: IntoIterator<Item = io::Result<String>>,
+{
+    MaxLine::<I, order::Shortest>::new(lines)
 }

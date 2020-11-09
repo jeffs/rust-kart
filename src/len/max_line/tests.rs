@@ -71,7 +71,7 @@ where
 
 #[test]
 fn empty() {
-    assert!(MaxLine::new(iter::empty()).next().is_none());
+    assert!(longest(iter::empty()).next().is_none());
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn errors_only() {
         (io::ErrorKind::NotFound, "not found"),
         (io::ErrorKind::InvalidData, "bad data 2"),
     ];
-    let mut subject = MaxLine::new(as_errors(&errors));
+    let mut subject = longest(as_errors(&errors));
     for &want in errors.iter() {
         subject.assert_err(want);
     }
@@ -97,7 +97,21 @@ fn returns_first_line_of_max_length() {
         "Here is another of that length just for good measure.",
         "MaxLine should return the first one.",
     ];
-    let mut subject = MaxLine::new(as_lines(&lines));
+    let mut subject = longest(as_lines(&lines));
+    subject.assert_line(lines[1]);
+    subject.expect_none();
+}
+
+#[test]
+fn returns_first_line_of_min_length() {
+    let lines = [
+        "Our line is a very very very long line.",
+        "This is a noticeably shorter line.",
+        "This line is as short as that one.",
+        "Here's another short line for you.",
+        "MaxLine should return the first short line.",
+    ];
+    let mut subject = shortest(as_lines(&lines));
     subject.assert_line(lines[1]);
     subject.expect_none();
 }
@@ -111,7 +125,7 @@ fn recoverable_errors() {
         Ok("After the errors, it should return the longest line."),
         Err((io::ErrorKind::NotFound, "error after the lines")),
     ];
-    let mut subject = MaxLine::new(as_results(results.iter()));
+    let mut subject = longest(as_results(results.iter()));
     for &i in &[0, 2, 4, 3] {
         subject.assert_res(results[i]);
     }
@@ -126,7 +140,7 @@ fn wide_chars() {
     // points that don't fit in UTF-8 code units, whereas the latter has only
     // one such code point: the COMBINING TILDE (U+0303).
     let lines = ["píñátá", "piñata"];
-    let mut subject = MaxLine::new(as_lines(&lines));
+    let mut subject = longest(as_lines(&lines));
     subject.assert_line(lines[1]);
     subject.expect_none();
 }

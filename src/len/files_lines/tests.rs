@@ -79,7 +79,7 @@ fn utf8_files() -> io::Result<()> {
 }
 
 #[test]
-fn recoverable_errors() -> io::Result<()> {
+fn forwards_errors() -> io::Result<()> {
     let paths = [
         "tests/data/utf8/fox",
         "tests/data/bad",
