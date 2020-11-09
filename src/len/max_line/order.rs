@@ -2,12 +2,11 @@ fn len(line: &String) -> usize {
     line.chars().count()
 }
 
-
 pub trait Less {
     fn less(old: usize, new: usize) -> bool;
 }
 
-pub enum Longest { }
+pub enum Longest {}
 
 impl Less for Longest {
     fn less(old: usize, new: usize) -> bool {
@@ -15,7 +14,7 @@ impl Less for Longest {
     }
 }
 
-pub enum Shortest { }
+pub enum Shortest {}
 
 impl Less for Shortest {
     fn less(old: usize, new: usize) -> bool {

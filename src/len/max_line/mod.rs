@@ -1,4 +1,4 @@
-pub mod order;
+mod order;
 mod tests;
 
 use std::io;
@@ -6,14 +6,15 @@ use std::marker::PhantomData;
 use std::mem;
 
 /// Iterator that yields all errors from a supplied underlying iterator,
-/// followed by the longest line (if any) yielded by the underlying iterator.
-pub struct MaxLine<I, C>
+/// followed by the maximal line (if any) yielded by the underlying iterator,
+/// as determined by the specified comparator (i.e., order policy).
+struct MaxLine<I, C>
 where
     I: IntoIterator<Item = io::Result<String>>,
     C: order::Policy,
 {
     lines: I::IntoIter,
-    max: Option<String>, // the longest line seen so far, if any
+    max: Option<String>,
     phantom: PhantomData<C>,
 }
 
@@ -49,14 +50,14 @@ where
     }
 }
 
-pub fn longest<I>(lines: I) -> MaxLine<I, order::Longest>
+pub fn longest<I>(lines: I) -> impl Iterator<Item = io::Result<String>>
 where
     I: IntoIterator<Item = io::Result<String>>,
 {
     MaxLine::<I, order::Longest>::new(lines)
 }
 
-pub fn shortest<I>(lines: I) -> MaxLine<I, order::Shortest>
+pub fn shortest<I>(lines: I) -> impl Iterator<Item = io::Result<String>>
 where
     I: IntoIterator<Item = io::Result<String>>,
 {

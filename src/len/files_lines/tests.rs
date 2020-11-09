@@ -1,9 +1,9 @@
 #![cfg(test)]
 
+use super::*;
 use crate::len::expect::Expect;
 use std::path::Path;
 use std::{fs, iter};
-use super::*;
 
 fn list_dir<P>(dir: P) -> io::Result<Vec<PathBuf>>
 where
