@@ -32,7 +32,7 @@ impl Log {
         self.print("error", what);
     }
 
-    pub fn fatal<T: Display>(&self, what: T) {
+    pub fn fatal<T: Display>(&self, what: T) -> ! {
         self.error(what);
         std::process::exit(1);
     }
