@@ -1,1 +1,4 @@
 /target
+
+# For use by scripts/watch-run.zsh.
+/stdin

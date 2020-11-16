@@ -13,11 +13,15 @@ else
 fi
 
 clear-run() {
-    local run="cargo --color=always --quiet run --bin len"
+    local run='cargo --color=always --quiet run'
     clear
-    cargo --color=always build || return 1
+    cargo --color=always --quiet build || return 1
     echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m\n"
-    ${=run} "$@" tests/data/utf8/* tests/data/bad tests/data/utf8/*
+    if [ -r stdin ]; then
+        ${=run} "$@" < stdin
+    else
+        ${=run} "$@"
+    fi
     echo -ne "\n\e[2m[$(date +%T)] $?\e[22m"
 }
 
