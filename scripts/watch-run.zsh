@@ -7,7 +7,7 @@ declare a=$tmp/a b=$tmp/b
 
 if [ $(uname) = Linux ]; then
     # Print timestamps of regular files under the current directory.
-    ts() { fd --type=file --exec-batch stat --format=%Y; }
+    ts() { fdfind --type=file --exec-batch stat --format=%Y; }
 else
     ts() { fd --type=file --exec-batch stat -f %m; }
 fi
@@ -15,12 +15,13 @@ fi
 clear-run() {
     local run='cargo --color=always --quiet run'
     clear
-    cargo --color=always --quiet build || return 1
+    cargo --color=always build || return 1
+    clear
     echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m\n"
     if [ -r stdin ]; then
-        ${=run} "$@" < stdin
+        ${=run} "$@" < stdin | head -20
     else
-        ${=run} "$@"
+        ${=run} "$@" | head -20
     fi
     echo -ne "\n\e[2m[$(date +%T)] $?\e[22m"
 }
