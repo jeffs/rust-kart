@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate clap;
+
 mod args;
 mod command;
 mod expect;

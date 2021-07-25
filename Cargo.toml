@@ -1,23 +1,7 @@
-[package]
-name = "rust-kart"
-version = "0.1.0"
-authors = ["Jeff Schwab <jeff@unbuggy.com>"]
-edition = "2018"
+[workspace]
 
-[dependencies]
-
-# Report the first input error before we stop processing.
-take-until = "0.1.0"
-
-# Color diagnostics.
-atty = "0.2.14"
-termcolor = "1.1.0"
-
-# Parse and document command-line arguments.
-#
-# The rev here happened to be `master` when I wrote the code.  It should be
-# replaced with a tag name once the API it supports (particularly the
-# `help_about` method) is supported by a tagged release.
-[dependencies.clap]
-git = "https://github.com/clap-rs/clap.git"
-rev = "829d953b489bf4380b02d75706c62b7cbee0f370"
+members = [
+    "b2c",
+    "len",
+    "tmux-send",
+]
