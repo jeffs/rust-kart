@@ -4,5 +4,6 @@ members = [
     "arg5",
     "b2c",
     "len",
+    "pangram",
     "tmux-send",
 ]
