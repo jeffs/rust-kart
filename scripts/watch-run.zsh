@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+set -uo pipefail
+
 declare tmp=$(mktemp -d)
 trap "rm -rf $tmp" EXIT
 
@@ -23,7 +25,8 @@ clear-run() {
     else
         ${=run} "$@" | head -20
     fi
-    echo -ne "\n\e[2m[$(date +%T)] $?\e[22m"
+    local st=$?
+    echo -ne "\n\e[2m[$(date +%T)] $st\e[22m"
 }
 
 ts >$a

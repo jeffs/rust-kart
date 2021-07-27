@@ -5,10 +5,13 @@ trap "rm -rf $tmp" EXIT
 
 declare a=$tmp/a b=$tmp/b
 
-# Print timestamps of regular files under the current directory.
-ts() {
-    fd --type=file --exec-batch stat -f %m
-}
+if [ $(uname) = Linux ]; then
+    # Print timestamps of regular files under the current directory.
+    ts() { fdfind --type=file --exec-batch stat --format=%Y; }
+else
+    ts() { fd --type=file --exec-batch stat -f %m; }
+fi
+
 
 clear-build() {
     local run="cargo --color=always build"
