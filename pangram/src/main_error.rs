@@ -1,4 +1,5 @@
 use std::fmt;
+use std::io;
 
 #[derive(Debug)]
 pub struct MainError {
@@ -14,5 +15,11 @@ impl fmt::Display for MainError {
 impl From<String> for MainError {
     fn from(what: String) -> Self {
         Self { what }
+    }
+}
+
+impl From<io::Error> for MainError {
+    fn from(err: io::Error) -> Self {
+        Self { what: format!("{}", err) }
     }
 }
