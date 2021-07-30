@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use crate::len::expect::Expect;
+use crate::expect::Expect;
 use std::path::Path;
 use std::{fs, iter};
 
@@ -44,7 +44,9 @@ fn expect_single_error(path: &str, kind: io::ErrorKind) {
     assert_eq!(kind, err.kind());
     assert!(
         err.to_string().contains(path),
-        format!(r#"expected path "{}" in "{}""#, path, err)
+        r#"expected path "{}" in "{}""#,
+        path,
+        err
     );
     lines.expect_none();
 }

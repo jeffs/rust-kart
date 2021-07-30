@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use crate::len::expect::Expect;
+use crate::expect::Expect;
 use std::{io, iter};
 
 type ErrorBrief = (io::ErrorKind, &'static str);
