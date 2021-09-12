@@ -33,5 +33,13 @@ mod a_parser {
             parser.parse([String::from("42")]).unwrap();
             assert_eq!(got, want);
         }
+
+        #[test]
+        fn rejects_a_bad_integer() {
+            let mut got = 0;
+            let mut parser = Parser::new();
+            parser.declare_positional(Parameter::new("arg1", &mut got));
+            assert!(parser.parse([String::from("not-an-integer")]).is_err());
+        }
     }
 }
