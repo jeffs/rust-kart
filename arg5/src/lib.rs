@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::num::ParseIntError;
 
 #[derive(Debug)]
-enum ParseError {
+pub enum ParseError {
     ParseIntError(ParseIntError),
     UsageError(String),
 }
@@ -18,12 +18,12 @@ impl From<ParseIntError> for ParseError {
     }
 }
 
-enum Store<'a> {
+pub enum Store<'a> {
     String(&'a mut String),
     I32(&'a mut i32),
 }
 
-trait Bind {
+pub trait Bind {
     fn store(r: &mut Self) -> Store;
 }
 
@@ -39,7 +39,7 @@ impl Bind for i32 {
     }
 }
 
-struct Parameter<'store> {
+pub struct Parameter<'store> {
     name: &'static str,
     #[allow(unused)]
     flag: Option<char>,
@@ -47,7 +47,7 @@ struct Parameter<'store> {
 }
 
 impl<'store> Parameter<'store> {
-    fn new<T: Bind>(name: &'static str, r: &'store mut T) -> Self {
+    pub fn new<T: Bind>(name: &'static str, r: &'store mut T) -> Self {
         Parameter {
             name,
             flag: None,
@@ -62,14 +62,14 @@ pub struct Parser<'stores> {
 }
 
 impl<'stores> Parser<'stores> {
-    fn new() -> Parser<'stores> {
+    pub fn new() -> Parser<'stores> {
         Parser {
             parameters: HashMap::new(),
             positional: None,
         }
     }
 
-    fn declare_positional<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
+    pub fn declare_positional<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
         let name = parameter.name;
         self.declare(parameter);
         self.positional = Some(name);
@@ -79,7 +79,7 @@ impl<'stores> Parser<'stores> {
         self.parameters.insert(parameter.name, parameter);
     }
 
-    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseError> {
+    pub fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseError> {
         for arg in args {
             if arg.starts_with("-") {
                 // TODO: Parse by key.
@@ -97,36 +97,5 @@ impl<'stores> Parser<'stores> {
             }
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parser_rejects_unexpected_single_positional_argument() {
-        let mut parser = Parser::new();
-        assert!(parser.parse([String::from("arg1")]).is_err());
-    }
-
-    #[test]
-    fn test_parser_can_assign_a_positional_string() {
-        let want = "hello";
-        let mut got = String::new();
-        let mut parser = Parser::new();
-        parser.declare_positional(Parameter::new("arg1", &mut got));
-        parser.parse([String::from(want)]).unwrap();
-        assert_eq!(got, want);
-    }
-
-    #[test]
-    fn test_parser_can_assign_a_positional_i32() {
-        let want = 42;
-        let mut got = 0;
-        let mut parser = Parser::new();
-        parser.declare_positional(Parameter::new("arg1", &mut got));
-        parser.parse([String::from("42")]).unwrap();
-        assert_eq!(got, want);
     }
 }
