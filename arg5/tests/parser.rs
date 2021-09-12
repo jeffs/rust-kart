@@ -19,6 +19,15 @@ mod a_parser {
             parser.parse([String::from(want)]).unwrap();
             assert_eq!(got, want);
         }
+
+        #[test]
+        fn rejects_a_second_argument() {
+            let mut got = String::new();
+            let mut parser = Parser::new();
+            let args = [String::from("arg1"), String::from("arg2")];
+            parser.declare_positional(Parameter::new("arg1", &mut got));
+            assert!(parser.parse(args).is_err());
+        }
     }
 
     mod given_a_positional_i32_parameter {
@@ -40,6 +49,15 @@ mod a_parser {
             let mut parser = Parser::new();
             parser.declare_positional(Parameter::new("arg1", &mut got));
             assert!(parser.parse([String::from("not-an-integer")]).is_err());
+        }
+
+        #[test]
+        fn rejects_a_second_argument() {
+            let mut got = 0;
+            let mut parser = Parser::new();
+            let args = [String::from("42"), String::from("43")];
+            parser.declare_positional(Parameter::new("arg1", &mut got));
+            assert!(parser.parse(args).is_err());
         }
     }
 }

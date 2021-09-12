@@ -19,23 +19,48 @@ impl From<ParseIntError> for ParseError {
 }
 
 pub enum Store<'a> {
-    String(&'a mut String),
-    I32(&'a mut i32),
+    String { target: &'a mut String, seen: bool },
+    I32 { target: &'a mut i32 , seen: bool },
+}
+
+impl<'a> Store<'a> {
+    fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
+        if *seen {
+            let what = format!("{}: redundant argument", arg);
+            return Err(ParseError::UsageError(what));
+        }
+        *seen = true;
+        Ok(())
+    }
+
+    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
+        match self {
+            Store::String { target, seen } => {
+                Self::set_seen(seen, &arg)?;
+                **target = arg;
+            }
+            Store::I32 { target, seen } => {
+                Self::set_seen(seen, &arg)?;
+                **target = arg.parse()?;
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait Bind {
-    fn store(r: &mut Self) -> Store;
+    fn store(target: &mut Self) -> Store;
 }
 
 impl Bind for String {
-    fn store(r: &mut Self) -> Store {
-        Store::String(r)
+    fn store(target: &mut Self) -> Store {
+        Store::String { target, seen: false }
     }
 }
 
 impl Bind for i32 {
-    fn store(r: &mut Self) -> Store {
-        Store::I32(r)
+    fn store(target: &mut Self) -> Store {
+        Store::I32 { target, seen: false }
     }
 }
 
@@ -47,11 +72,11 @@ pub struct Parameter<'store> {
 }
 
 impl<'store> Parameter<'store> {
-    pub fn new<T: Bind>(name: &'static str, r: &'store mut T) -> Self {
+    pub fn new<T: Bind>(name: &'static str, target: &'store mut T) -> Self {
         Parameter {
             name,
             flag: None,
-            store: Bind::store(r),
+            store: Bind::store(target),
         }
     }
 }
@@ -87,10 +112,7 @@ impl<'stores> Parser<'stores> {
                 .positional
                 .and_then(|name| self.parameters.get_mut(name))
             {
-                match &mut parameter.store {
-                    Store::String(s) => **s = arg,
-                    Store::I32(i) => **i = arg.parse()?,
-                }
+                parameter.store.parse(arg)?;
             } else {
                 let what = format!("{}: unexpected positional argument", arg);
                 return Err(ParseError::UsageError(what));
