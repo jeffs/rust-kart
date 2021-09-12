@@ -1,98 +1,56 @@
-//  counter mandatory positional  | example
-//  ------- --------- ----------  | -------
-//        f         f          f  |  ignore
-//        f         f          t  |    port
-//        f         t          f  |  action (like tar)
-//        f         t          t  | pattern (like grep)
-//        t         f          f  | verbose
-//        t         f          t  |       †
-//        t         t          f  |       †
-//        t         t          t  |       †
-//
-// † Counters are rarely mandatory or positional.
+// * All parameters have names.
+// * One parameter may receive positional arguments.
+// * Arity is determined by type.
+//   - Option for 0, scalar for 1, Vec for any number
 
-#![allow(dead_code, unused_imports)]
+use std::collections::HashMap;
 
-use std::env::Args;
-use std::error::Error;
+trait Parse {}
 
-/// Indicates a problem parsing a command-line argument.
-pub struct ArgError {}
-
-/// Refers to the variable where an argument value should be stored.
-pub trait Target {
-    /// The result is true if the arg was consumed.
-    fn offer(&mut self, arg: &String) -> Result<bool, ArgError>;
+struct Parameter<'store> {
+    name: &'static str,
+    #[allow(unused)]
+    flag: Option<char>,
+    store: &'store mut String,
 }
 
-/// Counts the number of times a named argument was specified.
-///
-/// For example, a parser having a 'v'/"verbose" Parameter whose target is a
-/// Count would handle the argument "-vvv" by incrementing the Count three
-/// times.
-pub struct Count(u32);
-
-impl Default for Count {
-    fn default() -> Self {
-        Count(0)
-    }
+pub struct Parser<'stores> {
+    parameters: HashMap<&'static str, Parameter<'stores>>,
+    positional: Option<&'static str>,
 }
 
-impl Target for Count {
-    /// Increments this Count.
-    fn offer(&mut self, _arg: &String) -> Result<bool, ArgError> {
-        self.0 += 1;
-        Ok(false)
-    }
-}
-
-/// Specifies one or more command-line arguments.
-pub struct Parameter<'a> {
-    /// A single character for use in flag sets.  For example, to support "-i"
-    /// (possibly as part of a flag set like "-ijk"), a parameter's short name
-    /// should be 'i'.
-    pub flag: Option<char>,
-
-    /// A stand-alone option.  For example, to support "--input-file" (either
-    /// alone or, with a value as in "--input-file=data.csv"), a parameter's
-    /// long name should be "input-file".  A stylized version of the name
-    /// (upper cased, with underscores instad of hyphens) represents the value
-    /// in help messages; for example, "INPUT_FILE".
-    pub name: &'static str,
-
-    /// Whether this parameter may be bound to an argument implicitly, rather
-    /// than by name.  For example, if the program "main" has one positional
-    /// parameter whose long name is "input-file", the following command lines
-    /// are equivalent:
-    /// ```sh
-    /// main --input-file data.csv
-    /// main data.csv
-    /// ```
-    pub is_positional: bool,
-
-    /// Refers to the variable whose value is updated when parameter is bound.
-    /// If the target variable is not an Option, the parameter is mandatory:
-    /// Failure to supply it (either by name or positionally) is an error.
-    pub target: &'a dyn Target,
-}
-
-struct Parser<'a> {
-    parameters: Vec<Parameter<'a>>,
-}
-
-impl<'a> Parser<'a> {
-    fn new() -> Parser<'a> {
+impl<'stores> Parser<'stores> {
+    fn new() -> Parser<'stores> {
         Parser {
-            parameters: Vec::new(),
+            parameters: HashMap::new(),
+            positional: None,
         }
     }
 
-    fn add(&mut self, parameter: Parameter<'a>) {
-        self.parameters.push(parameter);
+    fn declare_positional<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
+        let name = parameter.name;
+        self.declare(parameter);
+        self.positional = Some(name);
     }
 
-    fn parse(&mut self, _args: Args) {
-        todo!()
+    fn declare<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
+        self.parameters.insert(parameter.name, parameter);
+    }
+
+    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) {
+        for arg in args {
+            if arg.starts_with("-") {
+                // TODO: Parse by key.
+            } else if let Some(parameter) = self
+                .positional
+                .and_then(|name| self.parameters.get_mut(name))
+            {
+                // TODO: Parse positional argument.
+                *parameter.store = arg;
+            } else {
+                // TODO: Report error: Unexpected positional argument.
+            }
+        }
     }
 }
 
@@ -101,14 +59,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let mut flag_verbose = Count::default();
+    fn test_parser_can_assign_a_positional_string() {
+        let want = "hello";
+        let mut got = String::new();
         let mut parser = Parser::new();
-        parser.add(Parameter {
-            flag: Some('v'),
-            name: "verbose",
-            is_positional: false,
-            target: &mut flag_verbose,
-        })
+        parser.declare_positional(Parameter {
+            name: "arg1",
+            flag: None,
+            store: &mut got,
+        });
+        parser.parse([String::from(want)]);
+        assert_eq!(got, want);
     }
 }
