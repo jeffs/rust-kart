@@ -13,11 +13,37 @@ enum Store<'a> {
     I32(&'a mut i32),
 }
 
+trait Bind {
+    fn store(r: &mut Self) -> Store;
+}
+
+impl Bind for String {
+    fn store(r: &mut Self) -> Store {
+        Store::String(r)
+    }
+}
+
+impl Bind for i32 {
+    fn store(r: &mut Self) -> Store {
+        Store::I32(r)
+    }
+}
+
 struct Parameter<'store> {
     name: &'static str,
     #[allow(unused)]
     flag: Option<char>,
     store: Store<'store>,
+}
+
+impl<'store> Parameter<'store> {
+    fn new<T: Bind>(name: &'static str, r: &'store mut T) -> Self {
+        Parameter {
+            name,
+            flag: None,
+            store: Bind::store(r),
+        }
+    }
 }
 
 pub struct Parser<'stores> {
@@ -72,11 +98,7 @@ mod tests {
         let want = "hello";
         let mut got = String::new();
         let mut parser = Parser::new();
-        parser.declare_positional(Parameter {
-            name: "arg1",
-            flag: None,
-            store: Store::String(&mut got),
-        });
+        parser.declare_positional(Parameter::new("arg1", &mut got));
         parser.parse([String::from(want)]).unwrap();
         assert_eq!(got, want);
     }
@@ -86,11 +108,7 @@ mod tests {
         let want = 42;
         let mut got = 0;
         let mut parser = Parser::new();
-        parser.declare_positional(Parameter {
-            name: "arg1",
-            flag: None,
-            store: Store::I32(&mut got),
-        });
+        parser.declare_positional(Parameter::new("arg1", &mut got));
         parser.parse([String::from("42")]).unwrap();
         assert_eq!(got, want);
     }
