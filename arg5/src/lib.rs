@@ -6,7 +6,17 @@
 use std::collections::HashMap;
 use std::num::ParseIntError;
 
-trait Parse {}
+#[derive(Debug)]
+enum ParseError {
+    ParseIntError(ParseIntError),
+    UsageError(String),
+}
+
+impl From<ParseIntError> for ParseError {
+    fn from(error: ParseIntError) -> Self {
+        ParseError::ParseIntError(error)
+    }
+}
 
 enum Store<'a> {
     String(&'a mut String),
@@ -69,7 +79,7 @@ impl<'stores> Parser<'stores> {
         self.parameters.insert(parameter.name, parameter);
     }
 
-    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseIntError> {
+    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseError> {
         for arg in args {
             if arg.starts_with("-") {
                 // TODO: Parse by key.
@@ -82,7 +92,8 @@ impl<'stores> Parser<'stores> {
                     Store::I32(i) => **i = arg.parse()?,
                 }
             } else {
-                // TODO: Report error: Unexpected positional argument.
+                let what = format!("{}: unexpected positional argument", arg);
+                return Err(ParseError::UsageError(what));
             }
         }
         Ok(())
@@ -92,6 +103,12 @@ impl<'stores> Parser<'stores> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parser_rejects_unexpected_single_positional_argument() {
+        let mut parser = Parser::new();
+        assert!(parser.parse([String::from("arg1")]).is_err());
+    }
 
     #[test]
     fn test_parser_can_assign_a_positional_string() {
