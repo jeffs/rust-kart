@@ -4,14 +4,20 @@
 //   - Option for 0, scalar for 1, Vec for any number
 
 use std::collections::HashMap;
+use std::num::ParseIntError;
 
 trait Parse {}
+
+enum Store<'a> {
+    String(&'a mut String),
+    I32(&'a mut i32),
+}
 
 struct Parameter<'store> {
     name: &'static str,
     #[allow(unused)]
     flag: Option<char>,
-    store: &'store mut String,
+    store: Store<'store>,
 }
 
 pub struct Parser<'stores> {
@@ -37,7 +43,7 @@ impl<'stores> Parser<'stores> {
         self.parameters.insert(parameter.name, parameter);
     }
 
-    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) {
+    fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseIntError> {
         for arg in args {
             if arg.starts_with("-") {
                 // TODO: Parse by key.
@@ -45,12 +51,15 @@ impl<'stores> Parser<'stores> {
                 .positional
                 .and_then(|name| self.parameters.get_mut(name))
             {
-                // TODO: Parse positional argument.
-                *parameter.store = arg;
+                match &mut parameter.store {
+                    Store::String(s) => **s = arg,
+                    Store::I32(i) => **i = arg.parse()?,
+                }
             } else {
                 // TODO: Report error: Unexpected positional argument.
             }
         }
+        Ok(())
     }
 }
 
@@ -66,9 +75,23 @@ mod tests {
         parser.declare_positional(Parameter {
             name: "arg1",
             flag: None,
-            store: &mut got,
+            store: Store::String(&mut got),
         });
-        parser.parse([String::from(want)]);
+        parser.parse([String::from(want)]).unwrap();
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn test_parser_can_assign_a_positional_i32() {
+        let want = 42;
+        let mut got = 0;
+        let mut parser = Parser::new();
+        parser.declare_positional(Parameter {
+            name: "arg1",
+            flag: None,
+            store: Store::I32(&mut got),
+        });
+        parser.parse([String::from("42")]).unwrap();
         assert_eq!(got, want);
     }
 }
