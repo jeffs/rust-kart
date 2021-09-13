@@ -16,7 +16,7 @@ clear-run() {
     # https://github.com/rust-lang/cargo/issues/1983
     clear
     echo -e "\e[2m[$(date +%T)] cargo test $*\e[22m\n" \
-        && cargo --color=always test "$@" -- --color=always |& head -20
+        && cargo --color=always test "$@" -- --color=always |& head -"$((${WATCH_HEIGHT:-$(tput lines)} - 3))"
 }
 
 ts >$a
