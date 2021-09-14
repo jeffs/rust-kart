@@ -145,19 +145,21 @@ impl<'stores> Parser<'stores> {
         self.parameters.insert(parameter.name, parameter);
     }
 
+    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
+        if arg.starts_with("-") {
+            todo!() // TODO: Parse by key.
+        } else if let Some(name) = self.positional {
+            self.parameters.get_mut(name).unwrap().parse(arg)
+        } else {
+            Err(ParseError {
+                what: format!("{}: unexpected positional argument", arg),
+            })
+        }
+    }
+
     pub fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseError> {
         for arg in args {
-            if arg.starts_with("-") {
-                // TODO: Parse by key.
-            } else if let Some(parameter) = self
-                .positional
-                .and_then(|name| self.parameters.get_mut(name))
-            {
-                parameter.parse(arg)?;
-            } else {
-                let what = format!("{}: unexpected positional argument", arg);
-                return Err(ParseError { what });
-            }
+            self.parse_arg(arg)?;
         }
         for parameter in self.parameters.values() {
             parameter.validate()?;
