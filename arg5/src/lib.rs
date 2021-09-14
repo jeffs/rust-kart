@@ -26,16 +26,6 @@ pub enum Store<'a> {
 }
 
 impl<'a> Store<'a> {
-    fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
-        if *seen {
-            return Err(ParseError {
-                what: format!("{}: redundant argument", arg),
-            });
-        }
-        *seen = true;
-        Ok(())
-    }
-
     fn parse(&mut self, arg: String) -> Result<(), ParseError> {
         match self {
             Store::String { target, seen } => {
@@ -47,6 +37,16 @@ impl<'a> Store<'a> {
                 **target = arg.parse()?;
             }
         }
+        Ok(())
+    }
+
+    fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
+        if *seen {
+            return Err(ParseError {
+                what: format!("{}: redundant argument", arg),
+            });
+        }
+        *seen = true;
         Ok(())
     }
 
@@ -108,16 +108,16 @@ impl<'store> Parameter<'store> {
         }
     }
 
+    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
+        self.store.parse(arg).map_err(|err| self.decorate(err))
+    }
+
     pub fn new<T: Bind>(name: &'static str, target: &'store mut T) -> Self {
         Parameter {
             name,
             flag: None,
             store: Bind::store(target),
         }
-    }
-
-    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
-        self.store.parse(arg).map_err(|err| self.decorate(err))
     }
 
     fn validate(&self) -> Result<(), ParseError> {
@@ -131,11 +131,8 @@ pub struct Parser<'stores> {
 }
 
 impl<'stores> Parser<'stores> {
-    pub fn new() -> Parser<'stores> {
-        Parser {
-            parameters: HashMap::new(),
-            positional: None,
-        }
+    pub fn declare<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
+        self.parameters.insert(name, Parameter::new(name, target));
     }
 
     pub fn declare_positional<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
@@ -143,19 +140,10 @@ impl<'stores> Parser<'stores> {
         self.positional = Some(name);
     }
 
-    pub fn declare<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
-        self.parameters.insert(name, Parameter::new(name, target));
-    }
-
-    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
-        if arg.starts_with("-") {
-            todo!() // TODO: Parse by key.
-        } else if let Some(name) = self.positional {
-            self.parameters.get_mut(name).unwrap().parse(arg)
-        } else {
-            Err(ParseError {
-                what: format!("{}: unexpected positional argument", arg),
-            })
+    pub fn new() -> Parser<'stores> {
+        Parser {
+            parameters: HashMap::new(),
+            positional: None,
         }
     }
 
@@ -171,5 +159,17 @@ impl<'stores> Parser<'stores> {
             parameter.validate()?;
         }
         Ok(())
+    }
+
+    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
+        if arg.starts_with("-") {
+            todo!() // TODO: Parse by key.
+        } else if let Some(name) = self.positional {
+            self.parameters.get_mut(name).unwrap().parse(arg)
+        } else {
+            Err(ParseError {
+                what: format!("{}: unexpected positional argument", arg),
+            })
+        }
     }
 }
