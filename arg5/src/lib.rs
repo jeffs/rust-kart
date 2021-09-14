@@ -28,8 +28,9 @@ pub enum Store<'a> {
 impl<'a> Store<'a> {
     fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
         if *seen {
-            let what = format!("{}: redundant argument", arg);
-            return Err(ParseError { what });
+            return Err(ParseError {
+                what: format!("{}: redundant argument", arg),
+            });
         }
         *seen = true;
         Ok(())
@@ -53,14 +54,16 @@ impl<'a> Store<'a> {
         match self {
             Store::String { seen, .. } => {
                 if !seen {
-                    let what = String::from("expected argument");
-                    return Err(ParseError { what });
+                    return Err(ParseError {
+                        what: String::from("expected argument"),
+                    });
                 }
             }
             Store::I32 { seen, .. } => {
                 if !seen {
-                    let what = String::from("expected argument");
-                    return Err(ParseError { what });
+                    return Err(ParseError {
+                        what: String::from("expected argument"),
+                    });
                 }
             }
         }
