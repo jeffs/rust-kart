@@ -8,7 +8,7 @@ use std::num::ParseIntError;
 
 #[derive(Debug)]
 pub struct ParseError {
-    what: String,
+    pub what: String,
 }
 
 impl From<ParseIntError> for ParseError {
