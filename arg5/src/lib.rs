@@ -91,7 +91,7 @@ impl Bind for i32 {
 }
 
 #[derive(Debug)]
-pub struct Parameter<'store> {
+struct Parameter<'store> {
     name: &'static str,
     #[allow(unused)]
     flag: Option<char>,
@@ -135,14 +135,13 @@ impl<'stores> Parser<'stores> {
         }
     }
 
-    pub fn declare_positional<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
-        let name = parameter.name;
-        self.declare(parameter);
+    pub fn declare_positional<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
+        self.declare(name, target);
         self.positional = Some(name);
     }
 
-    fn declare<'store: 'stores>(&mut self, parameter: Parameter<'store>) {
-        self.parameters.insert(parameter.name, parameter);
+    pub fn declare<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
+        self.parameters.insert(name, Parameter::new(name, target));
     }
 
     fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
