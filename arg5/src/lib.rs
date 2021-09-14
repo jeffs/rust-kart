@@ -62,7 +62,7 @@ impl<'a> Store<'a> {
             Store::I32 { seen, .. } => {
                 if !seen {
                     return Err(ParseError {
-                        what: String::from("expected argument"),
+                        what: String::from("expected integer argument"),
                     });
                 }
             }
