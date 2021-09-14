@@ -7,27 +7,29 @@ use std::collections::HashMap;
 use std::num::ParseIntError;
 
 #[derive(Debug)]
-pub enum ParseError {
-    ParseIntError(ParseIntError),
-    UsageError(String),
+pub struct ParseError {
+    what: String,
 }
 
 impl From<ParseIntError> for ParseError {
     fn from(error: ParseIntError) -> Self {
-        ParseError::ParseIntError(error)
+        ParseError {
+            what: format!("{}", error),
+        }
     }
 }
 
+#[derive(Debug)]
 pub enum Store<'a> {
     String { target: &'a mut String, seen: bool },
-    I32 { target: &'a mut i32 , seen: bool },
+    I32 { target: &'a mut i32, seen: bool },
 }
 
 impl<'a> Store<'a> {
     fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
         if *seen {
             let what = format!("{}: redundant argument", arg);
-            return Err(ParseError::UsageError(what));
+            return Err(ParseError { what });
         }
         *seen = true;
         Ok(())
@@ -46,6 +48,24 @@ impl<'a> Store<'a> {
         }
         Ok(())
     }
+
+    fn validate(&self) -> Result<(), ParseError> {
+        match self {
+            Store::String { seen, .. } => {
+                if !seen {
+                    let what = String::from("expected argument");
+                    return Err(ParseError { what });
+                }
+            }
+            Store::I32 { seen, .. } => {
+                if !seen {
+                    let what = String::from("expected argument");
+                    return Err(ParseError { what });
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait Bind {
@@ -54,16 +74,23 @@ pub trait Bind {
 
 impl Bind for String {
     fn store(target: &mut Self) -> Store {
-        Store::String { target, seen: false }
+        Store::String {
+            target,
+            seen: false,
+        }
     }
 }
 
 impl Bind for i32 {
     fn store(target: &mut Self) -> Store {
-        Store::I32 { target, seen: false }
+        Store::I32 {
+            target,
+            seen: false,
+        }
     }
 }
 
+#[derive(Debug)]
 pub struct Parameter<'store> {
     name: &'static str,
     #[allow(unused)]
@@ -72,12 +99,26 @@ pub struct Parameter<'store> {
 }
 
 impl<'store> Parameter<'store> {
+    fn decorate(&self, err: ParseError) -> ParseError {
+        ParseError {
+            what: format!("{}: {}", self.name, err.what),
+        }
+    }
+
     pub fn new<T: Bind>(name: &'static str, target: &'store mut T) -> Self {
         Parameter {
             name,
             flag: None,
             store: Bind::store(target),
         }
+    }
+
+    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
+        self.store.parse(arg).map_err(|err| self.decorate(err))
+    }
+
+    fn validate(&self) -> Result<(), ParseError> {
+        self.store.validate().map_err(|err| self.decorate(err))
     }
 }
 
@@ -112,11 +153,14 @@ impl<'stores> Parser<'stores> {
                 .positional
                 .and_then(|name| self.parameters.get_mut(name))
             {
-                parameter.store.parse(arg)?;
+                parameter.parse(arg)?;
             } else {
                 let what = format!("{}: unexpected positional argument", arg);
-                return Err(ParseError::UsageError(what));
+                return Err(ParseError { what });
             }
+        }
+        for parameter in self.parameters.values() {
+            parameter.validate()?;
         }
         Ok(())
     }

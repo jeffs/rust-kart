@@ -28,6 +28,14 @@ mod a_parser {
             parser.declare_positional(Parameter::new("arg1", &mut got));
             assert!(parser.parse(args).is_err());
         }
+
+        #[test]
+        fn rejects_an_empty_argument_list() {
+            let mut got = String::new();
+            let mut parser = Parser::new();
+            parser.declare_positional(Parameter::new("arg1", &mut got));
+            assert!(parser.parse([]).is_err());
+        }
     }
 
     mod given_a_positional_i32_parameter {
@@ -58,6 +66,14 @@ mod a_parser {
             let args = [String::from("42"), String::from("43")];
             parser.declare_positional(Parameter::new("arg1", &mut got));
             assert!(parser.parse(args).is_err());
+        }
+
+        #[test]
+        fn rejects_an_empty_argument_list() {
+            let mut got = 0;
+            let mut parser = Parser::new();
+            parser.declare_positional(Parameter::new("arg1", &mut got));
+            assert!(parser.parse([]).is_err());
         }
     }
 }
