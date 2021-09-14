@@ -1,10 +1,13 @@
 mod a_parser {
     use arg5::Parser;
 
+    // The first arg to a program is typically the program name.
+    const ARG0: &str = "arg0";
+
     #[test]
     fn rejects_an_unexpected_positional_argument() {
         let mut parser = Parser::new();
-        assert!(parser.parse([String::from("arg1")]).is_err());
+        assert!(parser.parse([ARG0, "arg1"]).is_err());
     }
 
     mod given_a_positional_string_parameter {
@@ -15,8 +18,8 @@ mod a_parser {
             let want = "hello";
             let mut got = String::new();
             let mut parser = Parser::new();
-            parser.declare_positional("arg1", &mut got);
-            parser.parse([String::from(want)]).unwrap();
+            parser.declare_positional("par1", &mut got);
+            parser.parse([ARG0, want]).unwrap();
             assert_eq!(got, want);
         }
 
@@ -24,17 +27,16 @@ mod a_parser {
         fn rejects_a_second_argument() {
             let mut got = String::new();
             let mut parser = Parser::new();
-            let args = [String::from("arg1"), String::from("arg2")];
-            parser.declare_positional("arg1", &mut got);
-            assert!(parser.parse(args).is_err());
+            parser.declare_positional("par1", &mut got);
+            assert!(parser.parse([ARG0, "arg1", "arg2"]).is_err());
         }
 
         #[test]
         fn rejects_an_empty_argument_list() {
             let mut got = String::new();
             let mut parser = Parser::new();
-            parser.declare_positional("arg1", &mut got);
-            assert!(parser.parse([]).is_err());
+            parser.declare_positional("par1", &mut got);
+            assert!(parser.parse([ARG0]).is_err());
         }
     }
 
@@ -46,8 +48,8 @@ mod a_parser {
             let want = 42;
             let mut got = 0;
             let mut parser = Parser::new();
-            parser.declare_positional("arg1", &mut got);
-            parser.parse([String::from("42")]).unwrap();
+            parser.declare_positional("par1", &mut got);
+            parser.parse([ARG0, "42"]).unwrap();
             assert_eq!(got, want);
         }
 
@@ -55,25 +57,24 @@ mod a_parser {
         fn rejects_a_bad_integer() {
             let mut got = 0;
             let mut parser = Parser::new();
-            parser.declare_positional("arg1", &mut got);
-            assert!(parser.parse([String::from("not-an-integer")]).is_err());
+            parser.declare_positional("par1", &mut got);
+            assert!(parser.parse([ARG0, "not-an-integer"]).is_err());
         }
 
         #[test]
         fn rejects_a_second_argument() {
             let mut got = 0;
             let mut parser = Parser::new();
-            let args = [String::from("42"), String::from("43")];
-            parser.declare_positional("arg1", &mut got);
-            assert!(parser.parse(args).is_err());
+            parser.declare_positional("par1", &mut got);
+            assert!(parser.parse([ARG0, "42", "43"]).is_err());
         }
 
         #[test]
         fn rejects_an_empty_argument_list() {
             let mut got = 0;
             let mut parser = Parser::new();
-            parser.declare_positional("arg1", &mut got);
-            assert!(parser.parse([]).is_err());
+            parser.declare_positional("par1", &mut got);
+            assert!(parser.parse([ARG0]).is_err());
         }
     }
 }

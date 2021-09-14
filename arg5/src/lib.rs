@@ -159,9 +159,13 @@ impl<'stores> Parser<'stores> {
         }
     }
 
-    pub fn parse<I: IntoIterator<Item = String>>(&mut self, args: I) -> Result<(), ParseError> {
-        for arg in args {
-            self.parse_arg(arg)?;
+    pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
+    where
+        S: ToString,
+        I: IntoIterator<Item = S>,
+    {
+        for arg in args.into_iter().skip(1) {
+            self.parse_arg(arg.to_string())?;
         }
         for parameter in self.parameters.values() {
             parameter.validate()?;
