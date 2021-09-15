@@ -47,7 +47,7 @@ impl<'a> Store<'a> {
                     Ok(Capacity::Full)
                 }
                 Err(err) => Err(ParseError {
-                    what: format!("{}: {}", arg, err),
+                    what: format!("{} '{}'", err, arg),
                 }),
             },
         }
@@ -128,9 +128,9 @@ impl<'stores> Parser<'stores> {
         for arg in args.into_iter().skip(1) {
             self.parse_arg(arg.to_string())?;
         }
-        if !self.positionals.is_empty() {
+        if let Some(name) = self.positionals.pop_front() {
             return Err(ParseError {
-                what: "not enough arguments".to_string(),
+                what: format!("{}: expected argument", name),
             });
         }
         Ok(())
@@ -146,7 +146,7 @@ impl<'stores> Parser<'stores> {
             Ok(())
         } else {
             Err(ParseError {
-                what: format!("{}: unexpected positional argument", arg),
+                what: format!("unexpected positional argument '{}'", arg),
             })
         }
     }
