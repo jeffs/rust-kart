@@ -13,68 +13,59 @@ mod a_parser {
     mod given_a_positional_string_parameter {
         use super::*;
 
-        #[test]
-        fn can_assign_an_argument() {
-            let want = "hello";
+        fn try_parse(args: &[&'static str]) -> Result<String, ParseError> {
             let mut got = String::new();
             let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            parser.parse([ARG0, want]).unwrap();
-            assert_eq!(got, want);
+            parser.declare_positional("par", &mut got);
+            parser.parse(args)?;
+            Ok(got)
+        }
+
+        #[test]
+        fn can_assign_an_argument() {
+            assert_eq!(try_parse(&[ARG0, "arg"]).unwrap(), "arg");
         }
 
         #[test]
         fn rejects_a_second_argument() {
-            let mut got = String::new();
-            let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            assert!(parser.parse([ARG0, "arg1", "arg2"]).is_err());
+            assert!(try_parse(&[ARG0, "arg1", "arg2"]).is_err());
         }
 
         #[test]
         fn rejects_an_empty_argument_list() {
-            let mut got = String::new();
-            let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            assert!(parser.parse([ARG0]).is_err());
+            assert!(try_parse(&[ARG0]).is_err());
         }
     }
 
     mod given_a_positional_i32_parameter {
         use super::*;
 
-        #[test]
-        fn can_parse_and_assign_an_argument() {
-            let want = 42;
+        fn try_parse(args: &[&'static str]) -> Result<i32, ParseError> {
             let mut got = 0;
             let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            parser.parse([ARG0, "42"]).unwrap();
-            assert_eq!(got, want);
+            parser.declare_positional("par", &mut got);
+            parser.parse(args)?;
+            Ok(got)
+        }
+
+        #[test]
+        fn can_parse_and_assign_an_argument() {
+            assert_eq!(try_parse(&[ARG0, "42"]).unwrap(), 42);
         }
 
         #[test]
         fn rejects_a_bad_integer() {
-            let mut got = 0;
-            let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            assert!(parser.parse([ARG0, "not-an-integer"]).is_err());
+            assert!(try_parse(&[ARG0, "not-an-integer"]).is_err());
         }
 
         #[test]
         fn rejects_a_second_argument() {
-            let mut got = 0;
-            let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            assert!(parser.parse([ARG0, "42", "43"]).is_err());
+            assert!(try_parse(&[ARG0, "42", "43"]).is_err());
         }
 
         #[test]
         fn rejects_an_empty_argument_list() {
-            let mut got = 0;
-            let mut parser = Parser::new();
-            parser.declare_positional("par1", &mut got);
-            assert!(parser.parse([ARG0]).is_err());
+            assert!(try_parse(&[ARG0]).is_err());
         }
     }
 
