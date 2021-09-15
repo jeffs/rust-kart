@@ -103,5 +103,15 @@ mod a_parser {
         fn rejects_a_unary_argument_list() {
             assert!(try_parse(&[ARG0, "42"]).is_err());
         }
+
+        #[test]
+        fn can_describe_usage() {
+            let mut got_i32 = 0;
+            let mut got_str = String::new();
+            let mut parser = Parser::new();
+            parser.declare_positional("count", &mut got_i32);
+            parser.declare_positional("word", &mut got_str);
+            assert_eq!(parser.usage("repeat"), "repeat <count> <word>");
+        }
     }
 }

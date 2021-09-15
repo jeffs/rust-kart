@@ -150,4 +150,13 @@ impl<'stores> Parser<'stores> {
             })
         }
     }
+
+    pub fn usage(&self, arg0: &str) -> String {
+        let mut text = format!("{}", arg0);
+        // TODO: Print nonpositional parameters.
+        for name in &self.positionals {
+            text = format!("{} <{}>", text, name);
+        }
+        text
+    }
 }
