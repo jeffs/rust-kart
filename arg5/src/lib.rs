@@ -3,71 +3,54 @@
 // * Arity is determined by type.
 //   - Option for 0, scalar for 1, Vec for any number
 
-use std::collections::HashMap;
-use std::num::ParseIntError;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug)]
 pub struct ParseError {
     pub what: String,
 }
 
-impl From<ParseIntError> for ParseError {
-    fn from(error: ParseIntError) -> Self {
-        ParseError {
-            what: format!("{}", error),
+enum Capacity {
+    #[allow(dead_code)]
+    Hungry,
+    #[allow(dead_code)]
+    Peckish,
+    Full,
+}
+
+impl Capacity {
+    fn is_full(&self) -> bool {
+        if let Capacity::Full = self {
+            true
+        } else {
+            false
         }
     }
 }
 
 #[derive(Debug)]
 pub enum Store<'a> {
-    String { target: &'a mut String, seen: bool },
-    I32 { target: &'a mut i32, seen: bool },
+    String { target: &'a mut String },
+    I32 { target: &'a mut i32 },
 }
 
 impl<'a> Store<'a> {
-    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
+    fn parse(&mut self, arg: String) -> Result<Capacity, ParseError> {
         match self {
-            Store::String { target, seen } => {
-                Self::set_seen(seen, &arg)?;
+            Store::String { target } => {
                 **target = arg;
+                Ok(Capacity::Full)
             }
-            Store::I32 { target, seen } => {
-                Self::set_seen(seen, &arg)?;
-                **target = arg.parse()?;
-            }
-        }
-        Ok(())
-    }
-
-    fn set_seen(seen: &mut bool, arg: &String) -> Result<(), ParseError> {
-        if *seen {
-            return Err(ParseError {
-                what: format!("{}: redundant argument", arg),
-            });
-        }
-        *seen = true;
-        Ok(())
-    }
-
-    fn validate(&self) -> Result<(), ParseError> {
-        match self {
-            Store::String { seen, .. } => {
-                if !seen {
-                    return Err(ParseError {
-                        what: String::from("expected argument"),
-                    });
+            Store::I32 { target } => match arg.parse() {
+                Ok(value) => {
+                    **target = value;
+                    Ok(Capacity::Full)
                 }
-            }
-            Store::I32 { seen, .. } => {
-                if !seen {
-                    return Err(ParseError {
-                        what: String::from("expected integer argument"),
-                    });
-                }
-            }
+                Err(err) => Err(ParseError {
+                    what: format!("{}: {}", arg, err),
+                }),
+            },
         }
-        Ok(())
     }
 }
 
@@ -77,19 +60,13 @@ pub trait Bind {
 
 impl Bind for String {
     fn store(target: &mut Self) -> Store {
-        Store::String {
-            target,
-            seen: false,
-        }
+        Store::String { target }
     }
 }
 
 impl Bind for i32 {
     fn store(target: &mut Self) -> Store {
-        Store::I32 {
-            target,
-            seen: false,
-        }
+        Store::I32 { target }
     }
 }
 
@@ -108,7 +85,7 @@ impl<'store> Parameter<'store> {
         }
     }
 
-    fn parse(&mut self, arg: String) -> Result<(), ParseError> {
+    fn parse(&mut self, arg: String) -> Result<Capacity, ParseError> {
         self.store.parse(arg).map_err(|err| self.decorate(err))
     }
 
@@ -119,15 +96,11 @@ impl<'store> Parameter<'store> {
             store: Bind::store(target),
         }
     }
-
-    fn validate(&self) -> Result<(), ParseError> {
-        self.store.validate().map_err(|err| self.decorate(err))
-    }
 }
 
 pub struct Parser<'stores> {
     parameters: HashMap<&'static str, Parameter<'stores>>,
-    positional: Option<&'static str>,
+    positionals: VecDeque<&'static str>, // Names of positional parameters.
 }
 
 impl<'stores> Parser<'stores> {
@@ -137,13 +110,13 @@ impl<'stores> Parser<'stores> {
 
     pub fn declare_positional<T: Bind>(&mut self, name: &'static str, target: &'stores mut T) {
         self.declare(name, target);
-        self.positional = Some(name);
+        self.positionals.push_back(name);
     }
 
     pub fn new() -> Parser<'stores> {
         Parser {
             parameters: HashMap::new(),
-            positional: None,
+            positionals: VecDeque::new(),
         }
     }
 
@@ -155,17 +128,22 @@ impl<'stores> Parser<'stores> {
         for arg in args.into_iter().skip(1) {
             self.parse_arg(arg.to_string())?;
         }
-        for parameter in self.parameters.values() {
-            parameter.validate()?;
+        if !self.positionals.is_empty() {
+            return Err(ParseError {
+                what: "not enough arguments".to_string(),
+            });
         }
         Ok(())
     }
 
     fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
         if arg.starts_with("-") {
-            todo!() // TODO: Parse by key.
-        } else if let Some(name) = self.positional {
-            self.parameters.get_mut(name).unwrap().parse(arg)
+            todo!("parse by key")
+        } else if let Some(name) = self.positionals.pop_front() {
+            if !self.parameters.get_mut(name).unwrap().parse(arg)?.is_full() {
+                self.positionals.push_front(name);
+            }
+            Ok(())
         } else {
             Err(ParseError {
                 what: format!("{}: unexpected positional argument", arg),
