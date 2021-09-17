@@ -17,11 +17,29 @@ enum Appetite {
     Full,    // Cannot accept any more arguments.
 }
 
+#[allow(dead_code)]
+enum Capacity {
+    Mandatory, // exactly one
+    Optional,  // zero or one
+    Variadic,  // zero or more
+}
+
 #[derive(Debug)]
 pub enum Store<'a> {
     I32(&'a mut i32),
     OptI32(&'a mut Option<i32>),
     Str(&'a mut String),
+}
+
+impl<'a> Store<'a> {
+    #[allow(dead_code)]
+    fn capacity(&self) -> Capacity {
+        match self {
+            Store::I32(_) => Capacity::Mandatory,
+            Store::OptI32(_) => Capacity::Optional,
+            Store::Str(_) => Capacity::Mandatory,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -31,6 +49,11 @@ pub struct Binding<'a> {
 }
 
 impl<'a> Binding<'a> {
+    #[allow(dead_code)]
+    fn capacity(&self) -> Capacity {
+        self.store.capacity()
+    }
+
     fn parse(&mut self, arg: String) -> Result<(), ParseError> {
         assert!(self.appetite != Appetite::Full);
         match &mut self.store {
@@ -97,6 +120,11 @@ struct Parameter<'a> {
 impl<'a> Parameter<'a> {
     fn appetite(&self) -> Appetite {
         self.binding.appetite
+    }
+
+    #[allow(dead_code)]
+    fn capacity(&self) -> Capacity {
+        self.binding.capacity()
     }
 
     fn new<T: Bind>(name: &'static str, target: &'a mut T) -> Self {
