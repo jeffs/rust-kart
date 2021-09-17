@@ -11,7 +11,7 @@ pub struct ParseError {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum Capacity {
+enum Appetite {
     Hungry,  // Requires more arguments.
     Peckish, // Could accept more arguments, but doesn't require them.
     Full,    // Cannot accept any more arguments.
@@ -27,28 +27,28 @@ pub enum Store<'a> {
 #[derive(Debug)]
 pub struct Binding<'a> {
     store: Store<'a>,
-    capacity: Capacity,
+    appetite: Appetite,
 }
 
 impl<'a> Binding<'a> {
     fn parse(&mut self, arg: String) -> Result<(), ParseError> {
-        assert!(self.capacity != Capacity::Full);
+        assert!(self.appetite != Appetite::Full);
         match &mut self.store {
             Store::I32(target) => {
                 **target = arg.parse().map_err(|err| ParseError {
                     what: format!("{} '{}'", err, arg),
                 })?;
-                self.capacity = Capacity::Full;
+                self.appetite = Appetite::Full;
             }
             Store::OptI32(target) => {
                 **target = Some(arg.parse().map_err(|err| ParseError {
                     what: format!("{} '{}'", err, arg),
                 })?);
-                self.capacity = Capacity::Full;
+                self.appetite = Appetite::Full;
             }
             Store::Str(target) => {
                 **target = arg;
-                self.capacity = Capacity::Full;
+                self.appetite = Appetite::Full;
             }
         }
         Ok(())
@@ -63,7 +63,7 @@ impl Bind for i32 {
     fn bind(&mut self) -> Binding {
         Binding {
             store: Store::I32(self),
-            capacity: Capacity::Hungry,
+            appetite: Appetite::Hungry,
         }
     }
 }
@@ -72,7 +72,7 @@ impl Bind for Option<i32> {
     fn bind(&mut self) -> Binding {
         Binding {
             store: Store::OptI32(self),
-            capacity: Capacity::Peckish,
+            appetite: Appetite::Peckish,
         }
     }
 }
@@ -81,7 +81,7 @@ impl Bind for String {
     fn bind(&mut self) -> Binding {
         Binding {
             store: Store::Str(self),
-            capacity: Capacity::Hungry,
+            appetite: Appetite::Hungry,
         }
     }
 }
@@ -95,8 +95,8 @@ struct Parameter<'a> {
 }
 
 impl<'a> Parameter<'a> {
-    fn capacity(&self) -> Capacity {
-        self.binding.capacity
+    fn appetite(&self) -> Appetite {
+        self.binding.appetite
     }
 
     fn new<T: Bind>(name: &'static str, target: &'a mut T) -> Self {
@@ -145,7 +145,7 @@ impl<'a> Parser<'a> {
             self.parse_arg(arg.to_string())?;
         }
         if let Some(name) = self.positionals.pop_front() {
-            if self.parameters[name].capacity() == Capacity::Hungry {
+            if self.parameters[name].appetite() == Appetite::Hungry {
                 return Err(ParseError {
                     what: format!("{}: expected argument", name),
                 });
@@ -160,7 +160,7 @@ impl<'a> Parser<'a> {
         } else if let Some(name) = self.positionals.pop_front() {
             let parameter = self.parameters.get_mut(name).unwrap();
             parameter.parse(arg)?;
-            if parameter.capacity() != Capacity::Full {
+            if parameter.appetite() != Appetite::Full {
                 self.positionals.push_front(name);
             }
             Ok(())
