@@ -30,18 +30,18 @@ impl Capacity {
 
 #[derive(Debug)]
 pub enum Store<'a> {
-    String { target: &'a mut String },
-    I32 { target: &'a mut i32 },
+    Str(&'a mut String),
+    I32(&'a mut i32),
 }
 
 impl<'a> Store<'a> {
     fn parse(&mut self, arg: String) -> Result<Capacity, ParseError> {
         match self {
-            Store::String { target } => {
+            Store::Str(target) => {
                 **target = arg;
                 Ok(Capacity::Full)
             }
-            Store::I32 { target } => match arg.parse() {
+            Store::I32(target) => match arg.parse() {
                 Ok(value) => {
                     **target = value;
                     Ok(Capacity::Full)
@@ -60,13 +60,13 @@ pub trait Bind {
 
 impl Bind for String {
     fn store(target: &mut Self) -> Store {
-        Store::String { target }
+        Store::Str(target)
     }
 }
 
 impl Bind for i32 {
     fn store(target: &mut Self) -> Store {
-        Store::I32 { target }
+        Store::I32(target)
     }
 }
 
