@@ -3,7 +3,7 @@
 // * Arity is determined by type.
 //   - Option for 0, scalar for 1, Vec for any number
 
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
@@ -144,7 +144,8 @@ impl<'a> Parameter<'a> {
 
 pub struct Parser<'a> {
     parameters: HashMap<&'static str, Parameter<'a>>,
-    positionals: VecDeque<&'static str>, // Names of positional parameters.
+    positionals: Vec<&'static str>, // Names of positional parameters.
+    positional_index: usize,        // Parameter for next positional argument.
 }
 
 impl<'a> Parser<'a> {
@@ -154,13 +155,14 @@ impl<'a> Parser<'a> {
 
     pub fn declare_positional<T: Bind>(&mut self, name: &'static str, target: &'a mut T) {
         self.declare(name, target);
-        self.positionals.push_back(name);
+        self.positionals.push(name);
     }
 
     pub fn new() -> Parser<'a> {
         Parser {
             parameters: HashMap::new(),
-            positionals: VecDeque::new(),
+            positionals: Vec::new(),
+            positional_index: 0,
         }
     }
 
@@ -172,7 +174,8 @@ impl<'a> Parser<'a> {
         for arg in args.into_iter().skip(1) {
             self.parse_arg(arg.to_string())?;
         }
-        if let Some(name) = self.positionals.pop_front() {
+        // Return Err if any parameter is still hungry.
+        for name in &self.positionals {
             if self.parameters[name].appetite() == Appetite::Hungry {
                 return Err(ParseError {
                     what: format!("{}: expected argument", name),
@@ -185,11 +188,11 @@ impl<'a> Parser<'a> {
     fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
         if arg.starts_with("-") {
             todo!("parse by key")
-        } else if let Some(name) = self.positionals.pop_front() {
+        } else if let Some(name) = self.positionals.get(self.positional_index) {
             let parameter = self.parameters.get_mut(name).unwrap();
             parameter.parse(arg)?;
-            if parameter.appetite() != Appetite::Full {
-                self.positionals.push_front(name);
+            if parameter.appetite() == Appetite::Full {
+                self.positional_index += 1;
             }
             Ok(())
         } else {
