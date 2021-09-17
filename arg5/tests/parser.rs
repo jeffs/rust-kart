@@ -114,4 +114,31 @@ mod a_parser {
             assert_eq!(parser.usage("repeat"), "repeat <count> <word>");
         }
     }
+
+    mod given_an_optional_parameter {
+        use super::*;
+
+        fn try_parse(args: &[&'static str]) -> Result<Option<i32>, ParseError> {
+            let mut got: Option<i32> = None;
+            let mut parser = Parser::new();
+            parser.declare_positional("opt", &mut got);
+            parser.parse(args).map(|_| got)
+        }
+
+        #[test]
+        fn can_parse_and_assign_an_argument() {
+            assert_eq!(try_parse(&[ARG0, "42"]).unwrap(), Some(42));
+        }
+
+        #[test]
+        fn accepts_an_empty_argument_list() {
+            assert_eq!(try_parse(&[ARG0]), Ok(None));
+        }
+
+        #[test]
+        fn rejects_an_extra_argument() {
+            let mut parser = Parser::new();
+            assert!(parser.parse([ARG0, "42", "43"]).is_err());
+        }
+    }
 }

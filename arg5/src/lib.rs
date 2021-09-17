@@ -5,11 +5,12 @@
 
 use std::collections::{HashMap, VecDeque};
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
     pub what: String,
 }
 
+#[derive(Clone, Copy, Eq, PartialEq)]
 enum Capacity {
     #[allow(dead_code)]
     Hungry,
@@ -19,25 +20,41 @@ enum Capacity {
 }
 
 impl Capacity {
-    fn is_full(&self) -> bool {
-        if let Capacity::Full = self {
-            true
-        } else {
-            false
-        }
+    fn is_hungry(self) -> bool {
+        self == Capacity::Hungry
+    }
+
+    fn is_full(self) -> bool {
+        self == Capacity::Full
     }
 }
 
 #[derive(Debug)]
 pub enum Store<'a> {
-    I32(&'a mut i32),
-    Str(&'a mut String),
+    I32 { target: &'a mut i32, seen: bool },
+    OptI32(&'a mut Option<i32>),
+    Str { target: &'a mut String, seen: bool },
 }
 
 impl<'a> Store<'a> {
+    fn capacity(&self) -> Capacity {
+        match self {
+            Store::I32 { seen, .. } if *seen => Capacity::Full,
+            Store::I32 { .. } => Capacity::Hungry,
+            Store::OptI32(Some(_)) => Capacity::Full,
+            Store::OptI32(None) => Capacity::Peckish,
+            Store::Str { seen, .. } if *seen => Capacity::Full,
+            Store::Str { .. } => Capacity::Hungry,
+        }
+    }
+
+    fn is_hungry(&self) -> bool {
+        self.capacity().is_hungry()
+    }
+
     fn parse(&mut self, arg: String) -> Result<Capacity, ParseError> {
         match self {
-            Store::I32(target) => match arg.parse() {
+            Store::I32 { target, .. } => match arg.parse() {
                 Ok(value) => {
                     **target = value;
                     Ok(Capacity::Full)
@@ -46,7 +63,16 @@ impl<'a> Store<'a> {
                     what: format!("{} '{}'", err, arg),
                 }),
             },
-            Store::Str(target) => {
+            Store::OptI32(target) => match arg.parse() {
+                Ok(value) => {
+                    **target = Some(value);
+                    Ok(Capacity::Full)
+                }
+                Err(err) => Err(ParseError {
+                    what: format!("{} '{}'", err, arg),
+                }),
+            },
+            Store::Str { target, .. } => {
                 **target = arg;
                 Ok(Capacity::Full)
             }
@@ -60,13 +86,25 @@ pub trait Bind {
 
 impl Bind for i32 {
     fn store(target: &mut Self) -> Store {
-        Store::I32(target)
+        Store::I32 {
+            target,
+            seen: false,
+        }
+    }
+}
+
+impl Bind for Option<i32> {
+    fn store(target: &mut Self) -> Store {
+        Store::OptI32(target)
     }
 }
 
 impl Bind for String {
     fn store(target: &mut Self) -> Store {
-        Store::Str(target)
+        Store::Str {
+            target,
+            seen: false,
+        }
     }
 }
 
@@ -83,6 +121,10 @@ impl<'store> Parameter<'store> {
         ParseError {
             what: format!("{}: {}", self.name, err.what),
         }
+    }
+
+    fn is_hungry(&self) -> bool {
+        self.store.is_hungry()
     }
 
     fn parse(&mut self, arg: String) -> Result<Capacity, ParseError> {
@@ -129,9 +171,11 @@ impl<'stores> Parser<'stores> {
             self.parse_arg(arg.to_string())?;
         }
         if let Some(name) = self.positionals.pop_front() {
-            return Err(ParseError {
-                what: format!("{}: expected argument", name),
-            });
+            if self.parameters[name].is_hungry() {
+                return Err(ParseError {
+                    what: format!("{}: expected argument", name),
+                });
+            }
         }
         Ok(())
     }
