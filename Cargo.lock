@@ -128,6 +128,9 @@ checksum = "afb2e1c3ee07430c2cf76151675e583e0f19985fa6efae47d6848a3e2c824f85"
 [[package]]
 name = "pangram"
 version = "0.1.0"
+dependencies = [
+ "arg5",
+]
 
 [[package]]
 name = "proc-macro-error"
