@@ -17,7 +17,8 @@ clear-build() {
     local run="cargo --color=always build"
     clear
     echo -e "\e[2m[$(date +%T)] $run" "$@" "\e[22m\n" \
-        && ${=run} "$@" |& head -20
+        && ${=run} "$@" \
+            |& head -"$((${WATCH_HEIGHT:-$(tput lines)} - 3))"
 }
 
 ts >$a
