@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "arg5",
     "b2c",
     "len",
     "tmux-send",
