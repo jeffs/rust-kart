@@ -12,6 +12,12 @@ impl fmt::Display for MainError {
     }
 }
 
+impl From<arg5::ParseError> for MainError {
+    fn from(err: arg5::ParseError) -> Self {
+        Self { what: err.what }
+    }
+}
+
 impl From<String> for MainError {
     fn from(what: String) -> Self {
         Self { what }
@@ -20,6 +26,8 @@ impl From<String> for MainError {
 
 impl From<io::Error> for MainError {
     fn from(err: io::Error) -> Self {
-        Self { what: format!("{}", err) }
+        Self {
+            what: format!("{}", err),
+        }
     }
 }
