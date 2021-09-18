@@ -197,7 +197,7 @@ impl<'a> Parser<'a> {
         for name in &self.positionals {
             if self.parameters[name].appetite() == Appetite::Hungry {
                 return Err(ParseError {
-                    what: format!("{}: expected argument", name),
+                    what: format!("expected {}", name),
                 });
             }
         }
