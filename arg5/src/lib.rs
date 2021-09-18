@@ -31,6 +31,7 @@ pub enum Store<'a> {
     I32(&'a mut i32),
     OptI32(&'a mut Option<i32>),
     Str(&'a mut String),
+    OptStr(&'a mut Option<String>),
 }
 
 impl<'a> Store<'a> {
@@ -40,6 +41,7 @@ impl<'a> Store<'a> {
             Store::I32(_) => Capacity::Mandatory,
             Store::OptI32(_) => Capacity::Optional,
             Store::Str(_) => Capacity::Mandatory,
+            Store::OptStr(_) => Capacity::Optional,
         }
     }
 }
@@ -75,6 +77,10 @@ impl<'a> Binding<'a> {
                 **target = arg;
                 self.appetite = Appetite::Full;
             }
+            Store::OptStr(target) => {
+                **target = Some(arg);
+                self.appetite = Appetite::Full;
+            }
         }
         Ok(())
     }
@@ -107,6 +113,15 @@ impl Bind for String {
         Binding {
             store: Store::Str(self),
             appetite: Appetite::Hungry,
+        }
+    }
+}
+
+impl Bind for Option<String> {
+    fn bind(&mut self) -> Binding {
+        Binding {
+            store: Store::OptStr(self),
+            appetite: Appetite::Peckish,
         }
     }
 }

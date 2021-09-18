@@ -105,7 +105,7 @@ mod a_parser {
         }
     }
 
-    mod given_an_optional_parameter {
+    mod given_an_optional_i32_parameter {
         use super::*;
 
         fn try_parse(args: &[&'static str]) -> Result<Option<i32>, ParseError> {
@@ -141,6 +141,22 @@ mod a_parser {
             parser.declare_positional("word", &mut got_str);
             parser.declare_positional("opt", &mut got_opt);
             assert_eq!(parser.usage("repeat"), "repeat <count> <word> [opt]");
+        }
+    }
+
+    mod given_an_optional_string_parameter {
+        use super::*;
+
+        fn try_parse(args: &[&'static str]) -> Result<Option<String>, ParseError> {
+            let mut got: Option<String> = None;
+            let mut parser = Parser::new();
+            parser.declare_positional("opt", &mut got);
+            parser.parse(args).map(|_| got)
+        }
+
+        #[test]
+        fn can_assign_an_argument() {
+            assert_eq!(try_parse(&[ARG0, "arg"]).unwrap(), Some("arg".to_string()));
         }
     }
 }
