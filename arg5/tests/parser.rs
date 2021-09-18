@@ -130,5 +130,17 @@ mod a_parser {
             let mut parser = Parser::new();
             assert!(parser.parse([ARG0, "42", "43"]).is_err());
         }
+
+        #[test]
+        fn can_describe_usage() {
+            let mut got_i32 = 0;
+            let mut got_str = String::new();
+            let mut got_opt: Option<i32> = None;
+            let mut parser = Parser::new();
+            parser.declare_positional("count", &mut got_i32);
+            parser.declare_positional("word", &mut got_str);
+            parser.declare_positional("opt", &mut got_opt);
+            assert_eq!(parser.usage("repeat"), "repeat <count> <word> [opt]");
+        }
     }
 }

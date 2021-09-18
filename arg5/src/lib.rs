@@ -201,4 +201,18 @@ impl<'a> Parser<'a> {
             })
         }
     }
+
+    pub fn usage(&self, arg0: &str) -> String {
+        let mut text = format!("{}", arg0);
+        // TODO: Print nonpositional parameters.
+        for name in &self.positionals {
+            let parameter = &self.parameters[name];
+            text = match parameter.capacity() {
+                Capacity::Mandatory => format!("{} <{}>", text, name),
+                Capacity::Optional => format!("{} [{}]", text, name),
+                Capacity::Variadic => format!("{} [{}...]", text, name),
+            };
+        }
+        text
+    }
 }
