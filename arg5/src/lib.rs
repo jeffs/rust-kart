@@ -2,8 +2,10 @@
 // * One parameter may receive positional arguments.
 // * Arity is determined by type.
 //   - Option for 0, scalar for 1, Vec for any number
+// * Automatically prints usage and exits the process on -h|--help
 
 use std::collections::HashMap;
+use std::process::exit;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
@@ -168,8 +170,13 @@ impl<'a> Parser<'a> {
         S: ToString,
         I: IntoIterator<Item = S>,
     {
-        for arg in args.into_iter().skip(1) {
-            self.parse_arg(arg.to_string())?;
+        let mut args = args.into_iter();
+        let arg0 = match args.next() {
+            Some(arg) => arg.to_string(),
+            None => panic!("empty args; expected (at least) program name"),
+        };
+        for arg in args {
+            self.parse_arg(arg.to_string(), &arg0)?;
         }
         // Return Err if any parameter is still hungry.
         for name in &self.positionals {
@@ -182,9 +189,15 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
+    // arg0 is the name of the current program, to appear in usage messages.
+    fn parse_arg(&mut self, arg: String, arg0: &str) -> Result<(), ParseError> {
         if arg.starts_with('-') {
-            todo!("parse by key")
+            if arg == "-h" || arg == "--help" {
+                println!("Usage: {}", self.usage(arg0));
+                exit(0);
+            } else {
+                todo!("parse by key")
+            }
         } else if let Some(name) = self.positionals.get(self.positional_index) {
             let parameter = self.parameters.get_mut(name).unwrap();
             parameter.parse(arg)?;
