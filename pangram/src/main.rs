@@ -1,7 +1,5 @@
 // Usage: pangram [--min-length=<N>] <letters> [words-file]
 
-//#![allow(dead_code, unused_variables)]
-
 mod main_error;
 mod command;
 
@@ -21,7 +19,7 @@ fn main_imp() -> Result<(), MainError> {
     //  has mandatory letter
     //  has only available letters
     let file = File::open(command.words_file)?;
-    for line in BufReader::new(file).lines() {
+    for _line in BufReader::new(file).lines() {
 
     }
     Ok(())
