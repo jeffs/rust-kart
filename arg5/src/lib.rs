@@ -142,6 +142,7 @@ impl<'a> Parameter<'a> {
     }
 }
 
+#[derive(Default)]
 pub struct Parser<'a> {
     parameters: HashMap<&'static str, Parameter<'a>>,
     positionals: Vec<&'static str>, // Names of positional parameters.
@@ -159,11 +160,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn new() -> Parser<'a> {
-        Parser {
-            parameters: HashMap::new(),
-            positionals: Vec::new(),
-            positional_index: 0,
-        }
+        Parser::default()
     }
 
     pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
@@ -186,7 +183,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
-        if arg.starts_with("-") {
+        if arg.starts_with('-') {
             todo!("parse by key")
         } else if let Some(name) = self.positionals.get(self.positional_index) {
             let parameter = self.parameters.get_mut(name).unwrap();
@@ -203,7 +200,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn usage(&self, arg0: &str) -> String {
-        let mut text = format!("{}", arg0);
+        let mut text = arg0.to_string();
         // TODO: Print nonpositional parameters.
         for name in &self.positionals {
             let parameter = &self.parameters[name];
