@@ -13,7 +13,7 @@ struct Command {
 impl Command {
     fn from_args() -> Result<Self, arg5::ParseError> {
         let mut command = Self::default();
-        let mut parser = arg5::Parser::new();
+        let mut parser = arg5::Parser::with_name_from_args();
         parser.declare_positional("count", &mut command.count);
         parser.declare_positional("word", &mut command.word);
         parser.parse_args().map(|_| command)

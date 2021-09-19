@@ -5,7 +5,7 @@
 // * Automatically prints usage and exits the process on -h|--help
 
 use std::collections::HashMap;
-use std::process::exit;
+use std::path::Path;
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
@@ -161,6 +161,7 @@ impl<'a> Parameter<'a> {
 
 #[derive(Default)]
 pub struct Parser<'a> {
+    program: String,
     parameters: HashMap<&'static str, Parameter<'a>>,
     positionals: Vec<&'static str>, // Names of positional parameters.
     positional_index: usize,        // Parameter for next positional argument.
@@ -176,13 +177,9 @@ impl<'a> Parser<'a> {
         self.positionals.push(name);
     }
 
-    fn exit_help(&mut self, arg0: &str) -> ! {
-        println!("Usage: {}", self.usage(arg0));
-        exit(0)
-    }
-
-    pub fn new() -> Parser<'a> {
-        Parser::default()
+    fn exit_help(&mut self) -> ! {
+        println!("Usage: {}", self.usage());
+        std::process::exit(0)
     }
 
     pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
@@ -190,13 +187,8 @@ impl<'a> Parser<'a> {
         S: ToString,
         I: IntoIterator<Item = S>,
     {
-        let mut args = args.into_iter();
-        let arg0 = match args.next() {
-            Some(arg) => arg.to_string(),
-            None => panic!("empty args; expected (at least) program name"),
-        };
         for arg in args {
-            self.parse_arg(arg.to_string(), &arg0)?;
+            self.parse_arg(arg.to_string())?;
         }
         // Return Err if any parameter is still hungry.
         for name in &self.positionals {
@@ -209,12 +201,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub fn parse_args(&mut self) -> Result<(), ParseError> {
-        self.parse(std::env::args())
-    }
-
-    // arg0 is the name of the current program, to appear in usage messages.
-    fn parse_arg(&mut self, arg: String, arg0: &str) -> Result<(), ParseError> {
+    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
         if arg.starts_with("--") {
             let arg = &arg[2..];
             for name in self.parameters.keys() {
@@ -223,13 +210,13 @@ impl<'a> Parser<'a> {
                 }
             }
             if arg == "--help" {
-                self.exit_help(arg0); // Exit the program.
+                self.exit_help(); // Exit the program.
             } else {
                 todo!("parse by key")
             }
         } else if arg.starts_with('-') {
             if arg == "-h" {
-                self.exit_help(arg0); // Exit the program.
+                self.exit_help(); // Exit the program.
             } else {
                 todo!("parse by key")
             }
@@ -247,8 +234,12 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn usage(&self, arg0: &str) -> String {
-        let mut text = arg0.to_string();
+    pub fn parse_args(&mut self) -> Result<(), ParseError> {
+        self.parse(std::env::args().skip(1))
+    }
+
+    pub fn usage(&self) -> String {
+        let mut text = self.program.clone();
         // TODO: Print nonpositional parameters.
         for name in &self.positionals {
             let parameter = &self.parameters[name];
@@ -259,5 +250,20 @@ impl<'a> Parser<'a> {
             };
         }
         text
+    }
+
+    pub fn with_name(name: &str) -> Self {
+        Parser {
+            program: name.to_string(),
+            ..Parser::default()
+        }
+    }
+
+    pub fn with_name_from_args() -> Self {
+        let arg0 = std::env::args().next().unwrap();
+        let path = Path::new(&arg0);
+        let file = path.file_name().unwrap();
+        let name = file.to_str().unwrap();
+        Parser::with_name(&name)
     }
 }

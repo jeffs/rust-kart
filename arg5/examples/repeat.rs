@@ -1,7 +1,7 @@
 //! Repeats a given word a given number of times.
 
 fn main() {
-    let mut parameters = arg5::Parser::new();
+    let mut parameters = arg5::Parser::with_name_from_args();
 
     let mut count = 0;
     parameters.declare_positional("count", &mut count);
