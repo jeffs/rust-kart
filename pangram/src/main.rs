@@ -1,4 +1,11 @@
-// Usage: pangram [--min-length=<N>] <letters> [words-file]
+//! # Usage
+//! ```sh
+//! pangram <letters> [words-file]
+//! ```
+//!
+//! # To Do
+//! * [ ] `[-m|--min-length=<N>]`
+//! * [ ] `[-p|--omit-proper]`
 
 mod main_error;
 
@@ -31,7 +38,7 @@ fn parse_args() -> Result<Args, arg5::ParseError> {
     parameters.declare_positional("words-file", &mut words_file);
     parameters.parse(env::args())?;
     Ok(Args {
-        min_length: DEFAULT_MIN_LENGTH, // TODO: Accept min word length as flag.
+        min_length: DEFAULT_MIN_LENGTH,
         mandatory: to_charset(letters.chars().filter(|c| c.is_uppercase())),
         available: to_charset(letters.chars()),
         words_file: words_file.unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string()),
