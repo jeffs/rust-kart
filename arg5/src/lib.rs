@@ -176,6 +176,11 @@ impl<'a> Parser<'a> {
         self.positionals.push(name);
     }
 
+    fn exit_help(&mut self, arg0: &str) -> ! {
+        println!("Usage: {}", self.usage(arg0));
+        exit(0)
+    }
+
     pub fn new() -> Parser<'a> {
         Parser::default()
     }
@@ -206,10 +211,21 @@ impl<'a> Parser<'a> {
 
     // arg0 is the name of the current program, to appear in usage messages.
     fn parse_arg(&mut self, arg: String, arg0: &str) -> Result<(), ParseError> {
-        if arg.starts_with('-') {
-            if arg == "-h" || arg == "--help" {
-                println!("Usage: {}", self.usage(arg0));
-                exit(0);
+        if arg.starts_with("--") {
+            let arg = &arg[2..];
+            for name in self.parameters.keys() {
+                if arg == *name {
+                    todo!("parse {}", name);
+                }
+            }
+            if arg == "--help" {
+                self.exit_help(arg0); // Exit the program.
+            } else {
+                todo!("parse by key")
+            }
+        } else if arg.starts_with('-') {
+            if arg == "-h" {
+                self.exit_help(arg0); // Exit the program.
             } else {
                 todo!("parse by key")
             }
