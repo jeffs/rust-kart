@@ -4,9 +4,6 @@
 //! arguments are collected into a struct.  Note that Rust supports
 //! simultaneous mutable references to differnt fields of a single object.
 
-use std::env;
-use std::process::exit;
-
 #[derive(Default)]
 struct Command {
     count: i32,
@@ -19,7 +16,7 @@ impl Command {
         let mut parser = arg5::Parser::new();
         parser.declare_positional("count", &mut command.count);
         parser.declare_positional("word", &mut command.word);
-        parser.parse(env::args()).map(|_| command)
+        parser.parse_args().map(|_| command)
     }
 
     fn run(self) {
@@ -37,7 +34,7 @@ fn main() {
         Ok(command) => command.run(),
         Err(error) => {
             eprintln!("Error: {}", error.what);
-            exit(1);
+            std::process::exit(1);
         }
     }
 }

@@ -209,6 +209,10 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
+    pub fn parse_args(&mut self) -> Result<(), ParseError> {
+        self.parse(std::env::args())
+    }
+
     // arg0 is the name of the current program, to appear in usage messages.
     fn parse_arg(&mut self, arg: String, arg0: &str) -> Result<(), ParseError> {
         if arg.starts_with("--") {

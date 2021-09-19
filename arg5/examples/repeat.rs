@@ -1,8 +1,5 @@
 //! Repeats a given word a given number of times.
 
-use std::env;
-use std::process::exit;
-
 fn main() {
     let mut parameters = arg5::Parser::new();
 
@@ -12,9 +9,9 @@ fn main() {
     let mut word = String::new();
     parameters.declare_positional("word", &mut word);
 
-    if let Err(err) = parameters.parse(env::args()) {
+    if let Err(err) = parameters.parse_args() {
         eprintln!("Error: {}", err.what);
-        exit(1);
+        std::process::exit(1);
     }
 
     if count > 0 {
