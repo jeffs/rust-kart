@@ -9,6 +9,9 @@ use std::env;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+const DEFAULT_MIN_LENGTH: usize = 4;
+const DEFAULT_WORDS_FILE: &str = "/usr/share/dict/words";
+
 fn to_charset<I: Iterator<Item = char>>(chars: I) -> HashSet<char> {
     chars.flat_map(|c| c.to_lowercase()).collect()
 }
@@ -22,31 +25,33 @@ struct Args {
 
 fn parse_args() -> Result<Args, arg5::ParseError> {
     let mut letters = String::new();
-    let mut words_file = Some("/usr/share/dict/words".to_string());
+    let mut words_file = None;
     let mut parameters = arg5::Parser::new();
     parameters.declare_positional("letters", &mut letters);
     parameters.declare_positional("words-file", &mut words_file);
     parameters.parse(env::args())?;
     Ok(Args {
-        min_length: 4, // TODO: Accept min word length as flag.
+        min_length: DEFAULT_MIN_LENGTH, // TODO: Accept min word length as flag.
         mandatory: to_charset(letters.chars().filter(|c| c.is_uppercase())),
         available: to_charset(letters.chars()),
-        words_file: words_file.unwrap(),
+        words_file: words_file.unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string()),
     })
 }
 
 fn format_line(line: &str, args: &Args) -> Option<String> {
-    if line.chars().count() < args.min_length {
-        None
-    } else {
+    if line.chars().count() >= args.min_length {
         let set = to_charset(line.chars());
-        if !set.is_superset(&args.mandatory) || !set.is_subset(&args.available) {
-            None
-        } else if set.is_superset(&args.available) {
-            Some(format!("* {}", line))
+        if set.is_superset(&args.mandatory) && set.is_subset(&args.available) {
+            if set.is_superset(&args.available) {
+                Some(format!("* {}", line)) // a pangram
+            } else {
+                Some(format!("  {}", line)) // not a pangram, but an anagram
+            }
         } else {
-            Some(format!("  {}", line))
+            None // not an anagram
         }
+    } else {
+        None // too short
     }
 }
 
