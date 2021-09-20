@@ -2,7 +2,7 @@
 //!
 //! This example is functionally identical to repeat.rs.  However, command-line
 //! arguments are collected into a struct.  Note that Rust supports
-//! simultaneous mutable references to differnt fields of a single object.
+//! simultaneous mutable references to multiple fields of a single object.
 
 use std::env;
 use std::process::exit;
