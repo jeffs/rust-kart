@@ -187,8 +187,10 @@ impl<'a> Parser<'a> {
         S: ToString,
         I: IntoIterator<Item = S>,
     {
-        for arg in args {
-            self.parse_arg(arg.to_string())?;
+        let mut args: Vec<_> = args.into_iter().map(|s| s.to_string()).collect();
+        args.reverse();
+        while let Some(arg) = args.pop() {
+            self.parse_arg(arg, &mut args)?;
         }
         // Return Err if any parameter is still hungry.
         for name in &self.positionals {
@@ -201,7 +203,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn parse_arg(&mut self, arg: String) -> Result<(), ParseError> {
+    fn parse_arg(&mut self, arg: String, _rest: &mut Vec<String>) -> Result<(), ParseError> {
         if arg.starts_with("--") {
             let arg = &arg[2..];
             for name in self.parameters.keys() {
