@@ -15,14 +15,20 @@ fn find_src_bin_dir_name(mut parts: Vec<&str>) -> Option<&str> {
 }
 
 fn main() {
-    // Parse arguments.  There should be exactly one: a file path.
-    let mut parameters = arg5::Parser::new();
-    let mut file = String::new();
-    parameters.declare_positional("file", &mut file);
-    if let Err(err) = parameters.parse(env::args()) {
-        eprintln!("Error: {}", err.what);
-        exit(2);
-    }
+    // Parse arguments.  If cargo-norm is invoked directly, there should be
+    // exactly one argument: a file path.  However, when invoked indirectly as
+    // a subcommand (as in "cargo norm"), cargo-norm receives both the
+    // subcommand ("norm") and the file path.
+    let args: Vec<_> = env::args().collect();
+    let args: Vec<_> = args.iter().map(|s| s.as_ref()).collect();
+    let file = match &args[..] {
+        [_, file] => file,
+        [_, "norm", file] => file,
+        _ => {
+            eprintln!("Usage: cargo-norm FILE");
+            exit(2);
+        }
+    };
 
     // Convert the argument to an absolute path.
     let file: &Path = file.as_ref();
