@@ -30,7 +30,7 @@ fn new_app() -> clap::App<'static> {
         )
 }
 
-/// Converts clap's representation of a parsed command line  to an Args object.
+/// Converts clap's representation of a parsed command line to an Args object.
 fn args_from_clap(matches: clap::ArgMatches) -> Args {
     Args {
         one: matches.is_present("1"),
