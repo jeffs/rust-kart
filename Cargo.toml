@@ -4,6 +4,7 @@ members = [
     "arg5",
     "b2c",
     "cargo-norm",
+    "git-prune",
     "len",
     "pangram",
     "tmux-send",
