@@ -37,7 +37,7 @@ where
 }
 
 /// Passes args to git() and returns the first output line.  Returns an error
-/// unless git output exactly one line.
+/// unless git outputs exactly one line.
 fn git_single<'a, I>(args: I) -> Result<String, String>
 where
     I: IntoIterator<Item = &'a str>,
