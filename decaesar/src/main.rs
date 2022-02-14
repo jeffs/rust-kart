@@ -31,21 +31,39 @@ fn print_decryptions_imp(
 ) {
     if let Some((head, tail)) = args.split_first() {
         let head_ciphers = head.ciphers_derived(dict, partial);
-        if tail.is_empty() {
-            for cipher in head_ciphers {
-                let word = head.decrypt(&cipher);
-                if prefix.is_empty() {
-                    println!("{word}");
-                } else {
-                    println!("{} {}", prefix.join(" "), word);
+        if prefix.is_empty() {
+            let n = head_ciphers.len();
+            let enumerated = head_ciphers
+                .into_iter()
+                .enumerate()
+                .map(|(i, cipher)| (i + 1, cipher));
+            if tail.is_empty() {
+                for (i, cipher) in enumerated {
+                    let word = head.decrypt(&cipher);
+                    println!("{i}/{n} {}", word);
+                }
+            } else {
+                for (i, cipher) in enumerated {
+                    let word = head.decrypt(&cipher);
+                    prefix.push(format!("{i}/{n}"));
+                    prefix.push(word);
+                    print_decryptions_imp(tail, dict, &cipher, prefix);
+                    prefix.clear();
                 }
             }
         } else {
-            for cipher in head_ciphers {
-                let word = head.decrypt(&cipher);
-                prefix.push(word);
-                print_decryptions_imp(tail, dict, &cipher, prefix);
-                prefix.pop();
+            if tail.is_empty() {
+                for cipher in head_ciphers {
+                    let word = head.decrypt(&cipher);
+                    println!("{} {}", prefix.join(" "), word);
+                }
+            } else {
+                for cipher in head_ciphers {
+                    let word = head.decrypt(&cipher);
+                    prefix.push(word);
+                    print_decryptions_imp(tail, dict, &cipher, prefix);
+                    prefix.pop();
+                }
             }
         }
     }
