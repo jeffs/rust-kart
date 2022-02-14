@@ -23,42 +23,44 @@ fn load_dict(path: impl AsRef<Path>) -> io::Result<WordSet> {
 
 const DICT: &str = "/usr/share/dict/british-english";
 
-fn decryptions_imp(args: &[Ciphertext], dict: &WordSet, partial: &Cipher) -> Vec<Vec<String>> {
-    let mut decryptions = Vec::new();
-    if let Some((first, rest)) = args.split_first() {
-        let first_ciphers = first.ciphers_derived(dict, partial);
-        if rest.is_empty() {
-            let words = first_ciphers.iter().map(|cipher| first.decrypt(cipher));
-            decryptions.extend(words.map(|word| vec![word]))
-        } else {
-            for cipher in first_ciphers {
-                let first_word = first.decrypt(&cipher);
-                for mut rest_words in decryptions_imp(rest, dict, &cipher) {
-                    let mut words = vec![first_word.clone()];
-                    words.append(&mut rest_words);
-                    decryptions.push(words);
+fn print_decryptions_imp(
+    args: &[Ciphertext],
+    dict: &WordSet,
+    partial: &Cipher,
+    prefix: &mut Vec<String>,
+) {
+    if let Some((head, tail)) = args.split_first() {
+        let head_ciphers = head.ciphers_derived(dict, partial);
+        if tail.is_empty() {
+            for cipher in head_ciphers {
+                let word = head.decrypt(&cipher);
+                if prefix.is_empty() {
+                    println!("{word}");
+                } else {
+                    println!("{} {}", prefix.join(" "), word);
                 }
+            }
+        } else {
+            for cipher in head_ciphers {
+                let word = head.decrypt(&cipher);
+                prefix.push(word);
+                print_decryptions_imp(tail, dict, &cipher, prefix);
+                prefix.pop();
             }
         }
     }
-    decryptions
 }
 
-fn decryptions<'a>(
-    args: impl IntoIterator<Item = Ciphertext<'a>>,
-    dict: &WordSet,
-) -> Vec<Vec<String>> {
+fn print_decryptions<'a>(args: impl IntoIterator<Item = Ciphertext<'a>>, dict: &WordSet) {
     let args: Vec<Ciphertext> = args.into_iter().collect();
-    decryptions_imp(&args, dict, &Cipher::new())
+    print_decryptions_imp(&args, dict, &Cipher::new(), &mut Vec::new())
 }
 
 fn try_main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
     let args = args.iter().map(|arg| Ciphertext(arg));
     let dict = load_dict(DICT)?;
-    for decryption in decryptions(args, &dict) {
-        println!("{}", decryption.join(" "));
-    }
+    print_decryptions(args, &dict);
     Ok(())
 }
 
