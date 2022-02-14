@@ -12,7 +12,11 @@ use ciphertext::{Cipher, Ciphertext, WordSet};
 fn load_dict(path: impl AsRef<Path>) -> io::Result<WordSet> {
     let mut lines = WordSet::new();
     for line in BufReader::new(File::open(path)?).lines() {
-        lines.insert(line?);
+        let line = line?;
+        if !line.contains(|c| ['a', 'e', 'i', 'o', 'u', 'y'].contains(&c)) {
+            continue;
+        }
+        lines.insert(line);
     }
     Ok(lines)
 }
