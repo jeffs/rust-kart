@@ -20,6 +20,7 @@ impl Ciphertext<'_> {
         let new_chars = self.0.chars().unique().filter(|c| !partial.contains_key(c));
         let keys: Vec<(usize, char)> = new_chars.enumerate().collect();
         (0..ALPHABET.len())
+            // TODO: Filter out indexes that are already in partial.values().
             .combinations(keys.len())
             .flat_map(|combo| {
                 let k = combo.len();
