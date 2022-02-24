@@ -1,10 +1,6 @@
 # Rust Kart
 
-A workspace of small utilities written in Rust.  Aside from the Len package, no
-part of Rust Kart has any third-party build dependencies.  Some commands, like
-git-prune and tmux-send, launch third-party subcommands (such as git and tmux,
-respectively) at runtime.  Once the Arg5 library (./arg5) is sufficiently
-mature, the dependency on Clap can be removed.
+A workspace of small utilities written in Rust.
 
     arg5        -- argument parsing library
     b2c         -- decodes ASCII encoded binary

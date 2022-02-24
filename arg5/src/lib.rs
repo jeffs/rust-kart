@@ -32,6 +32,8 @@ pub enum Store<'a> {
     OptI32(&'a mut Option<i32>),
     Str(&'a mut String),
     OptStr(&'a mut Option<String>),
+    U32(&'a mut u32),
+    OptU32(&'a mut Option<u32>),
 }
 
 impl<'a> Store<'a> {
@@ -42,6 +44,8 @@ impl<'a> Store<'a> {
             Store::OptI32(_) => Capacity::Optional,
             Store::Str(_) => Capacity::Mandatory,
             Store::OptStr(_) => Capacity::Optional,
+            Store::U32(_) => Capacity::Mandatory,
+            Store::OptU32(_) => Capacity::Optional,
         }
     }
 }
@@ -79,6 +83,18 @@ impl<'a> Binding<'a> {
             }
             Store::OptStr(target) => {
                 **target = Some(arg);
+                self.appetite = Appetite::Full;
+            }
+            Store::U32(target) => {
+                **target = arg.parse().map_err(|err| ParseError {
+                    what: format!("{} '{}'", err, arg),
+                })?;
+                self.appetite = Appetite::Full;
+            }
+            Store::OptU32(target) => {
+                **target = Some(arg.parse().map_err(|err| ParseError {
+                    what: format!("{} '{}'", err, arg),
+                })?);
                 self.appetite = Appetite::Full;
             }
         }
@@ -121,6 +137,24 @@ impl Bind for Option<String> {
     fn bind(&mut self) -> Binding {
         Binding {
             store: Store::OptStr(self),
+            appetite: Appetite::Peckish,
+        }
+    }
+}
+
+impl Bind for u32 {
+    fn bind(&mut self) -> Binding {
+        Binding {
+            store: Store::U32(self),
+            appetite: Appetite::Hungry,
+        }
+    }
+}
+
+impl Bind for Option<u32> {
+    fn bind(&mut self) -> Binding {
+        Binding {
+            store: Store::OptU32(self),
             appetite: Appetite::Peckish,
         }
     }
