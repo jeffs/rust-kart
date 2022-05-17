@@ -10,5 +10,6 @@ members = [
     "hexify",
     "len",
     "pangram",
+    "sh-calc",
     "tmux-send",
 ]
