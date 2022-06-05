@@ -64,6 +64,8 @@ type.
 
 # TODO
 
-Discuss overflow.
+* Discuss overflow.
+* Preserve precision, optionally using rational numbers rather than floats.
+* Input and output rationals, or the base of the user's choice.
 
 [vim]: https://github.com/jeffs/geode-profile-home/blob/3b657a2f9b75916eef71202bf644ebce61022f2e/etc/nvim/after/ftplugin/rust.vim#L23-L29
