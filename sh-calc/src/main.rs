@@ -114,31 +114,24 @@ fn parse_syntax(mut terms: Vec<Term>) -> Result<Tree, ParseError> {
     }
 }
 
-fn parse_args() -> Result<Vec<Term>, ParseError> {
-    let mut terms = Vec::new();
+fn parse_arg(arg: &str) -> {
+
+}
+
+fn parse_args() -> Result<(), ParseError> {
     for arg in env::args().skip(1) {
-        // TODO: Treat separate args as separate terms.
-        terms.extend(parse_terms(&arg)?);
+        let tree = parse_arg(&arg);
+        dbg!(tree);
     }
-    Ok(terms)
+    Ok(())
 }
 
 fn main() {
-    let terms = match parse_args() {
+    let _terms = match parse_args() {
         Ok(terms) => terms,
         Err(err) => {
             eprintln!("error: {err}");
             process::exit(2);
         }
     };
-    eprintln!("terms: {:?}", terms);
-    let tree = match parse_syntax(terms) {
-        Ok(tree) => tree,
-        Err(err) => {
-            eprintln!("Error: {err}");
-            process::exit(3);
-        }
-    };
-    eprintln!("tree: {tree:?}");
-    println!("{}", tree.eval());
 }
