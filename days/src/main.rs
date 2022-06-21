@@ -5,12 +5,27 @@ use chrono::prelude::*;
 use std::env;
 use std::process;
 
-fn format(count: i64, unit: &str) -> String {
-    let s = match count {
-        1 => "",
-        _ => "s",
+fn format_part((count, unit): (i64, &str)) -> Option<String> {
+    match count {
+        0 => None,
+        1 => Some(format!("1 {unit}")),
+        _ => Some(format!("{count} {unit}s")),
+    }
+}
+
+fn print_parts(parts: &[String]) {
+    match parts.len() {
+        0 => println!("now"),
+        1 => println!("{}", parts[0]),
+        2 => println!("{} and {}", parts[0], parts[1]),
+        _ => {
+            let m = parts.len() - 1;
+            for part in &parts[0..m] {
+                print!("{}, ", part);
+            }
+            println!("and {}", parts[m]);
+        }
     };
-    format!("{count} {unit}{s}")
 }
 
 fn parse_args() -> Result<Date<Local>, arg5::ParseError> {
@@ -41,12 +56,15 @@ fn main() {
         process::exit(1);
     });
     let duration = date.and_hms(0, 0, 0) - Local::now();
-    println!(
-        "{}, {}, {}, {}, and {}",
-        format(duration.num_weeks(), "week"),
-        format(duration.num_days() % 7, "day"),
-        format(duration.num_hours() % 24, "hour"),
-        format(duration.num_minutes() % 60, "minute"),
-        format(duration.num_seconds() % 60, "second"),
-    );
+    let parts: Vec<_> = [
+        (duration.num_weeks(), "week"),
+        (duration.num_days() % 7, "day"),
+        (duration.num_hours() % 24, "hour"),
+        (duration.num_minutes() % 60, "minute"),
+        (duration.num_seconds() % 60, "second"),
+    ]
+    .into_iter()
+    .filter_map(format_part)
+    .collect();
+    print_parts(&parts);
 }
