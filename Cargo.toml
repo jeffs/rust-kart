@@ -6,6 +6,7 @@ members = [
     "cargo-norm",
     "days",
     "git-prune",
+    "hexify",
     "len",
     "pangram",
     "tmux-send",
