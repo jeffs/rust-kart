@@ -89,6 +89,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "diet"
+version = "0.1.0"
+
+[[package]]
 name = "git-prune"
 version = "0.1.0"
 

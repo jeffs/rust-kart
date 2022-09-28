@@ -5,6 +5,7 @@ members = [
     "b2c",
     "cargo-norm",
     "days",
+    "diet",
     "git-prune",
     "hexify",
     "len",
