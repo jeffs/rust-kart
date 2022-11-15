@@ -41,8 +41,17 @@ fn sum_kcal(buf: impl io::BufRead) -> Result<i32, MainError> {
         .position(|s| s == "kcal")
         .ok_or(MainError::HeaderMissingKcal)?;
     let mut total_kcal: i32 = 0;
-    for (line_no, line) in lines.enumerate().map(|(index, line)| (index + 2, line)) {
+    for (line_no, line) in lines.enumerate().map(|(index, line)| {
+        // +1 because (0-based) indexes are one off from (1-based) line
+        // numbers, and +1 because we've already read the header row.
+        (index + 2, line)
+    }) {
         let line = line?;
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            // Skip blank and comment lines.
+            continue;
+        }
         let kcal: i32 = line
             .split(',')
             .nth(kcal_index)
