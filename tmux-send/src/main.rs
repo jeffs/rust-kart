@@ -11,14 +11,14 @@ fn read_stdin() -> io::Result<Vec<u8>> {
 fn run() -> Result<ExitStatus, Box<dyn std::error::Error>> {
     let text = String::from_utf8(read_stdin()?)?;
     let args = ["send-keys", "-lt", "bottom-right", &text];
-    Ok(Command::new("tmux").args(&args).status()?)
+    Ok(Command::new("tmux").args(args).status()?)
 }
 
 fn main() {
     let status = run().unwrap();
 
     #[cfg(unix)]
-    for signal in status.signal() {
+    if let Some(signal) = status.signal() {
         process::exit(128 + signal);
     }
 
