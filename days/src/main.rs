@@ -28,7 +28,7 @@ fn print_parts(parts: &[String]) {
     };
 }
 
-fn parse_args() -> Result<Date<Local>, arg5::ParseError> {
+fn parse_args() -> Result<NaiveDate, arg5::ParseError> {
     let mut parameters = arg5::Parser::new();
     let mut year = 0;
     let mut month = 0;
@@ -37,16 +37,20 @@ fn parse_args() -> Result<Date<Local>, arg5::ParseError> {
     parameters.declare_positional("month", &mut month);
     parameters.declare_positional("day", &mut day);
     parameters.parse(env::args())?;
-    Ok(Local.ymd(year, month, day))
+    NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| arg5::ParseError {
+        what: String::from("bad date"),
+    })
 }
 
 #[cfg(test)]
 mod tests {
+    use super::format_part;
+
     #[test]
-    fn format() {
-        assert_eq!("1 week", super::format(1, "week"));
-        assert_eq!("0 weeks", super::format(0, "week"));
-        assert_eq!("2 weeks", super::format(2, "week"));
+    fn test_format_part() {
+        assert_eq!(format_part((1, "week")), Some(String::from("1 week")));
+        assert_eq!(format_part((0, "week")), None);
+        assert_eq!(format_part((2, "week")), Some(String::from("2 weeks")));
     }
 }
 
@@ -55,7 +59,7 @@ fn main() {
         eprintln!("Error: {}", error.what);
         process::exit(1);
     });
-    let duration = date.and_hms(0, 0, 0) - Local::now();
+    let duration = date.and_hms_opt(0, 0, 0).unwrap() - Local::now().naive_local();
     let parts: Vec<_> = [
         (duration.num_weeks(), "week"),
         (duration.num_days() % 7, "day"),
