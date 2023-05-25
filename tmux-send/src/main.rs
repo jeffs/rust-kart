@@ -10,7 +10,7 @@ fn read_stdin() -> io::Result<Vec<u8>> {
 
 fn run() -> Result<ExitStatus, Box<dyn std::error::Error>> {
     let text = String::from_utf8(read_stdin()?)?;
-    let args = ["send-keys", "-lt", "bottom-right", &text];
+    let args = ["send-keys", "-lt", "bottom-right", "--", &text];
     Ok(Command::new("tmux").args(args).status()?)
 }
 
