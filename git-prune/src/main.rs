@@ -14,6 +14,7 @@
 //! ```
 
 use std::env;
+use std::mem::take;
 use std::process::{exit, Command};
 
 const MAIN_REFS: [&str; 2] = ["main", "master"];
@@ -49,6 +50,9 @@ where
     }
 }
 
+/// Temporarily moves HEAD to a supplied target branch, then restores HEAD to
+/// its original (source) branch on drop.  Cheaper than actually checking out
+/// the target branch.
 struct SymRef {
     source: String,
 }
@@ -120,14 +124,21 @@ fn is_empty(branch: &str) -> Result<bool, String> {
     Ok(git(["log", &format!("..{branch}")])?.is_empty())
 }
 
-fn retain_obsolete(branches: Vec<String>) -> Result<Vec<String>, String> {
-    let mut obsoletes = Vec::new();
-    for branch in branches {
-        if !is_main(&branch) && is_empty(&branch)? {
-            obsoletes.push(branch);
+fn is_obsolete(branch: &str) -> Result<bool, String> {
+    Ok(!is_main(&branch) && is_empty(&branch)?)
+}
+
+fn retain_obsolete(mut branches: Vec<String>) -> Result<Vec<String>, String> {
+    let mut target = 0;
+    for source in 0..branches.len() {
+        let mut branch: String = take(&mut branches[source]);
+        if is_obsolete(&branch)? {
+            branches[target] = take(&mut branch);
+            target += 1;
         }
     }
-    Ok(obsoletes)
+    branches.truncate(target);
+    Ok(branches)
 }
 
 fn for_each_obsolete_branch(
