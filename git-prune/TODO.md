@@ -5,3 +5,5 @@
 * Support custom remote names rather than hard-coding origin.
 * Accept branch filter patterns; e.g., `$USER.*`
 * Create git-squash, taking a branch, merge, or PR #.
+  - Other semantic operations not directly supported by git, and/or by gh?
+* Format git output: glog, gable; JSON
