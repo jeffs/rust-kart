@@ -62,9 +62,13 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Delete branches that are not ahead of main.
     if !dead_branches.is_empty() {
-        let list = dead_branches.join(", ");
+        let n = dead_branches.len();
+        let s = (n > 1).then_some("es").unwrap_or_default();
+        eprintln!("Deleting {n} branch{s}:");
+        for branch in &dead_branches {
+            eprintln!("  {branch}");
+        }
         git(["branch", "-d"].into_iter().chain(dead_branches)).await?;
-        eprintln!("Deleted {list}");
     }
 
     // Return to the originally checked out branch, unless it's gone.
