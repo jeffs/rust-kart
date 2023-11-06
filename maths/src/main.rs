@@ -1,10 +1,13 @@
 use std::{env, error::Error, io::stdin, num::ParseFloatError, process};
 
-use crate::function::{error::NoFunc, Function};
-
 mod function;
+use function::{error::NoFunc, Function};
+use take::Stopper;
+
+mod take;
 
 type BoxedError = Box<dyn Error>;
+type F64Result = Result<f64, BoxedError>;
 
 fn apply_args(func: &dyn Function, first: f64, rest: &[f64]) -> f64 {
     rest.into_iter().fold(first, |x, &y| func.apply(x, y))
@@ -19,19 +22,22 @@ fn parse_line(line: &str) -> Result<impl Iterator<Item = f64>, ParseFloatError> 
 }
 
 fn apply_line<I: Iterator<Item = f64>>(func: &dyn Function, args: I) -> f64 {
-    let value = args.fold(func.identity(), |x, y| func.apply(x, y));
-    eprintln!("{} {value}", func.symbol());
-    value
+    args.fold(func.identity(), |x, y| func.apply(x, y))
 }
 
-fn apply_stdin(func: &dyn Function) -> Result<f64, BoxedError> {
-    // I wish Rust had Scala-style comprehensions.
+fn apply_stdin(func: &dyn Function) -> F64Result {
     stdin()
         .lines()
-        .map(|result| -> Result<String, BoxedError> { Ok(result?) }) // Box io::Error
-        .map(|result| result.and_then(|line| Ok(parse_line(&line)?))) // Parse line into Vec<f64>
-        .map(|result| result.map(|args| apply_line(func, args))) // Apply monoid to each line
-        .reduce(|result, line| Ok(func.apply(result?, line?))) // Apply monoid to per-line results
+        .map(|a| -> Result<String, BoxedError> { Ok(a?) }) // Box io::Error
+        .map(|a| a.and_then(|line| Ok(parse_line(&line)?))) // Parse line into Vec<f64>
+        .map(|a| a.map(|args| apply_line(func, args))) // Apply monoid to each line
+        .stop_once(|a| a.is_err())
+        .inspect(|a| {
+            if let Ok(value) = a {
+                eprintln!("{} {value}", func.symbol())
+            }
+        })
+        .reduce(|a, x| Ok(func.apply(a?, x?))) // Apply monoid to per-line results
         .unwrap_or(Ok(func.identity())) // Default to monoid identity if stdin was empty
 }
 
@@ -51,7 +57,7 @@ fn main_imp() -> Result<(), BoxedError> {
         [first, rest @ ..] => apply_args(func, *first, rest),
         _ => apply_stdin(func)?,
     };
-    println!("= {answer}");
+    println!("  {answer}");
     Ok(())
 }
 

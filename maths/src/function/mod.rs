@@ -1,12 +1,9 @@
-use self::{
-    error::BadFunc,
-    function::{Add, Mul},
-};
-
+mod function;
 pub use function::Function;
+use function::{Add, Mul};
 
 pub mod error;
-mod function;
+use error::BadFunc;
 
 pub fn parse(func: &str) -> Result<&'static dyn Function, BadFunc> {
     match func {
