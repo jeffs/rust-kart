@@ -10,6 +10,7 @@ members = [
     "git-prune",
     "hexify",
     "len",
+    "maths",
     "pangram",
     "products",
     "tmux-send",
