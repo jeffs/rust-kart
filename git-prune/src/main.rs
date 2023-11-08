@@ -73,6 +73,11 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Return to the originally checked out branch, unless it's gone.
     let _ = git(["checkout", "-"]).await;
+
+    // Print the current branch name before exiting.
+    let head = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
+    eprint!("* {head}");
+
     Ok(())
 }
 
