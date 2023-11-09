@@ -64,9 +64,9 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
     if !dead_branches.is_empty() {
         let n = dead_branches.len();
         let s = (n > 1).then_some("es").unwrap_or_default();
-        eprintln!("Deleting {n} branch{s}:");
+        println!("Deleting {n} branch{s}:");
         for branch in &dead_branches {
-            eprintln!("  {branch}");
+            println!("  {branch}");
         }
         git(["branch", "-d"].into_iter().chain(dead_branches)).await?;
     }
@@ -76,7 +76,7 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Print the current branch name before exiting.
     let head = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
-    eprint!("HEAD:\n  {head}");
+    print!("HEAD:\n  {head}");
 
     Ok(())
 }
@@ -84,11 +84,11 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 #[tokio::main]
 async fn main() {
     if env::args().len() > 1 {
-        eprintln!("git-prune: error: expected empty argument list");
+        println!("git-prune: error: expected empty argument list");
         exit(2);
     }
     if let Err(err) = main_imp().await {
-        eprintln!("git-prune: {err}");
+        println!("git-prune: {err}");
         exit(1);
     }
 }
