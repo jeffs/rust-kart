@@ -76,7 +76,7 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Print the current branch name before exiting.
     let head = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
-    eprint!("* {head}");
+    eprint!("HEAD:\n  {head}");
 
     Ok(())
 }
