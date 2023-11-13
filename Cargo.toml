@@ -12,6 +12,5 @@ members = [
     "len",
     "maths",
     "pangram",
-    "products",
     "tmux-send",
 ]
