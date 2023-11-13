@@ -1,7 +1,7 @@
 use std::{env, error::Error, io::stdin, num::ParseFloatError, process};
 
 mod function;
-use function::{error::NoFunc, Monoid};
+use function::{error::NoFunc, Function};
 use take::Stopper;
 
 mod take;
@@ -9,7 +9,7 @@ mod take;
 type BoxedError = Box<dyn Error>;
 type F64Result = Result<f64, BoxedError>;
 
-fn apply_args(func: &dyn Monoid, first: f64, rest: &[f64]) -> f64 {
+fn apply_args(func: &dyn Function, first: f64, rest: &[f64]) -> f64 {
     rest.into_iter().fold(first, |x, &y| func.apply(x, y))
 }
 
@@ -21,11 +21,11 @@ fn parse_line(line: &str) -> Result<impl Iterator<Item = f64>, ParseFloatError> 
     Ok(values?.into_iter())
 }
 
-fn apply_line<I: Iterator<Item = f64>>(func: &dyn Monoid, args: I) -> f64 {
+fn apply_line<I: Iterator<Item = f64>>(func: &dyn Function, args: I) -> f64 {
     args.fold(func.identity(), |x, y| func.apply(x, y))
 }
 
-fn apply_stdin(func: &dyn Monoid) -> F64Result {
+fn apply_stdin(func: &dyn Function) -> F64Result {
     stdin()
         .lines()
         .map(|a| -> Result<String, BoxedError> { Ok(a?) }) // Box io::Error
@@ -41,7 +41,7 @@ fn apply_stdin(func: &dyn Monoid) -> F64Result {
         .unwrap_or(Ok(func.identity())) // Default to monoid identity if stdin was empty
 }
 
-fn parse_args() -> Result<(&'static dyn Monoid, Vec<f64>), BoxedError> {
+fn parse_args() -> Result<(&'static dyn Function, Vec<f64>), BoxedError> {
     let mut args = env::args().skip(1);
     let func = args.next().ok_or(NoFunc)?;
     let func = function::parse(&func)?;
