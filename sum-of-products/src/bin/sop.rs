@@ -27,7 +27,7 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
 
     // Format output.
     //
-    // * Compute width of each column for formula terms:
+    // * Compute width of each column for formula terms
     let word_vecs: Vec<Vec<String>> = parsed
         .iter()
         .map(|values| values.iter().map(|value| value.to_string()).collect())
@@ -50,7 +50,7 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
         })
         .collect();
 
-    // * Render formulas:
+    // * Render formulas.  TODO: Align decimal points.
     let formulas: Vec<String> = parsed
         .into_iter()
         .map(|values| {
@@ -74,7 +74,7 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
     
     // dbg!(&formulas);
 
-    // * Determine total width, so we can right-align sum (below):
+    // * Determine total width, so we can right-align sum (below)
     debug_assert!(!formulas.is_empty());
     let formula_width = formulas[0].len();
     debug_assert!(formulas
