@@ -1,10 +1,3 @@
-fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
-    parsed
-        .iter()
-        .map(|values| values.iter().map(|value| value.to_string()).collect())
-        .collect()
-}
-
 fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str> {
     let word_vecs = render_values(&parsed);
     let column_count = word_vecs
@@ -22,6 +15,22 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str>
                 .unwrap_or_default()
         })
         .collect())
+}
+
+pub fn compute_total_width(formulas: &[String], sum: f64) -> usize {
+    debug_assert!(!formulas.is_empty());
+    let formula_width = formulas[0].len();
+    debug_assert!(formulas
+        .iter()
+        .all(|formula| formula.len() == formula_width));
+    formula_width + " = ".len() + sum.to_string().len()
+}
+
+fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
+    parsed
+        .iter()
+        .map(|values| values.iter().map(|value| value.to_string()).collect())
+        .collect()
 }
 
 // TODO: Align decimal points.
@@ -47,13 +56,4 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
             }
         })
         .collect())
-}
-
-pub fn compute_total_width(formulas: &[String], sum: f64) -> usize {
-    debug_assert!(!formulas.is_empty());
-    let formula_width = formulas[0].len();
-    debug_assert!(formulas
-        .iter()
-        .all(|formula| formula.len() == formula_width));
-    formula_width + " = ".len() + sum.to_string().len()
 }
