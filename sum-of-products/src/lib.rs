@@ -7,6 +7,15 @@ pub struct SumOfProducts {
     pub sum: f64,
 }
 
+pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
+    let products: Vec<f64> = parsed
+        .iter()
+        .map(|values| values.iter().product())
+        .collect();
+    let sum = products.iter().sum();
+    SumOfProducts { products, sum }
+}
+
 pub fn parse<I: Iterator<Item = io::Result<String>>>(
     lines: I,
 ) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
@@ -46,13 +55,4 @@ pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> Result<String, &'sta
         )))
         .collect();
     Ok(lines.join("\n"))
-}
-
-pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
-    let products: Vec<f64> = parsed
-        .iter()
-        .map(|values| values.iter().product())
-        .collect();
-    let sum = products.iter().sum();
-    SumOfProducts { products, sum }
 }

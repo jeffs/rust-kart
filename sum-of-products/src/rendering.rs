@@ -26,13 +26,6 @@ pub fn formula_width(formulas: &[String]) -> usize {
     formula_width
 }
 
-fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
-    parsed
-        .iter()
-        .map(|values| values.iter().map(|value| value.to_string()).collect())
-        .collect()
-}
-
 // TODO: Align decimal points.
 pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str> {
     let mul = " * ";
@@ -52,4 +45,11 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
             empty_columns.concat() + &columns.join(mul)
         })
         .collect())
+}
+
+fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
+    parsed
+        .iter()
+        .map(|values| values.iter().map(|value| value.to_string()).collect())
+        .collect()
 }
