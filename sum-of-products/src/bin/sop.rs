@@ -1,9 +1,8 @@
-use std::{error::Error, io::stdin, process::exit};
+use std::{error::Error, io, process::exit};
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, Box<dyn Error>> {
     // Parse input.
-    let parsed: Result<Vec<Vec<f64>>, _> = stdin()
-        .lines()
+    let parsed: Result<Vec<Vec<f64>>, _> = lines
         .map(|line| -> Result<_, Box<dyn Error>> {
             let values: Result<Vec<f64>, _> = line?
                 .split_ascii_whitespace()
@@ -73,7 +72,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         })
         .collect();
     
+    // dbg!(&formulas);
+
     // * Determine total width, so we can right-align sum (below):
+    debug_assert!(!formulas.is_empty());
     let formula_width = formulas[0].len();
     debug_assert!(formulas
         .iter()
@@ -85,12 +87,25 @@ fn main() -> Result<(), Box<dyn Error>> {
         .expect("at least one product, since input is known to be nonempty");
     let total_width = formula_width + " = ".len() + product_width;
 
+    let mut output_lines = Vec::new();
     // Print output table: "formula = product" lines, then "----", then sum.
     for (product, formula) in products.into_iter().zip(formulas.into_iter()) {
-        println!("{formula} = {product:>4}");
+        output_lines.push(format!("{formula} = {product:>4}"));
     }
-    println!("{:>1$}\n{sum:>1$}", "----", total_width);
+    output_lines.push(format!("{:>1$}\n{sum:>1$}", "----", total_width));
 
     // Return success.
-    Ok(())
+    Ok(output_lines.join("\n"))
+}
+
+fn main() {
+    match main_imp(io::stdin().lines()) {
+        Ok(output) => {
+            println!("{output}")
+        }
+        Err(err) => {
+            eprintln!("error: {err}");
+            exit(1);
+        }
+    }
 }
