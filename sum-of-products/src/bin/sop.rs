@@ -1,22 +1,29 @@
 use std::{error::Error, io, process::exit};
 
-fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, Box<dyn Error>> {
-    // Parse input.
-    let parsed: Result<Vec<Vec<f64>>, _> = lines
+fn parse_input<I: Iterator<Item = io::Result<String>>>(
+    lines: I,
+) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
+    lines
         .map(|line| -> Result<_, Box<dyn Error>> {
+            // Convert each line from a string to a vector of numbers.
             let values: Result<Vec<f64>, _> = line?
                 .split_ascii_whitespace()
                 .map(|word| word.parse())
                 .collect();
             Ok(values?)
         })
-        .collect();
+        .filter(|result| {
+            // Discard empty vectors.
+            !result
+                .as_ref()
+                .map(|values| values.is_empty())
+                .unwrap_or_default()
+        })
+        .collect()
+}
 
-    // Filter out empty lines.
-    let parsed: Vec<Vec<f64>> = parsed?
-        .into_iter()
-        .filter(|values| !values.is_empty())
-        .collect();
+fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, Box<dyn Error>> {
+    let parsed = parse_input(lines)?;
 
     // Compute results.
     let products: Vec<f64> = parsed
@@ -40,7 +47,8 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
             eprintln!("error: expected at least one input value");
             exit(2);
         });
-    let widths: Vec<usize> = (0..column_count).rev()
+    let widths: Vec<usize> = (0..column_count)
+        .rev()
         .map(|index| {
             word_vecs
                 .iter()
@@ -71,7 +79,7 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
             }
         })
         .collect();
-    
+
     // dbg!(&formulas);
 
     // * Determine total width, so we can right-align sum (below)
