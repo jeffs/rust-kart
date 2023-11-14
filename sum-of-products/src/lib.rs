@@ -32,12 +32,14 @@ pub fn parse<I: Iterator<Item = io::Result<String>>>(
 pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> Result<String, &'static str> {
     use rendering::*;
     let SumOfProducts { products, sum } = output;
+    let eq = " = ";
     let formulas = render_formulas(&input)?;
-    let total_width = compute_total_width(&formulas, sum);
+    let sum_width = sum.to_string().len();
+    let total_width = formula_width(&formulas) + eq.len() + sum_width;
     let lines: Vec<String> = formulas
         .iter()
         .zip(products.iter())
-        .map(|(formula, product)| format!("{formula} = {product:>4}"))
+        .map(|(formula, product)| format!("{formula}{eq}{product:>4}"))
         .chain(iter::once(format!(
             "{:>1$}\n{sum:>1$}",
             "----", total_width
