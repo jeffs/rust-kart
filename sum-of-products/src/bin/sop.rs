@@ -40,7 +40,7 @@ fn main_imp<I: Iterator<Item = io::Result<String>>>(lines: I) -> Result<String, 
             eprintln!("error: expected at least one input value");
             exit(2);
         });
-    let widths: Vec<usize> = (0..column_count)
+    let widths: Vec<usize> = (0..column_count).rev()
         .map(|index| {
             word_vecs
                 .iter()
