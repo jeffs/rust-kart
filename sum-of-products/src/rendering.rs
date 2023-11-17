@@ -14,7 +14,8 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str>
                 .max()
                 .unwrap_or_default()
         })
-        .collect())
+        .collect_into(&mut Vec::with_capacity(parsed.len()))
+        .to_vec())
 }
 
 pub fn formula_width(formulas: &[String]) -> usize {
@@ -36,20 +37,24 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
             let empty_count = widths.len() - values.len();
             let empty_columns: Vec<String> = (0..empty_count)
                 .map(|index| " ".repeat(widths[index] + mul.len()))
-                .collect();
+                .collect_into(&mut Vec::with_capacity(empty_count))
+                .to_vec();
             let columns: Vec<String> = values
                 .into_iter()
                 .zip(widths[empty_count..].iter())
                 .map(|(value, width)| format!("{value:>0$}", width))
-                .collect();
+                .collect_into(&mut Vec::with_capacity(values.len()))
+                .to_vec();
             empty_columns.concat() + &columns.join(mul)
         })
-        .collect())
+        .collect_into(&mut Vec::with_capacity(parsed.len()))
+        .to_vec())
 }
 
 fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
     parsed
         .iter()
         .map(|values| values.iter().map(|value| value.to_string()).collect())
-        .collect()
+        .collect_into(&mut Vec::with_capacity(parsed.len()))
+        .to_vec()
 }

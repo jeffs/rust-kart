@@ -1,3 +1,5 @@
+#![feature(iter_collect_into)]
+
 mod rendering;
 
 use std::{error::Error, io, iter};
