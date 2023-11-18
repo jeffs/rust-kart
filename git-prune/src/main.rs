@@ -62,12 +62,8 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Delete branches that are not ahead of main.
     if !dead_branches.is_empty() {
-        let n = dead_branches.len();
-        let s = (n > 1).then_some("es").unwrap_or_default();
-        println!("Deleting {n} branch{s}:");
-        for branch in &dead_branches {
-            println!("  {branch}");
-        }
+        // Git allows commas, but not spaces, in branch names.
+        println!("rm: {}", dead_branches.join(" "));
         git(["branch", "-d"].into_iter().chain(dead_branches)).await?;
     }
 
@@ -76,7 +72,7 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
 
     // Print the current branch name before exiting.
     let head = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
-    print!("HEAD:\n  {head}");
+    print!("co: {head}");
 
     Ok(())
 }
