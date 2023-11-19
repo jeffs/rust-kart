@@ -9,7 +9,6 @@ members = [
     "diet",
     "git-prune",
     "hexify",
-    "len",
     "maths",
     "pangram",
     "sum-of-products",
