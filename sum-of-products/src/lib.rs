@@ -48,7 +48,7 @@ pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> Result<String, &'sta
     let lines: Vec<String> = formulas
         .iter()
         .zip(products.iter())
-        .map(|(formula, product)| format!("{formula}{eq}{product:>4}"))
+        .map(|(formula, product)| format!("{formula}{eq}{product:>0$}", sum_width))
         .chain(iter::once(format!(
             "{:>1$}\n{sum:>1$}",
             "----", total_width
