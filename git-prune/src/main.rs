@@ -9,11 +9,25 @@ use std::ffi::OsStr;
 use std::process::exit;
 use tokio::process::Command;
 
+const ORIGIN: &str = "origin";
+
 async fn git<S, I>(args: I) -> Result<String, String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
+    #[cfg(debug)]
+    {
+        let args: Vec<_> = args.into_iter().collect();
+        eprintln!(
+            "debug: {}",
+            args.iter()
+                .map(|arg| arg.as_ref().to_string_lossy())
+                .collect::<Vec<_>>()
+                .join(" ")
+        );
+    }
+
     let output = Command::new("git")
         .args(args)
         .output()
@@ -28,7 +42,7 @@ where
 }
 
 /// Returns the local main branch (trunk) name, or an error.
-async fn trunk() -> Result<&'static str, String> {
+async fn local_trunk() -> Result<&'static str, String> {
     let names = ["main", "master"];
     for branch in names {
         if git(["show-ref", branch]).await.is_ok() {
@@ -40,25 +54,45 @@ async fn trunk() -> Result<&'static str, String> {
 }
 
 async fn main_imp() -> Result<(), Box<dyn Error>> {
-    // Check out the main branch.
-    git(["checkout", trunk().await?]).await?;
-    let _ = git(["pull", "--prune"]).await;
+    // Identify local head and trunk.
+    let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
+    let orig = orig.as_str().trim();
+    let trunk = local_trunk().await?;
 
-    // List all branches except the one we just checked out.
+    // Sync from origin, and update local trunk.
+    if let Err(err) = git(["fetch", "--prune", ORIGIN]).await {
+        eprintln!("warning: can't fetch {ORIGIN}: {err}")
+    } else if orig == trunk {
+        git(["pull"]).await?;
+    } else {
+        // Update local trunk to match origin.
+        git(["branch", "-f", trunk, &format!("{ORIGIN}/{trunk}")]).await?;
+    }
+
+    // List all branches except trunk.
     let branches = git(["branch"]).await?;
     let branches = branches
         .lines()
-        .filter(|line| !line.starts_with('*'))
-        .map(|line| line.trim());
+        .filter(|line| !line.ends_with(&format!(" {trunk}")))
+        .map(|line| &line[2..]); // Remove leading '*' or ' '.
 
     // List branches that are not ahead of main.
     let mut dead_branches = Vec::new();
     for branch in branches {
-        let range = format!("..{branch}");
+        let range = format!("{trunk}..{branch}");
         if git(["rev-list", "--count", &range]).await? == "0\n" {
             dead_branches.push(branch);
         }
     }
+
+    // Remember where we're leaving the local head, so we can print it later.
+    let last = if dead_branches.contains(&orig) {
+        // We can't delete the branch we're sitting on; so, sit elsewhere.
+        git(["checkout", &trunk]).await?;
+        trunk
+    } else {
+        orig
+    };
 
     // Delete branches that are not ahead of main.
     if !dead_branches.is_empty() {
@@ -67,13 +101,13 @@ async fn main_imp() -> Result<(), Box<dyn Error>> {
         git(["branch", "-d"].into_iter().chain(dead_branches)).await?;
     }
 
-    // Return to the originally checked out branch, unless it's gone.
-    let _ = git(["checkout", "-"]).await;
+    // Return to the original branch, unless it's gone.
+    if orig != last {
+        git(["checkout", &orig]).await?;
+    }
 
     // Print the current branch name before exiting.
-    let head = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
-    print!("co: {head}");
-
+    println!("co: {last}");
     Ok(())
 }
 
