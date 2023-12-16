@@ -3,15 +3,33 @@
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
 
-use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::process::exit;
+use std::{env, fmt};
 use tokio::process::Command;
 
-const ORIGIN: &str = "origin";
+#[derive(Debug)]
+struct SimpleError(String);
 
-async fn git<S, I>(args: I) -> Result<String, String>
+impl fmt::Display for SimpleError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl<S> From<S> for SimpleError
+where
+    S: Into<String>,
+{
+    fn from(value: S) -> Self {
+        SimpleError(value.into())
+    }
+}
+
+impl Error for SimpleError {}
+
+async fn git<S, I>(args: I) -> Result<String, SimpleError>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -53,21 +71,56 @@ async fn local_trunk() -> Result<&'static str, String> {
     Err(format!("expected trunk; can't find {names}"))
 }
 
-async fn main_imp() -> Result<(), Box<dyn Error>> {
+async fn upstream(branch: &str) -> Option<String> {
+    git([
+        "rev-parse",
+        "--abbrev-ref",
+        "--symbolic-full-name",
+        &format!("{branch}@{{u}}"),
+    ])
+    .await
+    .ok()
+    .map(|s| s.trim().to_owned())
+}
+
+async fn update_other_branch(branch: &str, upstream: &str) -> Result<(), SimpleError> {
+    let Some((remote, _)) = upstream.split_once('/') else {
+        return Err(format!("{upstream}: bad upstream; expected ORIGIN/BRANCH").into());
+    };
+    if let Err(err) = git(["fetch", "--prune", remote]).await {
+        return Err(format!("can't fetch {remote}: {err}").into());
+    }
+    git(["branch", "-f", branch, &upstream]).await?;
+    Ok(())
+}
+
+async fn try_pull(trunk: &str, head: &str) {
+    let Some(remote) = upstream(trunk).await else {
+        return;
+    };
+
+    if head == trunk {
+        if let Err(err) = git(["pull"]).await {
+            eprintln!("warning: can't pull {trunk}: {err}");
+            return;
+        }
+    } else {
+        if let Err(err) = update_other_branch(trunk, &remote).await {
+            eprintln!("warning: can't move {trunk}: {err}");
+            return;
+        }
+    }
+    println!("mv: {trunk} {remote}");
+}
+
+async fn main_imp() -> Result<(), SimpleError> {
     // Identify local head and trunk.
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
     let trunk = local_trunk().await?;
 
-    // Sync from origin, and update local trunk.
-    if let Err(err) = git(["fetch", "--prune", ORIGIN]).await {
-        eprintln!("warning: can't fetch {ORIGIN}: {err}")
-    } else if orig == trunk {
-        git(["pull"]).await?;
-    } else {
-        // Update local trunk to match origin.
-        git(["branch", "-f", trunk, &format!("{ORIGIN}/{trunk}")]).await?;
-    }
+    // Update trunk from remote, if possible.
+    try_pull(trunk, orig).await;
 
     // List all branches except trunk.
     let branches = git(["branch"]).await?;
