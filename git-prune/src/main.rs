@@ -98,7 +98,6 @@ async fn try_pull(trunk: &str, head: &str) {
     let Some(remote) = upstream(trunk).await else {
         return;
     };
-
     if head == trunk {
         if let Err(err) = git(["pull"]).await {
             eprintln!("warning: can't pull {trunk}: {err}");
@@ -110,16 +109,14 @@ async fn try_pull(trunk: &str, head: &str) {
             return;
         }
     }
-    println!("mv: {trunk} {remote}");
 }
 
 async fn main_imp() -> Result<(), SimpleError> {
-    // Identify local head and trunk.
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
-    let trunk = local_trunk().await?;
 
     // Update trunk from remote, if possible.
+    let trunk = local_trunk().await?;
     try_pull(trunk, orig).await;
 
     // List all branches except trunk.
@@ -129,7 +126,7 @@ async fn main_imp() -> Result<(), SimpleError> {
         .filter(|line| !line.ends_with(&format!(" {trunk}")))
         .map(|line| &line[2..]); // Remove leading '*' or ' '.
 
-    // List branches that are not ahead of main.
+    // Filter branches that are not ahead of main.
     let mut dead_branches = Vec::new();
     for branch in branches {
         let range = format!("{trunk}..{branch}");
@@ -138,29 +135,19 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    // Remember where we're leaving the local head, so we can print it later.
-    let last = if dead_branches.contains(&orig) {
-        // We can't delete the branch we're sitting on; so, sit elsewhere.
+    // If we're to delete the branch we're sitting on, sit elsewhere.
+    if dead_branches.contains(&orig) {
         git(["checkout", &trunk]).await?;
-        trunk
-    } else {
-        orig
-    };
+        println!("co {trunk}");
+    }
 
     // Delete branches that are not ahead of main.
     if !dead_branches.is_empty() {
         // Git allows commas, but not spaces, in branch names.
-        println!("rm: {}", dead_branches.join(" "));
-        git(["branch", "-d"].into_iter().chain(dead_branches)).await?;
+        println!("rm {}", dead_branches.join(" "));
+        git(["branch", "-D"].into_iter().chain(dead_branches)).await?;
     }
 
-    // Return to the original branch, unless it's gone.
-    if orig != last {
-        git(["checkout", &orig]).await?;
-    }
-
-    // Print the current branch name before exiting.
-    println!("co: {last}");
     Ok(())
 }
 
