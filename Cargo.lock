@@ -171,10 +171,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "infiniterator"
-version = "0.1.0"
-
-[[package]]
 name = "js-sys"
 version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -261,6 +257,10 @@ version = "0.1.0"
 dependencies = [
  "arg5",
 ]
+
+[[package]]
+name = "perpetuity"
+version = "0.1.0"
 
 [[package]]
 name = "pin-project-lite"

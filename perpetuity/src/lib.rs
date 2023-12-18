@@ -1,46 +1,43 @@
 use std::{mem, ops::RangeFrom};
 
 // Like std::iter::Iterator, but returns items directly, rather than options.
-pub trait Infiniterator: Sized {
+pub trait Perpetuity: Sized {
     type Item;
 
     fn next_item(&mut self) -> Self::Item;
 
-    // We can't automatically impl IntoIterator for all Infiniterators, because
-    // IntoIterator isn't defined here, and that's a rule.
+    // We can't automatically impl IntoIterator for all types that implement us,
+    // because we didn't define either IntoIterator or those types.
     fn into_iter(self) -> IntoIter<Self> {
         IntoIter(self)
     }
 
-    fn take(self, n: usize) -> Take<Self> {
-        Take {
-            items: self,
-            count: n,
-        }
+    fn take(self, count: usize) -> Take<Self> {
+        Take { items: self, count }
     }
 }
 
 #[cfg(todo)]
-pub trait IntoInfiniterator {
+pub trait IntoPerpetuity {
     type Item;
-    type IntoInf: Infiniterator<Item = Self::Item>;
-    fn into_inf(self) -> Self::IntoInf;
+    type IntoPerp: Perpetuity<Item = Self::Item>;
+    fn into_perp(self) -> Self::IntoPerp;
 }
 
-/// Erases the type of the infinerator.
+/// Returns the specified Perpetuity, erasing any further type information.
 /// ```
 /// let _: Vec<i32> = (0..).take(4).collect();
 /// ```
 /// ```compile_fail
-/// let _: Vec<i32> = infiniterator::from(0..).take(4).collect();
+/// let _: Vec<i32> = perpetuity::assimilate(0..).take(4).collect();
 /// ```
-pub fn from<T>(items: impl Infiniterator<Item = T>) -> impl Infiniterator<Item = T> {
+pub fn assimilate<T>(items: impl Perpetuity<Item = T>) -> impl Perpetuity<Item = T> {
     items
 }
 
-pub struct IntoIter<I: Infiniterator>(I);
+pub struct IntoIter<I: Perpetuity>(I);
 
-impl<I: Infiniterator> Iterator for IntoIter<I> {
+impl<I: Perpetuity> Iterator for IntoIter<I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -48,12 +45,12 @@ impl<I: Infiniterator> Iterator for IntoIter<I> {
     }
 }
 
-pub struct Take<I: Infiniterator> {
+pub struct Take<I: Perpetuity> {
     items: I,
     count: usize,
 }
 
-impl<I: Infiniterator> Iterator for Take<I> {
+impl<I: Perpetuity> Iterator for Take<I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -69,7 +66,7 @@ pub struct Successors<T, F: FnMut(&T) -> T> {
     succ: F,
 }
 
-impl<T, F: FnMut(&T) -> T> Infiniterator for Successors<T, F> {
+impl<T, F: FnMut(&T) -> T> Perpetuity for Successors<T, F> {
     type Item = T;
     fn next_item(&mut self) -> Self::Item {
         let next = (self.succ)(&self.next);
@@ -86,7 +83,7 @@ impl<T, F: FnMut(&T) -> T> Infiniterator for Successors<T, F> {
 // If we could use Step in stable Rust, the impl might look like this:
 //
 // ```
-// impl<A: Step> Infiniterator for RangeFrom<A> {
+// impl<A: Step> Perpetuity for RangeFrom<A> {
 //     type Item = A;
 //     fn next_item(&mut self) -> Self::Item {
 //         self.next().unwrap()
@@ -97,7 +94,7 @@ impl<T, F: FnMut(&T) -> T> Infiniterator for Successors<T, F> {
 // So instead, we crank out implementations for specific types of RangeFrom.
 macro_rules! range_from {
     ($t:ty) => {
-        impl Infiniterator for RangeFrom<$t> {
+        impl Perpetuity for RangeFrom<$t> {
             type Item = $t;
             fn next_item(&mut self) -> Self::Item {
                 <Self as Iterator>::next(self).unwrap()
@@ -133,13 +130,13 @@ mod tests {
 
     #[test]
     fn into_iter() {
-        let got: Vec<i32> = from(0..).into_iter().take(4).collect();
+        let got: Vec<i32> = assimilate(0..).into_iter().take(4).collect();
         assert_eq!(got, [0, 1, 2, 3]);
     }
 
     #[test]
     fn take() {
-        let got: Vec<i32> = from(0..).take(4).collect();
+        let got: Vec<i32> = assimilate(0..).take(4).collect();
         assert_eq!(got, [0, 1, 2, 3]);
     }
 }
