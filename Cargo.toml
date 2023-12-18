@@ -9,8 +9,8 @@ members = [
     "diet",
     "git-prune",
     "hexify",
-    "maths",
     "pangram",
+    "stop-once",
     "sum-of-products",
     "tmux-send",
 ]
