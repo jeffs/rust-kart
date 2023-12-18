@@ -1,7 +1,7 @@
-use std::ops::RangeFrom;
+use std::{mem, ops::RangeFrom};
 
 // Like std::iter::Iterator, but returns items directly, rather than options.
-trait Infiniterator: Sized {
+pub trait Infiniterator: Sized {
     type Item;
 
     fn next_item(&mut self) -> Self::Item;
@@ -11,15 +11,69 @@ trait Infiniterator: Sized {
     fn into_iter(self) -> IntoIter<Self> {
         IntoIter(self)
     }
+
+    fn take(self, n: usize) -> Take<Self> {
+        Take {
+            items: self,
+            count: n,
+        }
+    }
 }
 
-struct IntoIter<I: Infiniterator>(I);
+#[cfg(todo)]
+pub trait IntoInfiniterator {
+    type Item;
+    type IntoInf: Infiniterator<Item = Self::Item>;
+    fn into_inf(self) -> Self::IntoInf;
+}
+
+/// Erases the type of the infinerator.
+/// ```
+/// let _: Vec<i32> = (0..).take(4).collect();
+/// ```
+/// ```compile_fail
+/// let _: Vec<i32> = infiniterator::from(0..).take(4).collect();
+/// ```
+pub fn from<T>(items: impl Infiniterator<Item = T>) -> impl Infiniterator<Item = T> {
+    items
+}
+
+pub struct IntoIter<I: Infiniterator>(I);
 
 impl<I: Infiniterator> Iterator for IntoIter<I> {
     type Item = I::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.0.next_item())
+    }
+}
+
+pub struct Take<I: Infiniterator> {
+    items: I,
+    count: usize,
+}
+
+impl<I: Infiniterator> Iterator for Take<I> {
+    type Item = I::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        (self.count > 0).then(|| {
+            self.count -= 1;
+            self.items.next_item()
+        })
+    }
+}
+
+pub struct Successors<T, F: FnMut(&T) -> T> {
+    next: T,
+    succ: F,
+}
+
+impl<T, F: FnMut(&T) -> T> Infiniterator for Successors<T, F> {
+    type Item = T;
+    fn next_item(&mut self) -> Self::Item {
+        let next = (self.succ)(&self.next);
+        mem::replace(&mut self.next, next)
     }
 }
 
@@ -69,19 +123,23 @@ mod tests {
 
     #[test]
     fn next_item() {
-        let mut counts = Vec::new();
+        let mut got = Vec::new();
         let mut count = 0..;
         for _ in 0..4 {
-            counts.push(count.next_item()); // Look ma, no .unwrap()!
+            got.push(count.next_item()); // Look ma, no .unwrap()!
         }
-        assert_eq!(counts, [0, 1, 2, 3]);
+        assert_eq!(got, [0, 1, 2, 3]);
     }
 
     #[test]
     fn into_iter() {
-        fn take4<I: Infiniterator>(items: I) -> Vec<I::Item> {
-            items.into_iter().take(4).collect()
-        }
-        assert_eq!(take4(0..), [0, 1, 2, 3]);
+        let got: Vec<i32> = from(0..).into_iter().take(4).collect();
+        assert_eq!(got, [0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn take() {
+        let got: Vec<i32> = from(0..).take(4).collect();
+        assert_eq!(got, [0, 1, 2, 3]);
     }
 }
