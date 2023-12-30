@@ -3,9 +3,16 @@
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
 
+// TODO: Delete remote branches behind trunk.
+
+// TODO: Don't mess up "checkout -" by checking out main.  I tried _not_
+// checking out main, but after fetch --prune, the user still sees a list of
+// obsolete branches the next time they pull --prune; so now this program checks
+// out main just so it can run pull --prune per se.
+
 use std::error::Error;
 use std::ffi::OsStr;
-use std::process::exit;
+use std::process::{exit, ExitStatus};
 use std::{env, fmt};
 use tokio::process::Command;
 
@@ -29,34 +36,72 @@ where
 
 impl Error for SimpleError {}
 
-async fn git<S, I>(args: I) -> Result<String, SimpleError>
+fn format_git_command<S, I>(args: I) -> String
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    #[cfg(debug)]
-    {
-        let args: Vec<_> = args.into_iter().collect();
-        eprintln!(
-            "debug: {}",
-            args.iter()
-                .map(|arg| arg.as_ref().to_string_lossy())
-                .collect::<Vec<_>>()
-                .join(" ")
-        );
-    }
+    let args: Vec<_> = args.into_iter().collect();
+    let strs: Vec<_> = args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
+    format!("git {}", strs.join(" "))
+}
 
+/// Returns (success, stdout, stderr).
+async fn run_git<S, I>(args: I) -> (ExitStatus, String, String)
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     let output = Command::new("git")
         .args(args)
         .output()
         .await
         .expect("git should be executable");
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    if !output.status.success() {
+    (
+        output.status,
+        String::from_utf8_lossy(&output.stdout).to_string(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+async fn git<S, I>(args: I) -> Result<String, SimpleError>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let args: Vec<_> = args.into_iter().collect();
+    print!("{}", format_git_command(&args));
+
+    let (status, stdout, stderr) = run_git(args).await;
+    if !status.success() {
         return Err(stderr.into());
     }
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    Ok((stderr + stdout).into())
+
+    let lines: Vec<_> = stdout.lines().collect();
+    match lines.len() {
+        0 => println!(),
+        1 => println!(": {}", lines[0].trim()),
+        _ => {
+            println!(":");
+            for line in lines {
+                println!("  {line}");
+            }
+        }
+    }
+
+    Ok((stderr + &stdout).into())
+}
+
+async fn git_quiet<S, I>(args: I) -> Result<String, SimpleError>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let (status, stdout, stderr) = run_git(args).await;
+    if !status.success() {
+        return Err(stderr.into());
+    }
+    Ok((stderr + &stdout).into())
 }
 
 /// Returns the local main branch (trunk) name, or an error.
@@ -83,50 +128,27 @@ async fn upstream(branch: &str) -> Option<String> {
     .map(|s| s.trim().to_owned())
 }
 
-async fn update_other_branch(branch: &str, upstream: &str) -> Result<(), SimpleError> {
-    let Some((remote, _)) = upstream.split_once('/') else {
-        return Err(format!("{upstream}: bad upstream; expected ORIGIN/BRANCH").into());
-    };
-    if let Err(err) = git(["fetch", "--prune", remote]).await {
-        return Err(format!("can't fetch {remote}: {err}").into());
-    }
-    git(["branch", "-f", branch, &upstream]).await?;
-    Ok(())
-}
-
-async fn try_pull(trunk: &str, head: &str) {
-    let Some(remote) = upstream(trunk).await else {
-        return;
-    };
-    if head == trunk {
-        if let Err(err) = git(["pull"]).await {
-            eprintln!("warning: can't pull {trunk}: {err}");
-            return;
-        }
-    } else {
-        if let Err(err) = update_other_branch(trunk, &remote).await {
-            eprintln!("warning: can't move {trunk}: {err}");
-            return;
-        }
-    }
-}
-
 async fn main_imp() -> Result<(), SimpleError> {
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
 
-    // Update trunk from remote, if possible.
     let trunk = local_trunk().await?;
-    try_pull(trunk, orig).await;
+    if trunk != orig {
+        git(["checkout", trunk]).await?;
+    }
 
-    // List all branches except trunk.
-    let branches = git(["branch"]).await?;
+    if upstream(trunk).await.is_some() {
+        if let Err(err) = git(["pull", "--prune"]).await {
+            eprintln!("warning: can't pull {trunk}: {err}");
+        }
+    }
+
+    let branches = git_quiet(["branch"]).await?;
     let branches = branches
         .lines()
-        .filter(|line| !line.ends_with(&format!(" {trunk}")))
-        .map(|line| &line[2..]); // Remove leading '*' or ' '.
+        .filter(|line| !line.starts_with("* "))
+        .map(|line| &line[2..]); // Remove leading ' '.
 
-    // Filter branches that are not ahead of main.
     let mut dead_branches = Vec::new();
     for branch in branches {
         let range = format!("{trunk}..{branch}");
@@ -135,16 +157,11 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    // If we're to delete the branch we're sitting on, sit elsewhere.
-    if dead_branches.contains(&orig) {
-        git(["checkout", &trunk]).await?;
-        println!("co {trunk}");
+    if trunk != orig && !dead_branches.contains(&orig) {
+        git(["checkout", orig]).await?;
     }
 
-    // Delete branches that are not ahead of main.
     if !dead_branches.is_empty() {
-        // Git allows commas, but not spaces, in branch names.
-        println!("rm {}", dead_branches.join(" "));
         git(["branch", "-D"].into_iter().chain(dead_branches)).await?;
     }
 
