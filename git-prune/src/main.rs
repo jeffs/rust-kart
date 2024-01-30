@@ -4,11 +4,13 @@
 //! `master` is used as a fallback if no `main` branch is found.
 
 // TODO: Delete remote branches behind trunk.
-
+//
 // TODO: Don't mess up "checkout -" by checking out main.  I tried _not_
-// checking out main, but after fetch --prune, the user still sees a list of
-// obsolete branches the next time they pull --prune; so now this program checks
-// out main just so it can run pull --prune per se.
+//   checking out main, but after fetch --prune, the user still sees a list of
+//   obsolete branches the next time they pull --prune; so now this program
+//   checks out main just so it can run pull --prune per se.
+//
+// TODO: Check that working copy is clean before switching or pulling branches.
 
 use std::error::Error;
 use std::ffi::OsStr;
