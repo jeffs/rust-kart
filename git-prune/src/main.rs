@@ -3,6 +3,10 @@
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
 
+// TODO: Rename this program.  git-prune is already a thing.
+//
+// TODO: Call `git branch --merged` rather than looping through branches.
+//
 // TODO: Delete remote branches behind trunk.
 //
 // TODO: Don't mess up "checkout -" by checking out main.  I tried _not_
