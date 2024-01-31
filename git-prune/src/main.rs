@@ -130,7 +130,15 @@ async fn upstream(branch: &str) -> Option<String> {
     .map(|s| s.trim().to_owned())
 }
 
+async fn is_working_copy_clean() -> Result<bool, SimpleError> {
+    Ok(git(["status", "--porcelain"]).await?.is_empty())
+}
+
 async fn main_imp() -> Result<(), SimpleError> {
+    if !is_working_copy_clean().await? {
+        return Err(SimpleError("working copy is unclean".to_owned()));
+    }
+
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
 
