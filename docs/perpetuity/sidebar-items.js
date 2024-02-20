@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["assimilate"],"struct":["IntoIter","Successors","Take"],"trait":["Perpetuity"]};

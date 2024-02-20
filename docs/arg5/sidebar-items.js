@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Store"],"struct":["Binding","ParseError","Parser"],"trait":["Bind"]};

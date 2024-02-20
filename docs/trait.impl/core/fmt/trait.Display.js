@@ -1,0 +1,5 @@
+(function() {var implementors = {
+"diet":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.75.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"enum\" href=\"diet/enum.MainError.html\" title=\"enum diet::MainError\">MainError</a>"]],
+"git_prune":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.75.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"struct\" href=\"git_prune/struct.SimpleError.html\" title=\"struct git_prune::SimpleError\">SimpleError</a>"]],
+"pangram":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.75.0/core/fmt/trait.Display.html\" title=\"trait core::fmt::Display\">Display</a> for <a class=\"struct\" href=\"pangram/main_error/struct.MainError.html\" title=\"struct pangram::main_error::MainError\">MainError</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

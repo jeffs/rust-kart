@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["delay"],"struct":["Delayed"],"trait":["Delay"]};
