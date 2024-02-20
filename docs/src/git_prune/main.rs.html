@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `git-prune/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="git_prune" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `git-prune/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-452d19225583af2a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="git_prune" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (3cdd004e5 2023-12-29)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6902632119e002ca.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -193,7 +194,7 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This program pulls the main branch of the repo from which it&#39;s called, then
+</pre></div><pre class="rust"><code><span class="doccomment">//! This program pulls the main branch of the repo from which it's called, then
 //! deletes any local branches that are not ahead of main, and finally checks
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
@@ -204,7 +205,7 @@
 //
 // TODO: Delete remote branches behind trunk.
 //
-// TODO: Don&#39;t mess up &quot;checkout -&quot; by checking out main.  I tried _not_
+// TODO: Don't mess up "checkout -" by checking out main.  I tried _not_
 //   checking out main, but after fetch --prune, the user still sees a list of
 //   obsolete branches the next time they pull --prune; so now this program
 //   checks out main just so it can run pull --prune per se.
@@ -222,7 +223,7 @@
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>SimpleError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
@@ -244,7 +245,7 @@
 {
     <span class="kw">let </span>args: Vec&lt;<span class="kw">_</span>&gt; = args.into_iter().collect();
     <span class="kw">let </span>strs: Vec&lt;<span class="kw">_</span>&gt; = args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
-    <span class="macro">format!</span>(<span class="string">&quot;git {}&quot;</span>, strs.join(<span class="string">&quot; &quot;</span>))
+    <span class="macro">format!</span>(<span class="string">"git {}"</span>, strs.join(<span class="string">" "</span>))
 }
 
 <span class="doccomment">/// Returns (success, stdout, stderr).
@@ -253,11 +254,11 @@
     </span>I: IntoIterator&lt;Item = S&gt;,
     S: AsRef&lt;OsStr&gt;,
 {
-    <span class="kw">let </span>output = Command::new(<span class="string">&quot;git&quot;</span>)
+    <span class="kw">let </span>output = Command::new(<span class="string">"git"</span>)
         .args(args)
         .output()
         .<span class="kw">await
-        </span>.expect(<span class="string">&quot;git should be executable&quot;</span>);
+        </span>.expect(<span class="string">"git should be executable"</span>);
     (
         output.status,
         String::from_utf8_lossy(<span class="kw-2">&amp;</span>output.stdout).to_string(),
@@ -271,7 +272,7 @@
     S: AsRef&lt;OsStr&gt;,
 {
     <span class="kw">let </span>args: Vec&lt;<span class="kw">_</span>&gt; = args.into_iter().collect();
-    <span class="macro">print!</span>(<span class="string">&quot;{}&quot;</span>, format_git_command(<span class="kw-2">&amp;</span>args));
+    <span class="macro">print!</span>(<span class="string">"{}"</span>, format_git_command(<span class="kw-2">&amp;</span>args));
 
     <span class="kw">let </span>(status, stdout, stderr) = run_git(args).<span class="kw">await</span>;
     <span class="kw">if </span>!status.success() {
@@ -281,11 +282,11 @@
     <span class="kw">let </span>lines: Vec&lt;<span class="kw">_</span>&gt; = stdout.lines().collect();
     <span class="kw">match </span>lines.len() {
         <span class="number">0 </span>=&gt; <span class="macro">println!</span>(),
-        <span class="number">1 </span>=&gt; <span class="macro">println!</span>(<span class="string">&quot;: {}&quot;</span>, lines[<span class="number">0</span>].trim()),
+        <span class="number">1 </span>=&gt; <span class="macro">println!</span>(<span class="string">": {}"</span>, lines[<span class="number">0</span>].trim()),
         <span class="kw">_ </span>=&gt; {
-            <span class="macro">println!</span>(<span class="string">&quot;:&quot;</span>);
+            <span class="macro">println!</span>(<span class="string">":"</span>);
             <span class="kw">for </span>line <span class="kw">in </span>lines {
-                <span class="macro">println!</span>(<span class="string">&quot;  {line}&quot;</span>);
+                <span class="macro">println!</span>(<span class="string">"  {line}"</span>);
             }
         }
     }
@@ -306,23 +307,23 @@
 }
 
 <span class="doccomment">/// Returns the local main branch (trunk) name, or an error.
-</span><span class="kw">async fn </span>local_trunk() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt; {
-    <span class="kw">let </span>names = [<span class="string">&quot;main&quot;</span>, <span class="string">&quot;master&quot;</span>];
+</span><span class="kw">async fn </span>local_trunk() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, String&gt; {
+    <span class="kw">let </span>names = [<span class="string">"main"</span>, <span class="string">"master"</span>];
     <span class="kw">for </span>branch <span class="kw">in </span>names {
-        <span class="kw">if </span>git([<span class="string">&quot;show-ref&quot;</span>, branch]).<span class="kw">await</span>.is_ok() {
+        <span class="kw">if </span>git([<span class="string">"show-ref"</span>, branch]).<span class="kw">await</span>.is_ok() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(branch);
         }
     }
-    <span class="kw">let </span>names = names.join(<span class="string">&quot; or &quot;</span>);
-    <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;expected trunk; can&#39;t find {names}&quot;</span>))
+    <span class="kw">let </span>names = names.join(<span class="string">" or "</span>);
+    <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"expected trunk; can't find {names}"</span>))
 }
 
 <span class="kw">async fn </span>upstream(branch: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     git([
-        <span class="string">&quot;rev-parse&quot;</span>,
-        <span class="string">&quot;--abbrev-ref&quot;</span>,
-        <span class="string">&quot;--symbolic-full-name&quot;</span>,
-        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{branch}@{{u}}&quot;</span>),
+        <span class="string">"rev-parse"</span>,
+        <span class="string">"--abbrev-ref"</span>,
+        <span class="string">"--symbolic-full-name"</span>,
+        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{branch}@{{u}}"</span>),
     ])
     .<span class="kw">await
     </span>.ok()
@@ -330,48 +331,48 @@
 }
 
 <span class="kw">async fn </span>is_working_copy_clean() -&gt; <span class="prelude-ty">Result</span>&lt;bool, SimpleError&gt; {
-    <span class="prelude-val">Ok</span>(git([<span class="string">&quot;status&quot;</span>, <span class="string">&quot;--porcelain&quot;</span>]).<span class="kw">await</span><span class="question-mark">?</span>.is_empty())
+    <span class="prelude-val">Ok</span>(git([<span class="string">"status"</span>, <span class="string">"--porcelain"</span>]).<span class="kw">await</span><span class="question-mark">?</span>.is_empty())
 }
 
 <span class="kw">async fn </span>main_imp() -&gt; <span class="prelude-ty">Result</span>&lt;(), SimpleError&gt; {
     <span class="kw">if </span>!is_working_copy_clean().<span class="kw">await</span><span class="question-mark">? </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(SimpleError(<span class="string">&quot;working copy is unclean&quot;</span>.to_owned()));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SimpleError(<span class="string">"working copy is unclean"</span>.to_owned()));
     }
 
-    <span class="kw">let </span>orig = git([<span class="string">&quot;rev-parse&quot;</span>, <span class="string">&quot;--abbrev-ref&quot;</span>, <span class="string">&quot;HEAD&quot;</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>orig = git([<span class="string">"rev-parse"</span>, <span class="string">"--abbrev-ref"</span>, <span class="string">"HEAD"</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>orig = orig.as_str().trim();
 
     <span class="kw">let </span>trunk = local_trunk().<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">if </span>trunk != orig {
-        git([<span class="string">&quot;checkout&quot;</span>, trunk]).<span class="kw">await</span><span class="question-mark">?</span>;
+        git([<span class="string">"checkout"</span>, trunk]).<span class="kw">await</span><span class="question-mark">?</span>;
     }
 
     <span class="kw">if </span>upstream(trunk).<span class="kw">await</span>.is_some() {
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = git([<span class="string">&quot;pull&quot;</span>, <span class="string">&quot;--prune&quot;</span>]).<span class="kw">await </span>{
-            <span class="macro">eprintln!</span>(<span class="string">&quot;warning: can&#39;t pull {trunk}: {err}&quot;</span>);
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = git([<span class="string">"pull"</span>, <span class="string">"--prune"</span>]).<span class="kw">await </span>{
+            <span class="macro">eprintln!</span>(<span class="string">"warning: can't pull {trunk}: {err}"</span>);
         }
     }
 
-    <span class="kw">let </span>branches = git_quiet([<span class="string">&quot;branch&quot;</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>branches = git_quiet([<span class="string">"branch"</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>branches = branches
         .lines()
-        .filter(|line| !line.starts_with(<span class="string">&quot;* &quot;</span>))
-        .map(|line| <span class="kw-2">&amp;</span>line[<span class="number">2</span>..]); <span class="comment">// Remove leading &#39; &#39;.
+        .filter(|line| !line.starts_with(<span class="string">"* "</span>))
+        .map(|line| <span class="kw-2">&amp;</span>line[<span class="number">2</span>..]); <span class="comment">// Remove leading ' '.
 
     </span><span class="kw">let </span><span class="kw-2">mut </span>dead_branches = Vec::new();
     <span class="kw">for </span>branch <span class="kw">in </span>branches {
-        <span class="kw">let </span>range = <span class="macro">format!</span>(<span class="string">&quot;{trunk}..{branch}&quot;</span>);
-        <span class="kw">if </span>git([<span class="string">&quot;rev-list&quot;</span>, <span class="string">&quot;--count&quot;</span>, <span class="kw-2">&amp;</span>range]).<span class="kw">await</span><span class="question-mark">? </span>== <span class="string">&quot;0\n&quot; </span>{
+        <span class="kw">let </span>range = <span class="macro">format!</span>(<span class="string">"{trunk}..{branch}"</span>);
+        <span class="kw">if </span>git([<span class="string">"rev-list"</span>, <span class="string">"--count"</span>, <span class="kw-2">&amp;</span>range]).<span class="kw">await</span><span class="question-mark">? </span>== <span class="string">"0\n" </span>{
             dead_branches.push(branch);
         }
     }
 
     <span class="kw">if </span>trunk != orig &amp;&amp; !dead_branches.contains(<span class="kw-2">&amp;</span>orig) {
-        git([<span class="string">&quot;checkout&quot;</span>, orig]).<span class="kw">await</span><span class="question-mark">?</span>;
+        git([<span class="string">"checkout"</span>, orig]).<span class="kw">await</span><span class="question-mark">?</span>;
     }
 
     <span class="kw">if </span>!dead_branches.is_empty() {
-        git([<span class="string">&quot;branch&quot;</span>, <span class="string">&quot;-D&quot;</span>].into_iter().chain(dead_branches)).<span class="kw">await</span><span class="question-mark">?</span>;
+        git([<span class="string">"branch"</span>, <span class="string">"-D"</span>].into_iter().chain(dead_branches)).<span class="kw">await</span><span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -380,11 +381,11 @@
 <span class="attr">#[tokio::main]
 </span><span class="kw">async fn </span>main() {
     <span class="kw">if </span>env::args().len() &gt; <span class="number">1 </span>{
-        <span class="macro">println!</span>(<span class="string">&quot;git-prune: error: expected empty argument list&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"git-prune: error: expected empty argument list"</span>);
         exit(<span class="number">2</span>);
     }
     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = main_imp().<span class="kw">await </span>{
-        <span class="macro">println!</span>(<span class="string">&quot;git-prune: {err}&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"git-prune: {err}"</span>);
         exit(<span class="number">1</span>);
     }
 }
