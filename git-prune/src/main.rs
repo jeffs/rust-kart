@@ -152,7 +152,7 @@ async fn main_imp() -> Result<(), SimpleError> {
     }
 
     if upstream(trunk).await.is_some() {
-        if let Err(err) = git(["pull", "--prune"]).await {
+        if let Err(err) = git(["pull", "--prune", "--quiet"]).await {
             eprintln!("warning: can't pull {trunk}: {err}");
         }
     }
