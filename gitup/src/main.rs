@@ -3,8 +3,6 @@
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
 
-// TODO: Rename this program.  git-prune is already a thing.
-//
 // TODO: Call `git branch --merged` rather than looping through branches.
 //
 // TODO: Delete remote branches behind trunk.
@@ -18,6 +16,7 @@
 
 use std::error::Error;
 use std::ffi::OsStr;
+use std::path::Path;
 use std::process::{exit, ExitStatus};
 use std::{env, fmt};
 use tokio::process::Command;
@@ -184,12 +183,22 @@ async fn main_imp() -> Result<(), SimpleError> {
 
 #[tokio::main]
 async fn main() {
-    if env::args().len() > 1 {
-        println!("git-prune: error: expected empty argument list");
+    let mut args = env::args_os();
+    let name = args
+        .next()
+        .expect("argv[0] to hold the path to this executable");
+    let name: &Path = name.as_ref();
+    let name = name
+        .file_stem()
+        .expect("executable path to terminate in file name")
+        .to_string_lossy();
+
+    if let Some(arg) = args.next() {
+        println!("{name}: error: {arg:?}: unexpected argument");
         exit(2);
     }
     if let Err(err) = main_imp().await {
-        println!("git-prune: {err}");
+        println!("{name}: error: {err}");
         exit(1);
     }
 }
