@@ -8,7 +8,7 @@ members = [
     "days",
     "delay",
     "diet",
-    "git-prune",
+    "gitup",
     "hexify",
     "pangram",
     "perpetuity",
