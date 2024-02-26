@@ -5,7 +5,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["days",["",[],["main.rs"]]],\
 ["delay",["",[],["lib.rs"]]],\
 ["diet",["",[],["main.rs"]]],\
-["git_prune",["",[],["main.rs"]]],\
+["gitup",["",[],["main.rs"]]],\
 ["hexify",["",[],["main.rs"]]],\
 ["pangram",["",[],["main.rs","main_error.rs"]]],\
 ["perpetuity",["",[],["lib.rs"]]],\

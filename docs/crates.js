@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["arg5","b2c","cargo_norm","days","delay","diet","git_prune","hexify","pangram","perpetuity","sop","stop_once","sum_of_products","tmux_send","uuid"];
+window.ALL_CRATES = ["arg5","b2c","cargo_norm","days","delay","diet","gitup","hexify","pangram","perpetuity","sop","stop_once","sum_of_products","tmux_send","uuid"];
