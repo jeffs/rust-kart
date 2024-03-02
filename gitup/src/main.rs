@@ -69,7 +69,8 @@ where
     )
 }
 
-async fn git<S, I>(args: I) -> Result<String, SimpleError>
+#[allow(dead_code)]
+async fn git_loud<S, I>(args: I) -> Result<String, SimpleError>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -97,7 +98,7 @@ where
     Ok((stderr + &stdout).into())
 }
 
-async fn git_quiet<S, I>(args: I) -> Result<String, SimpleError>
+async fn git<S, I>(args: I) -> Result<String, SimpleError>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -146,6 +147,7 @@ async fn main_imp() -> Result<(), SimpleError> {
     let orig = orig.as_str().trim();
 
     let trunk = local_trunk().await?;
+
     if trunk != orig {
         git(["checkout", trunk]).await?;
     }
@@ -156,7 +158,7 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    let branches = git_quiet(["branch"]).await?;
+    let branches = git(["branch"]).await?;
     let branches = branches
         .lines()
         .filter(|line| !line.starts_with("* "))
@@ -170,11 +172,17 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    if trunk != orig && !dead_branches.contains(&orig) {
+    if dead_branches.contains(&orig) {
+        // Let the user know we're not leaving HEAD on the original branch.
+        println!("co {trunk}");
+    } else if trunk != orig {
         git(["checkout", orig]).await?;
-    }
+    };
 
     if !dead_branches.is_empty() {
+        for zombie in &dead_branches {
+            println!("rm {zombie}");
+        }
         git(["branch", "-D"].into_iter().chain(dead_branches)).await?;
     }
 
