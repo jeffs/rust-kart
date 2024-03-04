@@ -15,5 +15,6 @@ members = [
     "stop-once",
     "sum-of-products",
     "tmux-send",
+    "utf",
     "uuid",
 ]
