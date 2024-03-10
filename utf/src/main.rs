@@ -27,6 +27,7 @@ fn parse_codepoint(arg: &str) -> Result<char, BadCodepoint> {
 fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
     match arg {
         s if s.starts_with("poo") => Ok('\u{1f4a9}'), // 💩
+        s if s.starts_with("cent") => Ok('\u{a2}'),   // ¢
         "horns" => Ok('\u{1f918}'),                   // 🤘
         "grimace" | "grim" => Ok('\u{1f62c}'),        // 😬
         _ => parse_codepoint(arg),
