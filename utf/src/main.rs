@@ -24,16 +24,19 @@ fn parse_codepoint(arg: &str) -> Result<char, BadCodepoint> {
     Ok(char::from_u32(codepoint).ok_or_else(|| BadCodepoint::from_arg(arg))?)
 }
 
+#[rustfmt::skip]
 fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
-    match arg {
-        s if s.starts_with("poo") => Ok('\u{1f4a9}'), // 💩
-        s if s.starts_with("cent") => Ok('\u{a2}'),   // ¢
-        "facepalm" | "fp" => Ok('\u{1f926}'),         // 🤦
-        "grimace" | "grim" => Ok('\u{1f62c}'),        // 😬
-        "horns" => Ok('\u{1f918}'),                   // 🤘
-        "ok" => Ok('\u{1f44c}'),                      // 👌
-        _ => parse_codepoint(arg),
-    }
+    Ok(match arg {
+        "cent" | "cents"                    => '¢',
+        "command" | "cmd"                   => '⌘',
+        "facepalm"                          => '🤦',
+        "grimace" | "grim"                  => '😬',
+        "horns"                             => '🤘',
+        "ok"                                => '👌',
+        "shift"                             => '⇧',
+        s if s.starts_with("poo")           => '💩',
+        _ => parse_codepoint(arg)?,
+    })
 }
 
 fn main() {
