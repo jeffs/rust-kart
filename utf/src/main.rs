@@ -34,6 +34,7 @@ fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
         "horns"                             => '🤘',
         "ok"                                => '👌',
         "shift"                             => '⇧',
+        "up"                                => '↑',
         s if s.starts_with("poo")           => '💩',
         _ => parse_codepoint(arg)?,
     })
