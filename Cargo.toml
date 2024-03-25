@@ -7,7 +7,6 @@ members = [
     "cargo-norm",
     "days",
     "delay",
-    "diet",
     "gitup",
     "hexify",
     "pangram",
