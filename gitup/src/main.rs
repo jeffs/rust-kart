@@ -192,19 +192,19 @@ async fn main() {
     let mut args = env::args_os();
     let name = args
         .next()
-        .expect("argv[0] to hold the path to this executable");
+        .expect("argv[0] should hold the path to this executable");
     let name: &Path = name.as_ref();
     let name = name
         .file_stem()
-        .expect("executable path to terminate in file name")
+        .expect("executable path should terminate in file name")
         .to_string_lossy();
 
     if let Some(arg) = args.next() {
-        println!("{name}: error: {arg:?}: unexpected argument");
+        eprintln!("{name}: error: {arg:?}: unexpected argument");
         exit(2);
     }
     if let Err(err) = main_imp().await {
-        println!("{name}: error: {err}");
+        eprintln!("{name}: error: {err}");
         exit(1);
     }
 }
