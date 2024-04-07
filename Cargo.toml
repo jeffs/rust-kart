@@ -4,11 +4,11 @@ resolver = "2"
 members = [
     "arg5",
     "b2c",
-    "cargo-norm",
+    "cargo-norm", "convert",
     "days",
     "delay",
     "gitup",
-    "hexify",
+    "hexify", "kcal",
     "pangram",
     "perpetuity",
     "stop-once",
