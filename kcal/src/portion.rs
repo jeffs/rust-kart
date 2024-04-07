@@ -20,8 +20,8 @@ impl Display for BadPortion {
 }
 
 pub struct PortionSize {
-    amount: f64,
-    unit: Unit,
+    pub number: f64,
+    pub unit: Unit,
 }
 
 impl PortionSize {
@@ -29,17 +29,21 @@ impl PortionSize {
         self.convert_to(self.unit.dual())
     }
 
-    fn convert_to(&self, unit: Unit) -> Result<PortionSize, BadConversion> {
-        let amount = self.amount * unit.per(self.unit)?;
-        Ok(PortionSize { amount, unit })
+    pub fn convert_to(&self, unit: Unit) -> Result<PortionSize, BadConversion> {
+        let amount = self.number * unit.per(self.unit)?;
+        Ok(PortionSize {
+            number: amount,
+            unit,
+        })
     }
 }
 
 impl Display for PortionSize {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.unit {
-            Unit::Gram => write!(f, "{}", self.amount.round())?,
-            _ => write!(f, "{:.2}", self.amount)?,
+            // There's no point in showing fractions of a gram.
+            Unit::Gram => write!(f, "{}", self.number.round())?,
+            _ => write!(f, "{:.2}", self.number)?,
         }
         write!(f, "{}", self.unit)
     }
@@ -58,6 +62,9 @@ impl FromStr for PortionSize {
         let unit = unit
             .parse()
             .map_err(|_| BadPortion::BadUnit(unit.to_string()))?;
-        Ok(PortionSize { amount, unit })
+        Ok(PortionSize {
+            number: amount,
+            unit,
+        })
     }
 }
