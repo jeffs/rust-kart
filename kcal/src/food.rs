@@ -8,7 +8,7 @@ impl Display for BadFood {
     }
 }
 
-pub struct Food {
+pub struct FoodDescriptor {
     pub description: &'static str,
     pub source: &'static str,
     /// kilocalories per 100g of this food
@@ -17,17 +17,33 @@ pub struct Food {
     pub protein: f64,
 }
 
+pub type Food = &'static FoodDescriptor;
+
+macro_rules! food {
+    ($name: ident, $kcal: expr, $protein: expr, $per: expr, $description: expr, $source: expr) => {
+        (
+            stringify!($name),
+            FoodDescriptor {
+                description: $description,
+                kcal: $kcal as f64 * 100.0 / $per as f64,
+                protein: $protein as f64 * 100.0 / $per as f64,
+                source: $source,
+            },
+        )
+    };
+}
+
+#[rustfmt::skip]
+const FOODS: &[(&str, FoodDescriptor)] = &[
+    food!(turkey, 64, 7.7, 57, "Deli Sliced Turkey", "https://www.nutritionix.com/food/deli-sliced-turkey"),
+];
+
 impl FromStr for Food {
     type Err = BadFood;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "turkey" => Ok(Food {
-                description: "Deli Sliced Turkey",
-                source: "https://www.nutritionix.com/food/deli-sliced-turkey",
-                kcal: 64.0 * (100.0 / 57.0),
-                protein: 7.7 * (100.0 / 57.0),
-            }),
-            _ => Err(BadFood(s.to_string())),
-        }
+        FOODS
+            .iter()
+            .find_map(|(slug, food)| (*slug == s).then_some(food))
+            .ok_or_else(|| BadFood(s.to_string()))
     }
 }
