@@ -24,6 +24,7 @@ pub enum Unit {
 }
 
 impl Unit {
+    /// Default target unit for conversions.
     pub fn dual(self) -> Unit {
         match self {
             Unit::Gram => Unit::Ounce,
@@ -32,6 +33,7 @@ impl Unit {
         }
     }
 
+    /// Multiplier for converting self to the specified unit.
     pub fn per(self, unit: Unit) -> Result<f64, BadConversion> {
         match (self, unit) {
             _ if self == unit => Ok(1.0),
