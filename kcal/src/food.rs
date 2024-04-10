@@ -35,7 +35,11 @@ macro_rules! food {
 
 #[rustfmt::skip]
 const FOODS: &[(&str, FoodDescriptor)] = &[
-    food!(turkey, 64, 7.7, 57, "Deli Sliced Turkey", "https://www.nutritionix.com/food/deli-sliced-turkey"),
+    food!(carrot,  41,  0.8, 100, "Carrots, baby, raw",                           "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2258587/nutrients"),
+    food!(celery,  14,  0.7, 100, "Celery, raw",                                  "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169988/nutrients"),
+    food!(chicken, 60, 11.0,  56, "Blazing Buffalo Style Roasted Chicken Breast", "https://boarshead.com/products/detail/440-blazing-buffalo-style-roasted-chicken-breast"),
+    food!(turkey,  64,  7.7,  57, "Deli Sliced Turkey",                           "https://www.nutritionix.com/food/deli-sliced-turkey"),
+    food!(veg,     20,  1.5,  57, "mixed vegetables",                             "rough average of squash, mushrooms, and asparagus"),
 ];
 
 impl FromStr for Food {
