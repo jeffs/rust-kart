@@ -1,4 +1,6 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, path::Path, str::FromStr};
+
+use serde::Deserialize;
 
 pub struct BadFood(String);
 
@@ -56,5 +58,45 @@ impl FromStr for Food {
             .iter()
             .find_map(|(slug, food)| (*slug == s).then_some(food))
             .ok_or_else(|| BadFood(s.to_string()))
+    }
+}
+
+#[derive(Deserialize)]
+pub struct CatalogFood {
+    pub description: String,
+    pub source: String,
+    /// kilocalories per 100g of this food
+    pub kcal: f64,
+    /// grams of protein per 100g of this food
+    pub protein: f64,
+}
+
+struct CatalogRow {
+    name: String,
+    food: CatalogFood,
+}
+
+#[allow(dead_code)]
+pub struct Catalog {
+    // TODO: Read from CSV
+    foods: Vec<CatalogRow>,
+}
+
+impl Catalog {
+    #[allow(dead_code)]
+    pub fn from_csv(path: &Path) -> Result<Catalog, csv::Error> {
+        let mut reader = csv::Reader::from_path(path)?;
+        for record in reader.deserialize() {
+            let _record: CatalogFood = record?;
+        }
+        todo!()
+    }
+
+    #[allow(dead_code)]
+    pub fn find(&self, name: &str) -> Result<&CatalogFood, BadFood> {
+        self.foods
+            .iter()
+            .find_map(|row| (row.name == name).then_some(&row.food))
+            .ok_or_else(|| BadFood(name.to_string()))
     }
 }
