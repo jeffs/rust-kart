@@ -48,6 +48,7 @@ const FOODS: &[(&str, FoodDescriptor)] = &[
     food!(tomato,      22,  0.7, 100, "Tomato, roma",                                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/1999634/nutrients"),
     food!(turkey,      64,  7.7,  57, "Deli Sliced Turkey",                           "https://www.nutritionix.com/food/deli-sliced-turkey"),
     food!(veg,         20,  1.5,  57, "Mixed vegetables",                             "rough average of squash, mushrooms, and asparagus"),
+    food!(whiskey,    250,  0.0, 100, "Whisky",                                       "Google"),
 ];
 
 impl FromStr for Food {
