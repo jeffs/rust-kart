@@ -44,6 +44,7 @@ const FOODS: &[(&str, FoodDescriptor)] = &[
     food!(endive,      17,  1.3, 100, "Endive",                                       "https://fdc.nal.usda.gov/fdc-app.html#/food-details/168412/nutrients"),
     food!(enoki,       44,  2.4, 100, "Mushroom, enoki",                              "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2003600/nutrients"),
     food!(mushroom,    22,  3.1, 100, "Mushrooms, white, raw",                        "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169251/nutrients"),
+    food!(oil,        884,  0.0, 100, "Oil, olive, salad or cooking",                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/171413/nutrients"),
     food!(onion,       41,  1.3, 100, "Red Onion",                                    "https://www.nutritionix.com/food/red-onion"),
     food!(pepper,      20,  0.9, 100, "Peppers, sweet, green, raw",                   "https://fdc.nal.usda.gov/fdc-app.html#/food-details/170427/nutrients"),
     food!(popcorn,    387, 12.9, 100, "Snacks, popcorn, air-popped",                  "https://fdc.nal.usda.gov/fdc-app.html#/food-details/167959/nutrients"),
