@@ -49,6 +49,7 @@ const FOODS: &[(&str, FoodDescriptor)] = &[
     food!(onion,       41,  1.3, 100, "Red Onion",                                    "https://www.nutritionix.com/food/red-onion"),
     food!(pepper,      20,  0.9, 100, "Peppers, sweet, green, raw",                   "https://fdc.nal.usda.gov/fdc-app.html#/food-details/170427/nutrients"),
     food!(popcorn,    387, 12.9, 100, "Snacks, popcorn, air-popped",                  "https://fdc.nal.usda.gov/fdc-app.html#/food-details/167959/nutrients"),
+    food!(thigh,      149, 18.6, 100, "Chicken, thigh, boneless, skinless, raw",      "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2646171/nutrients"),
     food!(tomato,      22,  0.7, 100, "Tomato, roma",                                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/1999634/nutrients"),
     food!(turkey,      64,  7.7,  57, "Deli Sliced Turkey",                           "https://www.nutritionix.com/food/deli-sliced-turkey"),
     food!(veg,         20,  1.5,  57, "Mixed vegetables",                             "rough average of squash, mushrooms, and asparagus"),
