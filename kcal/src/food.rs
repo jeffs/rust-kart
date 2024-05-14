@@ -40,6 +40,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(cauliflower, 25,  1.9, 100, "Cauliflower, raw",                             "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169986/nutrients"),
     food!(celery,      14,  0.7, 100, "Celery, raw",                                  "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169988/nutrients"),
     food!(chicken,     60, 11.0,  56, "Blazing Buffalo Style Roasted Chicken Breast", "https://boarshead.com/products/detail/440-blazing-buffalo-style-roasted-chicken-breast"),
+    food!(cucumber,    15,  0.6, 100, "Cucumber, with peel, raw",                     "https://fdc.nal.usda.gov/fdc-app.html#/food-details/168409/nutrients"),
     food!(eggwhite,    25,  5.0,  46, "Egg whites",                                   "carton"),
     food!(endive,      17,  1.3, 100, "Endive",                                       "https://fdc.nal.usda.gov/fdc-app.html#/food-details/168412/nutrients"),
     food!(enoki,       44,  2.4, 100, "Mushroom, enoki",                              "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2003600/nutrients"),
