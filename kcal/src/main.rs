@@ -4,6 +4,8 @@ use kcal::{BadConversion, BadFood, BadPortion, Food, PortionSize, Unit};
 
 const USAGE: &str = "usage: convert SIZE [FOOD]";
 
+// TODO: Support SIZE/SIZExKCAL,G for one-off foods.
+// TODO: Support creation and storage of new foods from the CLI.
 struct Args {
     size: Option<PortionSize>,
     food: Option<Food>,
@@ -50,7 +52,7 @@ impl Args {
     }
 }
 
-fn scale(size: PortionSize, food: Food) -> Result<(f64, f64), BadConversion> {
+fn scale(size: PortionSize, food: &Food) -> Result<(f64, f64), BadConversion> {
     let grams = size.convert_to(Unit::Gram)?;
     let [kcal, protein] = [food.kcal, food.protein].map(|f| (f * grams.number / 100.0).round());
     Ok((kcal, protein))
@@ -60,7 +62,7 @@ fn main_imp() -> Result<(), String> {
     let args = Args::from_env()?;
     match (args.size, args.food) {
         (Some(size), Some(food)) => {
-            let (kcal, protein) = scale(size, food).map_err(|err| err.to_string())?;
+            let (kcal, protein) = scale(size, &food).map_err(|err| err.to_string())?;
             println!("{kcal} {protein}");
         }
         (Some(size), None) => {

@@ -8,7 +8,8 @@ impl Display for BadFood {
     }
 }
 
-pub struct FoodDescriptor {
+#[derive(Clone)]
+pub struct Food {
     pub description: &'static str,
     pub source: &'static str,
     /// kilocalories per 100g of this food
@@ -17,13 +18,11 @@ pub struct FoodDescriptor {
     pub protein: f64,
 }
 
-pub type Food = &'static FoodDescriptor;
-
 macro_rules! food {
     ($name: ident, $kcal: expr, $protein: expr, $per: expr, $description: expr, $source: expr) => {
         (
             stringify!($name),
-            FoodDescriptor {
+            Food {
                 description: $description,
                 kcal: $kcal as f64 * 100.0 / $per as f64,
                 protein: $protein as f64 * 100.0 / $per as f64,
@@ -34,7 +33,7 @@ macro_rules! food {
 }
 
 #[rustfmt::skip]
-const FOODS: &[(&str, FoodDescriptor)] = &[
+const FOODS: &[(&str, Food)] = &[
     food!(broccoli,    34,  2.8, 100, "Broccoli, raw",                                "https://fdc.nal.usda.gov/fdc-app.html#/food-details/170379/nutrients"),
     food!(cabbage,     25,  1.3, 100, "Cabbage, raw",                                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169975/nutrients"),
     food!(carrot,      41,  0.8, 100, "Carrots, baby, raw",                           "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2258587/nutrients"),
@@ -60,9 +59,10 @@ const FOODS: &[(&str, FoodDescriptor)] = &[
 impl FromStr for Food {
     type Err = BadFood;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        FOODS
+        Ok(FOODS
             .iter()
             .find_map(|(slug, food)| (*slug == s).then_some(food))
-            .ok_or_else(|| BadFood(s.to_string()))
+            .ok_or_else(|| BadFood(s.to_string()))?
+            .clone())
     }
 }
