@@ -1,5 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
+use crate::{Portion, Unit};
+
 pub struct BadFood(String);
 
 impl Display for BadFood {
@@ -57,13 +59,44 @@ const FOODS: &[(&str, Food)] = &[
     food!(whiskey,    250,  0.0, 100, "Whisky",                                       "Google"),
 ];
 
+/// Parses foods in the format C,P/Z.
+/// * C is the number of kilocalories per serving
+/// * P is the number of grams of protein per serving
+/// * Z is the serving size
+fn parse_custom(s: &str) -> Option<Food> {
+    let (cp, z) = s.split_once('/')?;
+    let (c, p) = cp.split_once(',')?;
+
+    let kcal: f64 = c.parse().ok()?;
+    let protein: f64 = p.parse().ok()?;
+    let hundreds: f64 = z
+        .parse::<Portion>()
+        .ok()?
+        .convert_to(Unit::Gram)
+        .ok()?
+        .number
+        / 100.0;
+
+    Some(Food {
+        description: "ad hoc",
+        source: "user",
+        kcal: kcal / hundreds,
+        protein: protein / hundreds,
+    })
+}
+
 impl FromStr for Food {
     type Err = BadFood;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(FOODS
+        if let Some(food) = FOODS
             .iter()
             .find_map(|(slug, food)| (*slug == s).then_some(food))
-            .ok_or_else(|| BadFood(s.to_string()))?
-            .clone())
+        {
+            Ok(food.clone())
+        } else if let Some(food) = parse_custom(s) {
+            Ok(food)
+        } else {
+            Err(BadFood(s.to_string()))
+        }
     }
 }
