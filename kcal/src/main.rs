@@ -1,13 +1,13 @@
 use std::{env, process::exit};
 
-use kcal::{BadConversion, BadFood, BadPortion, Food, PortionSize, Unit};
+use kcal::{BadConversion, BadFood, BadPortion, Food, Portion, Unit};
 
 const USAGE: &str = "usage: convert SIZE [FOOD]";
 
 // TODO: Support SIZE/SIZExKCAL,G for one-off foods.
 // TODO: Support creation and storage of new foods from the CLI.
 struct Args {
-    size: Option<PortionSize>,
+    size: Option<Portion>,
     food: Option<Food>,
 }
 
@@ -20,7 +20,7 @@ impl Args {
             return Err(format!("{extra}: unexpected argument"));
         }
 
-        if let Ok(size) = arg1.parse::<PortionSize>() {
+        if let Ok(size) = arg1.parse::<Portion>() {
             if let Some(food) = arg2 {
                 let food = food.parse().map_err(|err: BadFood| err.to_string())?;
                 Ok(Args {
@@ -52,7 +52,7 @@ impl Args {
     }
 }
 
-fn scale(size: PortionSize, food: &Food) -> Result<(f64, f64), BadConversion> {
+fn scale(size: Portion, food: &Food) -> Result<(f64, f64), BadConversion> {
     let grams = size.convert_to(Unit::Gram)?;
     let [kcal, protein] = [food.kcal, food.protein].map(|f| (f * grams.number / 100.0).round());
     Ok((kcal, protein))

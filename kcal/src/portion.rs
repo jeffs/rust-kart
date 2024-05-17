@@ -19,26 +19,26 @@ impl Display for BadPortion {
     }
 }
 
-pub struct PortionSize {
+pub struct Portion {
     pub number: f64,
     pub unit: Unit,
 }
 
-impl PortionSize {
-    pub fn convert(&self) -> Result<PortionSize, BadConversion> {
+impl Portion {
+    pub fn convert(&self) -> Result<Portion, BadConversion> {
         self.convert_to(self.unit.dual())
     }
 
-    pub fn convert_to(&self, unit: Unit) -> Result<PortionSize, BadConversion> {
+    pub fn convert_to(&self, unit: Unit) -> Result<Portion, BadConversion> {
         let amount = self.number * unit.per(self.unit)?;
-        Ok(PortionSize {
+        Ok(Portion {
             number: amount,
             unit,
         })
     }
 }
 
-impl Display for PortionSize {
+impl Display for Portion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.unit {
             // There's no point in showing fractions of a gram.
@@ -49,7 +49,7 @@ impl Display for PortionSize {
     }
 }
 
-impl FromStr for PortionSize {
+impl FromStr for Portion {
     type Err = BadPortion;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let unit_begin = s
@@ -62,7 +62,7 @@ impl FromStr for PortionSize {
         let unit = unit
             .parse()
             .map_err(|_| BadPortion::BadUnit(unit.to_string()))?;
-        Ok(PortionSize {
+        Ok(Portion {
             number: amount,
             unit,
         })
