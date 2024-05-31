@@ -1,0 +1,1 @@
+searchState.loadedDescShard("gitup", 0, "This program pulls the main branch of the repo from which …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nReturns the local main branch (trunk) name, or an error.\nReturns (success, stdout, stderr).")

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("b2c", 0, "Parses binary numbers as ASCII and prints the resulting …")

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("sum_of_products", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.")
