@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MainError"],"fn":["main","sum_kcal"]};

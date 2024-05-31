@@ -1,0 +1,4 @@
+(function() {var implementors = {
+"arg5":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.77.2/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"enum\" href=\"arg5/enum.Appetite.html\" title=\"enum arg5::Appetite\">Appetite</a>"]],
+"kcal":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.77.2/core/marker/trait.Copy.html\" title=\"trait core::marker::Copy\">Copy</a> for <a class=\"enum\" href=\"kcal/unit/enum.Unit.html\" title=\"enum kcal::unit::Unit\">Unit</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

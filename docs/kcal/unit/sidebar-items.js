@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GRAMS_PER_OUNCE","GRAMS_PER_POUND","OUNCES_PER_GRAM","OUNCES_PER_POUND"],"enum":["Unit"],"struct":["BadConversion","BadUnit"]};

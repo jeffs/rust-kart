@@ -4,15 +4,16 @@ var srcIndex = new Map(JSON.parse('[\
 ["cargo_norm",["",[],["main.rs"]]],\
 ["days",["",[],["main.rs"]]],\
 ["delay",["",[],["lib.rs"]]],\
-["diet",["",[],["main.rs"]]],\
 ["gitup",["",[],["main.rs"]]],\
 ["hexify",["",[],["main.rs"]]],\
+["kcal",["",[],["food.rs","lib.rs","portion.rs","unit.rs"]]],\
 ["pangram",["",[],["main.rs","main_error.rs"]]],\
 ["perpetuity",["",[],["lib.rs"]]],\
 ["sop",["",[],["main.rs"]]],\
 ["stop_once",["",[],["lib.rs"]]],\
 ["sum_of_products",["",[],["lib.rs","rendering.rs"]]],\
 ["tmux_send",["",[],["main.rs"]]],\
+["utf",["",[],["main.rs"]]],\
 ["uuid",["",[],["main.rs"]]]\
 ]'));
 createSrcSidebar();

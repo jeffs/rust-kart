@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Store"],"struct":["Binding","ParseError","Parser"],"trait":["Bind"]};
+window.SIDEBAR_ITEMS = {"enum":["Appetite","Capacity","Store"],"struct":["Binding","Parameter","ParseError","Parser"],"trait":["Bind"]};

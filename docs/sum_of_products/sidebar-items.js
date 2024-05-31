@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compute","parse","render"],"struct":["SumOfProducts"]};
+window.SIDEBAR_ITEMS = {"fn":["compute","parse","render"],"mod":["rendering"],"struct":["SumOfProducts"]};

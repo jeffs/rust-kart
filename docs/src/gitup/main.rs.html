@@ -1,5 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gitup/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-452d19225583af2a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gitup" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (3cdd004e5 2023-12-29)" data-channel="nightly" data-search-js="search-c17e98913a53b3b7.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6902632119e002ca.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `gitup/src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gitup" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.2 (25ef9e3d8 2024-04-09)" data-channel="1.77.2" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../gitup/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -203,6 +204,12 @@
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
 <a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This program pulls the main branch of the repo from which it's called, then
 //! deletes any local branches that are not ahead of main, and finally checks
 //! back out the original branch.  The main branch defaults to `main`, but
@@ -216,8 +223,6 @@
 //   checking out main, but after fetch --prune, the user still sees a list of
 //   obsolete branches the next time they pull --prune; so now this program
 //   checks out main just so it can run pull --prune per se.
-//
-// TODO: Check that working copy is clean before switching or pulling branches.
 
 </span><span class="kw">use </span>std::error::Error;
 <span class="kw">use </span>std::ffi::OsStr;
@@ -274,7 +279,8 @@
     )
 }
 
-<span class="kw">async fn </span>git&lt;S, I&gt;(args: I) -&gt; <span class="prelude-ty">Result</span>&lt;String, SimpleError&gt;
+<span class="attr">#[allow(dead_code)]
+</span><span class="kw">async fn </span>git_loud&lt;S, I&gt;(args: I) -&gt; <span class="prelude-ty">Result</span>&lt;String, SimpleError&gt;
 <span class="kw">where
     </span>I: IntoIterator&lt;Item = S&gt;,
     S: AsRef&lt;OsStr&gt;,
@@ -302,7 +308,7 @@
     <span class="prelude-val">Ok</span>((stderr + <span class="kw-2">&amp;</span>stdout).into())
 }
 
-<span class="kw">async fn </span>git_quiet&lt;S, I&gt;(args: I) -&gt; <span class="prelude-ty">Result</span>&lt;String, SimpleError&gt;
+<span class="kw">async fn </span>git&lt;S, I&gt;(args: I) -&gt; <span class="prelude-ty">Result</span>&lt;String, SimpleError&gt;
 <span class="kw">where
     </span>I: IntoIterator&lt;Item = S&gt;,
     S: AsRef&lt;OsStr&gt;,
@@ -351,6 +357,7 @@
     <span class="kw">let </span>orig = orig.as_str().trim();
 
     <span class="kw">let </span>trunk = local_trunk().<span class="kw">await</span><span class="question-mark">?</span>;
+
     <span class="kw">if </span>trunk != orig {
         git([<span class="string">"checkout"</span>, trunk]).<span class="kw">await</span><span class="question-mark">?</span>;
     }
@@ -361,7 +368,7 @@
         }
     }
 
-    <span class="kw">let </span>branches = git_quiet([<span class="string">"branch"</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="kw">let </span>branches = git([<span class="string">"branch"</span>]).<span class="kw">await</span><span class="question-mark">?</span>;
     <span class="kw">let </span>branches = branches
         .lines()
         .filter(|line| !line.starts_with(<span class="string">"* "</span>))
@@ -375,11 +382,17 @@
         }
     }
 
-    <span class="kw">if </span>trunk != orig &amp;&amp; !dead_branches.contains(<span class="kw-2">&amp;</span>orig) {
+    <span class="kw">if </span>dead_branches.contains(<span class="kw-2">&amp;</span>orig) {
+        <span class="comment">// Let the user know we're not leaving HEAD on the original branch.
+        </span><span class="macro">println!</span>(<span class="string">"co {trunk}"</span>);
+    } <span class="kw">else if </span>trunk != orig {
         git([<span class="string">"checkout"</span>, orig]).<span class="kw">await</span><span class="question-mark">?</span>;
-    }
+    };
 
     <span class="kw">if </span>!dead_branches.is_empty() {
+        <span class="kw">for </span>zombie <span class="kw">in </span><span class="kw-2">&amp;</span>dead_branches {
+            <span class="macro">println!</span>(<span class="string">"rm {zombie}"</span>);
+        }
         git([<span class="string">"branch"</span>, <span class="string">"-D"</span>].into_iter().chain(dead_branches)).<span class="kw">await</span><span class="question-mark">?</span>;
     }
 
@@ -391,19 +404,19 @@
     <span class="kw">let </span><span class="kw-2">mut </span>args = env::args_os();
     <span class="kw">let </span>name = args
         .next()
-        .expect(<span class="string">"argv[0] to hold the path to this executable"</span>);
+        .expect(<span class="string">"argv[0] should hold the path to this executable"</span>);
     <span class="kw">let </span>name: <span class="kw-2">&amp;</span>Path = name.as_ref();
     <span class="kw">let </span>name = name
         .file_stem()
-        .expect(<span class="string">"executable path to terminate in file name"</span>)
+        .expect(<span class="string">"executable path should terminate in file name"</span>)
         .to_string_lossy();
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(arg) = args.next() {
-        <span class="macro">println!</span>(<span class="string">"{name}: error: {arg:?}: unexpected argument"</span>);
+        <span class="macro">eprintln!</span>(<span class="string">"{name}: error: {arg:?}: unexpected argument"</span>);
         exit(<span class="number">2</span>);
     }
     <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = main_imp().<span class="kw">await </span>{
-        <span class="macro">println!</span>(<span class="string">"{name}: error: {err}"</span>);
+        <span class="macro">eprintln!</span>(<span class="string">"{name}: error: {err}"</span>);
         exit(<span class="number">1</span>);
     }
 }

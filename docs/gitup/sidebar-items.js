@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["format_git_command","git","git_quiet","is_working_copy_clean","local_trunk","main","main_imp","run_git","upstream"],"struct":["SimpleError"]};
+window.SIDEBAR_ITEMS = {"fn":["format_git_command","git","git_loud","is_working_copy_clean","local_trunk","main","main_imp","run_git","upstream"],"struct":["SimpleError"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["delay"],"struct":["Delayed"],"trait":["Delay"]};
+window.SIDEBAR_ITEMS = {"enum":["DelayState"],"fn":["delay"],"struct":["Delayed"],"trait":["Delay"]};
