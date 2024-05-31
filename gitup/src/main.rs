@@ -11,8 +11,6 @@
 //   checking out main, but after fetch --prune, the user still sees a list of
 //   obsolete branches the next time they pull --prune; so now this program
 //   checks out main just so it can run pull --prune per se.
-//
-// TODO: Check that working copy is clean before switching or pulling branches.
 
 use std::error::Error;
 use std::ffi::OsStr;
@@ -69,7 +67,8 @@ where
     )
 }
 
-async fn git<S, I>(args: I) -> Result<String, SimpleError>
+#[allow(dead_code)]
+async fn git_loud<S, I>(args: I) -> Result<String, SimpleError>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -97,7 +96,7 @@ where
     Ok((stderr + &stdout).into())
 }
 
-async fn git_quiet<S, I>(args: I) -> Result<String, SimpleError>
+async fn git<S, I>(args: I) -> Result<String, SimpleError>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -146,6 +145,7 @@ async fn main_imp() -> Result<(), SimpleError> {
     let orig = orig.as_str().trim();
 
     let trunk = local_trunk().await?;
+
     if trunk != orig {
         git(["checkout", trunk]).await?;
     }
@@ -156,7 +156,7 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    let branches = git_quiet(["branch"]).await?;
+    let branches = git(["branch"]).await?;
     let branches = branches
         .lines()
         .filter(|line| !line.starts_with("* "))
@@ -170,11 +170,17 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    if trunk != orig && !dead_branches.contains(&orig) {
+    if dead_branches.contains(&orig) {
+        // Let the user know we're not leaving HEAD on the original branch.
+        println!("co {trunk}");
+    } else if trunk != orig {
         git(["checkout", orig]).await?;
-    }
+    };
 
     if !dead_branches.is_empty() {
+        for zombie in &dead_branches {
+            println!("rm {zombie}");
+        }
         git(["branch", "-D"].into_iter().chain(dead_branches)).await?;
     }
 
@@ -186,19 +192,19 @@ async fn main() {
     let mut args = env::args_os();
     let name = args
         .next()
-        .expect("argv[0] to hold the path to this executable");
+        .expect("argv[0] should hold the path to this executable");
     let name: &Path = name.as_ref();
     let name = name
         .file_stem()
-        .expect("executable path to terminate in file name")
+        .expect("executable path should terminate in file name")
         .to_string_lossy();
 
     if let Some(arg) = args.next() {
-        println!("{name}: error: {arg:?}: unexpected argument");
+        eprintln!("{name}: error: {arg:?}: unexpected argument");
         exit(2);
     }
     if let Err(err) = main_imp().await {
-        println!("{name}: error: {err}");
+        eprintln!("{name}: error: {err}");
         exit(1);
     }
 }
