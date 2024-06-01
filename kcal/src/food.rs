@@ -46,6 +46,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(eggwhite,    25,  5.0,  46, "Egg whites",                                   "carton"),
     food!(endive,      17,  1.3, 100, "Endive",                                       "https://fdc.nal.usda.gov/fdc-app.html#/food-details/168412/nutrients"),
     food!(enoki,       44,  2.4, 100, "Mushroom, enoki",                              "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2003600/nutrients"),
+    food!(lettuce,     17,  1.0, 100, "Lettuce, romaine, green, raw",                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2346389/nutrients"),
     food!(mushroom,    22,  3.1, 100, "Mushrooms, white, raw",                        "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169251/nutrients"),
     food!(oil,        884,  0.0, 100, "Oil, olive, salad or cooking",                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/171413/nutrients"),
     food!(onion,       41,  1.3, 100, "Red Onion",                                    "https://www.nutritionix.com/food/red-onion"),
