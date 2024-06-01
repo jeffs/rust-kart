@@ -1,49 +1,51 @@
 use std::{env, error, fmt::Display, process};
 
 #[derive(Debug)]
-struct BadCodepoint(String);
+struct BadSymbol(String);
 
-impl BadCodepoint {
-    pub fn from_arg(arg: &str) -> BadCodepoint {
-        BadCodepoint(format!("{arg}: bad codepoint"))
+impl BadSymbol {
+    pub fn from_arg(arg: &str) -> BadSymbol {
+        BadSymbol(format!("{arg}: bad codepoint"))
     }
 }
 
-impl Display for BadCodepoint {
+impl Display for BadSymbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl error::Error for BadCodepoint {}
+impl error::Error for BadSymbol {}
 
-fn parse_codepoint(arg: &str) -> Result<char, BadCodepoint> {
+fn parse_codepoint(arg: &str) -> Result<char, BadSymbol> {
     let Ok(codepoint) = u32::from_str_radix(&arg, 16) else {
-        return Err(BadCodepoint::from_arg(arg));
+        return Err(BadSymbol::from_arg(arg));
     };
-    Ok(char::from_u32(codepoint).ok_or_else(|| BadCodepoint::from_arg(arg))?)
+    Ok(char::from_u32(codepoint).ok_or_else(|| BadSymbol::from_arg(arg))?)
 }
 
+// TODO: Accept a buffer, rather than allocating a String.
 #[rustfmt::skip]
-fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
+fn parse_arg(arg: &str) -> Result<String, BadSymbol> {
     Ok(match arg {
-        "cent" | "cents"                    => '¢',
-        "command" | "cmd"                   => '⌘',
-        "facepalm"                          => '🤦',
-        "grimace" | "grim"                  => '😬',
-        "horns"                             => '🤘',
-        "lol"                               => '😂',
-        "ok"                                => '👌',
-        "shift"                             => '⇧',
-        "sob"                               => '😭',
-        "up"                                => '↑',
-        s if s.starts_with("poo")           => '💩',
-        _ => parse_codepoint(arg)?,
+        "cent" | "cents"                    => "¢".to_string(),
+        "command" | "cmd"                   => "⌘".to_string(),
+        "facepalm"                          => "🤦".to_string(),
+        "grimace" | "grim"                  => "😬".to_string(),
+        "horns"                             => "🤘".to_string(),
+        "info"                              => "ℹ️".to_string(), // multiple codepoints
+        "lol"                               => "😂".to_string(),
+        "ok"                                => "👌".to_string(),
+        "shift"                             => "⇧".to_string(),
+        "sob"                               => "😭".to_string(),
+        "up"                                => "↑".to_string(),
+        s if s.starts_with("poo")           => "💩".to_string(),
+        _ => parse_codepoint(arg)?.to_string(),
     })
 }
 
 fn main() {
-    let args: Result<Vec<char>, _> = env::args().skip(1).map(|arg| parse_arg(&arg)).collect();
+    let args: Result<Vec<String>, _> = env::args().skip(1).map(|arg| parse_arg(&arg)).collect();
     match args {
         Ok(chars) if chars.is_empty() => {
             eprintln!("utf: error: expected codepoints");
