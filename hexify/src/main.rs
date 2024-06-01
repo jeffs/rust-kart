@@ -1,4 +1,4 @@
-///! Converts each sequence of decimal digits in each arg to hexadecimal.
+//! Converts each sequence of decimal digits in each arg to hexadecimal.
 
 fn hexify(mut text: &str) -> String {
     let mut result = String::new();
