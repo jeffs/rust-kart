@@ -1,1 +1,1 @@
-searchState.loadedDescShard("hexify", 0, "! Converts each sequence of decimal digits in each arg to …")
+searchState.loadedDescShard("hexify", 0, "Converts each sequence of decimal digits in each arg to …")
