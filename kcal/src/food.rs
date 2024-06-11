@@ -37,6 +37,7 @@ macro_rules! food {
 #[rustfmt::skip]
 const FOODS: &[(&str, Food)] = &[
     food!(broccoli,    34,  2.8, 100, "Broccoli, raw",                                "https://fdc.nal.usda.gov/fdc-app.html#/food-details/170379/nutrients"),
+    food!(brussels,    43,  3.4, 100, "Brussels sprouts, raw",                        "https://fdc.nal.usda.gov/fdc-app.html#/food-details/170383/nutrients"),
     food!(cabbage,     25,  1.3, 100, "Cabbage, raw",                                 "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169975/nutrients"),
     food!(carrot,      41,  0.8, 100, "Carrots, baby, raw",                           "https://fdc.nal.usda.gov/fdc-app.html#/food-details/2258587/nutrients"),
     food!(cauliflower, 25,  1.9, 100, "Cauliflower, raw",                             "https://fdc.nal.usda.gov/fdc-app.html#/food-details/169986/nutrients"),
