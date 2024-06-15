@@ -33,8 +33,9 @@ fn parse_arg(arg: &str) -> Result<String, BadSymbol> {
         "facepalm"                          => "🤦".to_string(),
         "grimace" | "grim"                  => "😬".to_string(),
         "horns"                             => "🤘".to_string(),
-        "info"                              => "ℹ️".to_string(), // multiple codepoints
+        "info"                              => "ℹ️".to_string(), // U+2139 U+FE0F
         "lol"                               => "😂".to_string(),
+        "not"                               => "🚫".to_string(), // U+1F6AB Prohibited
         "ok"                                => "👌".to_string(),
         "shift"                             => "⇧".to_string(),
         "sob"                               => "😭".to_string(),
