@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::unit::{BadConversion, Unit};
+use crate::unit::Unit;
 
 #[derive(Debug)]
 pub enum BadPortion {
@@ -25,16 +25,15 @@ pub struct Portion {
 }
 
 impl Portion {
-    pub fn convert(&self) -> Result<Portion, BadConversion> {
+    pub fn convert(&self) -> Portion {
         self.convert_to(self.unit.dual())
     }
 
-    pub fn convert_to(&self, unit: Unit) -> Result<Portion, BadConversion> {
-        let amount = self.number * unit.per(self.unit)?;
-        Ok(Portion {
-            number: amount,
+    pub fn convert_to(&self, unit: Unit) -> Portion {
+        Portion {
+            number: self.number * unit.per(self.unit),
             unit,
-        })
+        }
     }
 }
 

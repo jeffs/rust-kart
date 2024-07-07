@@ -1,6 +1,6 @@
 use std::{env, process::exit};
 
-use kcal::{BadConversion, BadFood, BadPortion, Food, Portion, Unit};
+use kcal::{BadFood, BadPortion, Food, Portion, Unit};
 
 const USAGE: &str = "usage: convert SIZE [FOOD]";
 
@@ -52,21 +52,21 @@ impl Args {
     }
 }
 
-fn scale(size: Portion, food: &Food) -> Result<(f64, f64), BadConversion> {
-    let grams = size.convert_to(Unit::Gram)?;
+fn scale(size: Portion, food: &Food) -> (f64, f64) {
+    let grams = size.convert_to(Unit::Gram);
     let [kcal, protein] = [food.kcal, food.protein].map(|f| (f * grams.number / 100.0).round());
-    Ok((kcal, protein))
+    (kcal, protein)
 }
 
 fn main_imp() -> Result<(), String> {
     let args = Args::from_env()?;
     match (args.size, args.food) {
         (Some(size), Some(food)) => {
-            let (kcal, protein) = scale(size, &food).map_err(|err| err.to_string())?;
+            let (kcal, protein) = scale(size, &food);
             println!("{kcal} {protein}");
         }
         (Some(size), None) => {
-            let converted = size.convert().map_err(|err| err.to_string())?;
+            let converted = size.convert();
             println!("{size} = {converted}",);
         }
         (None, Some(food)) => {

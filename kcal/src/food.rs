@@ -70,13 +70,7 @@ fn parse_custom(s: &str) -> Option<Food> {
 
     let kcal: f64 = c.parse().ok()?;
     let protein: f64 = p.parse().ok()?;
-    let hundreds: f64 = z
-        .parse::<Portion>()
-        .ok()?
-        .convert_to(Unit::Gram)
-        .ok()?
-        .number
-        / 100.0;
+    let hundreds: f64 = z.parse::<Portion>().ok()?.convert_to(Unit::Gram).number / 100.0;
 
     Some(Food {
         kcal: kcal / hundreds,
