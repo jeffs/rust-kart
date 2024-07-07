@@ -51,6 +51,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(pepper,          20,  0.9, 100),
     food!(popcorn,        100,  4.0,  27),
     food!(popcorn_usda,   387, 12.9, 100),
+    food!(potato,          79,  2.1, 100),
     food!(spinach,         23,  2.9, 100),
     food!(thigh,          149, 18.6, 100),
     food!(tomato,          22,  0.7, 100),
