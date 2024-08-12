@@ -9,6 +9,7 @@ members = [
     "delay",
     "fix-quotes",
     "gitup",
+    "head1",           # To be rebranded "head" when ready.
     "hexify",
     "kcal",
     "pangram",
