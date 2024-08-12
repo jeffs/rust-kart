@@ -17,12 +17,13 @@ pub trait Perpetuity: Sized {
     }
 }
 
-#[cfg(todo)]
-pub trait IntoPerpetuity {
-    type Item;
-    type IntoPerp: Perpetuity<Item = Self::Item>;
-    fn into_perp(self) -> Self::IntoPerp;
-}
+// TODO: Define a feature for "todo" stuff.  This currently freaks rust-analyzer out.
+// #[cfg(todo)]
+// pub trait IntoPerpetuity {
+//     type Item;
+//     type IntoPerp: Perpetuity<Item = Self::Item>;
+//     fn into_perp(self) -> Self::IntoPerp;
+// }
 
 /// Returns the specified Perpetuity, erasing any further type information.
 /// ```
