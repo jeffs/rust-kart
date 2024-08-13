@@ -14,6 +14,7 @@ members = [
     "kcal",
     "pangram",
     "perpetuity",
+    "since",
     "stop-once",
     "sum-of-products",
     "tmux-send",
