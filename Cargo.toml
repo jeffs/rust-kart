@@ -12,6 +12,7 @@ members = [
     "head1",           # To be rebranded "head" when ready.
     "hexify",
     "kcal",
+    "netmask",
     "pangram",
     "perpetuity",
     "since",
