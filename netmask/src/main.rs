@@ -86,10 +86,15 @@ impl FromStr for Netmask {
             Some((ip, len)) => (ip, len.parse()?),
             None => (s, Ipv4Addr::BITS as u8),
         };
-        Ok(Netmask {
-            ip: keep_left(ip.parse()?, len),
+        let ip = ip.parse()?;
+        let netmask = Netmask {
+            ip: keep_left(ip, len),
             len,
-        })
+        };
+        if ip != netmask.ip {
+            eprintln!("warning: dropping extra bits from {ip} for {}", netmask);
+        }
+        Ok(netmask)
     }
 }
 
