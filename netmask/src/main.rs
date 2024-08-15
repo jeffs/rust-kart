@@ -53,7 +53,7 @@ impl Netmask {
                 let mask = mask_left(len);
                 these & mask != those & mask
             })
-            .unwrap_or(Ipv4Addr::BITS as u8);
+            .unwrap_or(max_len);
         Netmask {
             ip: keep_left(self.ip, len),
             len,
@@ -111,6 +111,14 @@ mod tests {
         let rhs: Netmask = "12.34.65.78/20".parse().expect("hard-coded netmask");
         let want: Netmask = "12.34.40.0/18".parse().expect("hard-coded netmask");
         assert_eq!(lhs.ancestor(&rhs), want);
+    }
+
+    #[test]
+    fn test_ancestor_max_len() {
+        // Even if two masks are identical, their ancestor is limited to the shorter mask's length.
+        let lhs: Netmask = "12.34.56.78/16".parse().expect("hard-coded netmask");
+        let rhs: Netmask = "12.34.56.78".parse().expect("hard-coded netmask");
+        assert_eq!(lhs.ancestor(&rhs), lhs);
     }
 
     #[test]
