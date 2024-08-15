@@ -50,7 +50,7 @@ impl Netmask {
         let max_len = self.len.min(other.len);
         let len = (0..max_len)
             .find(|&len| {
-                let mask = mask_left(len);
+                let mask = mask_left(len + 1);
                 these & mask != those & mask
             })
             .unwrap_or(max_len);
@@ -109,7 +109,7 @@ mod tests {
     fn test_netmask_ancestor() {
         let lhs: Netmask = "12.34.56.78/20".parse().expect("hard-coded netmask");
         let rhs: Netmask = "12.34.65.78/20".parse().expect("hard-coded netmask");
-        let want: Netmask = "12.34.40.0/18".parse().expect("hard-coded netmask");
+        let want: Netmask = "12.34.0.0/17".parse().expect("hard-coded netmask");
         assert_eq!(lhs.ancestor(&rhs), want);
     }
 
@@ -119,6 +119,20 @@ mod tests {
         let lhs: Netmask = "12.34.56.78/16".parse().expect("hard-coded netmask");
         let rhs: Netmask = "12.34.56.78".parse().expect("hard-coded netmask");
         assert_eq!(lhs.ancestor(&rhs), lhs);
+    }
+
+    #[test]
+    fn test_ancestor_exclude_first_difference() {
+        // The ancestor length should be one _less_ than the index of the first differing bit.
+        let lhs = Netmask {
+            ip: Ipv4Addr::from_bits(0xff000000),
+            len: 8,
+        };
+        let rhs = Netmask {
+            ip: Ipv4Addr::from_bits(0xfe000000),
+            len: 8,
+        };
+        assert_eq!(lhs.ancestor(&rhs).len, 7);
     }
 
     #[test]
