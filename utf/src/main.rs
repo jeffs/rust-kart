@@ -1,3 +1,5 @@
+// TODO: Support [emoticons](https://gist.github.com/jordanorelli/11229304)
+
 use std::{env, error, fmt::Display, process};
 
 #[derive(Debug)]
