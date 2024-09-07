@@ -3,6 +3,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use std::{env, io};
 
 use regex::Regex;
@@ -15,7 +16,7 @@ struct Extractor {
 impl Extractor {
     pub fn new() -> Extractor {
         Extractor {
-            re: Regex::new(r"^\t<string>(.*)</string>$").unwrap(),
+            re: Regex::new(r"^\t<string>(.*)</string>$").expect("hard-coded regex should be valid"),
         }
     }
 
@@ -34,12 +35,17 @@ fn is_webloc(entry: &DirEntry) -> bool {
         .is_some()
 }
 
-fn find_weblocs(root: String) -> impl Iterator<Item = PathBuf> {
-    WalkDir::new(root)
-        .into_iter()
-        .flatten()
-        .filter(is_webloc)
-        .map(|entry| entry.path().to_path_buf())
+fn find_weblocs(root: &Path) -> walkdir::Result<Vec<PathBuf>> {
+    Ok(if root.is_dir() {
+        let paths: Result<Vec<_>, _> = WalkDir::new(root).into_iter().collect();
+        paths?
+            .into_iter()
+            .filter(is_webloc)
+            .map(|entry| entry.path().to_path_buf())
+            .collect()
+    } else {
+        vec![root.to_path_buf()]
+    })
 }
 
 fn read_links(path: &Path) -> io::Result<Vec<String>> {
@@ -52,19 +58,24 @@ fn read_links(path: &Path) -> io::Result<Vec<String>> {
         .collect())
 }
 
-fn get_stem(path: &Path) -> &str {
-    path.file_stem()
-        .and_then(|os_str| os_str.to_str())
-        .unwrap_or("(non_utf8_file_name)")
-}
-
-fn main() -> io::Result<()> {
-    for path in env::args().skip(1).flat_map(find_weblocs) {
-        let path = &path;
-        let stem = get_stem(path);
-        for link in read_links(path)? {
-            println!("* [{stem}]({link})");
+fn main() {
+    for root in env::args().skip(1) {
+        let paths = find_weblocs(root.as_ref()).unwrap_or_else(|err| {
+            eprintln!("error: {err}");
+            exit(1);
+        });
+        for path in paths.into_iter() {
+            let stem = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("file lacking UTF-8 stem");
+            let links = read_links(&path).unwrap_or_else(|err| {
+                eprintln!("error: {}: {err}", path.display());
+                exit(1);
+            });
+            for link in links {
+                println!("* [{stem}]({link})");
+            }
         }
     }
-    Ok(())
 }
