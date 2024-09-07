@@ -10,6 +10,3 @@ A workspace of small utilities written in Rust.
     len         -- sorts lines by length
     pangram     -- makes as many words as possible from specified letters
     tmux-send   -- sends text to the bottom-right tmux pane
-
-The scripts directory holds shell scripts useful in the development of
-rust-kart itself.
