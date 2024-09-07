@@ -1,0 +1,9 @@
+[package]
+name = "wl2md"
+version = "0.1.0"
+authors = ["Jeff Schwab <jeff@unbuggy.com>"]
+edition = "2021"
+
+[dependencies]
+regex = "1"
+walkdir = "2"

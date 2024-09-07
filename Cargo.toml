@@ -21,4 +21,5 @@ members = [
     "tmux-send",
     "utf",
     "uuid",
+    "wl2md",
 ]
