@@ -1,81 +1,178 @@
 // TODO: Report CLI errors; supprot --help.
 
+use core::fmt;
+use std::fmt::Display;
 use std::fs::File;
 use std::io::prelude::*;
+use std::os::unix::ffi::OsStrExt;
 use std::path::{Path, PathBuf};
 use std::process::exit;
+use std::str::FromStr;
+use std::sync::LazyLock;
 use std::{env, io};
 
 use regex::Regex;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
-struct Extractor {
-    re: Regex,
+#[derive(Debug)]
+struct Error(String);
+
+impl Error {
+    fn for_path<E: Display>(path: &Path, err: E) -> Error {
+        Error(format!("{}: {err}", path.display()))
+    }
+
+    /// Callback for std::io::Result::map_err.  io::Error messages often omit the path.
+    fn add_path(path: &Path) -> impl Fn(io::Error) -> Error + Copy + '_ {
+        |err| Error::for_path(path, err)
+    }
+
+    /// Semantically, this function should return !, and shouldn't be generic.  For reasons beyond
+    /// my ken, the Rust compiler doesn't realize that ! should type check as anything, even though
+    /// it accepts exit(1) (which returns !) as any old unbounded T.
+    fn die<T>(self) -> T {
+        eprintln!("error: {self}");
+        exit(1)
+    }
 }
 
-impl Extractor {
-    pub fn new() -> Extractor {
-        Extractor {
-            re: Regex::new(r"^\t<string>(.*)</string>$").expect("hard-coded regex should be valid"),
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+/// walkdir::Error, unlike io::Error, always includes the path where the error occurred.
+impl From<walkdir::Error> for Error {
+    fn from(value: walkdir::Error) -> Self {
+        Error(format!("{value}"))
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
+
+struct Link {
+    name: String,
+    link: String,
+}
+
+impl fmt::Display for Link {
+    /// Returns a Markdown inline link.  See also:
+    /// <https://daringfireball.net/projects/markdown/syntax#link>
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{}]({})", self.name, self.link)
+    }
+}
+
+struct LinkPattern(Regex);
+
+impl LinkPattern {
+    pub fn compile() -> LinkPattern {
+        // I'd love to offer you a link to the webloc format docs, but there don't seem to be any.
+        LinkPattern(Regex::new(r"^\t<string>(.*)</string>$").expect("hard-coded regex"))
+    }
+
+    pub fn match_line(&self, line: &str) -> Option<String> {
+        self.0
+            .captures(line)
+            .map(|captures| captures[1].to_string())
+    }
+}
+
+static LINK_PATTERN: LazyLock<LinkPattern> = LazyLock::new(LinkPattern::compile);
+
+struct WeblocFile(PathBuf);
+
+impl WeblocFile {
+    fn from_path(path: &Path) -> Option<WeblocFile> {
+        let is_webloc_file =
+            path.is_file() && path.extension().is_some_and(|s| s.as_bytes() == b"webloc");
+        is_webloc_file.then(|| WeblocFile(path.to_owned()))
+    }
+
+    /// Returns this file's stem, or the full path if it has no stem.
+    fn name(&self) -> String {
+        self.0
+            .file_stem()
+            .unwrap_or(self.0.as_os_str())
+            .to_string_lossy()
+            .into_owned()
+    }
+}
+
+impl TryFrom<WeblocFile> for Link {
+    type Error = Error;
+    fn try_from(value: WeblocFile) -> Result<Self> {
+        let path = &value.0;
+        let add_path = Error::add_path(path);
+        let file = File::open(path).map_err(add_path)?;
+        let mut links = io::BufReader::new(file)
+            .lines()
+            .collect::<io::Result<Vec<String>>>()
+            .map_err(add_path)?
+            .into_iter()
+            .filter_map(|line| LINK_PATTERN.match_line(&line));
+        match (links.next(), links.next()) {
+            (Some(link), None) => Ok(Link {
+                name: value.name(),
+                link,
+            }),
+            _ => Err(Error::for_path(path, "expected exactly one link")),
         }
     }
+}
 
-    pub fn link(&self, line: &str) -> Option<String> {
-        self.re
-            .captures(line)
-            .and_then(|captures| captures.get(1).map(|m| m.as_str().to_string()))
+enum SearchablePath {
+    File(WeblocFile),
+    Directory(PathBuf),
+}
+
+impl FromStr for SearchablePath {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self> {
+        let path = Path::new(s);
+        if let Some(file) = WeblocFile::from_path(path) {
+            Ok(SearchablePath::File(file))
+        } else if path.is_dir() {
+            Ok(SearchablePath::Directory(path.to_owned()))
+        } else {
+            let what = format!("{s}: expected directory or .webloc file");
+            Err(Error(what))
+        }
     }
 }
 
-fn is_webloc(entry: &DirEntry) -> bool {
-    entry
-        .path()
-        .extension()
-        .filter(|&ext| ext == "webloc")
-        .is_some()
-}
-
-fn find_weblocs(root: &Path) -> walkdir::Result<Vec<PathBuf>> {
-    Ok(if root.is_dir() {
-        let paths: Result<Vec<_>, _> = WalkDir::new(root).into_iter().collect();
-        paths?
-            .into_iter()
-            .filter(is_webloc)
-            .map(|entry| entry.path().to_path_buf())
-            .collect()
-    } else {
-        vec![root.to_path_buf()]
-    })
-}
-
-fn read_links(path: &Path) -> io::Result<Vec<String>> {
-    let extract = Extractor::new();
-    let file = File::open(path)?;
-    let lines: io::Result<Vec<String>> = io::BufReader::new(file).lines().collect();
-    Ok(lines?
-        .iter()
-        .filter_map(|line| extract.link(line))
-        .collect())
+impl TryFrom<SearchablePath> for Vec<Link> {
+    type Error = Error;
+    fn try_from(value: SearchablePath) -> Result<Self> {
+        match value {
+            SearchablePath::File(file) => Ok(vec![file.try_into()?]),
+            SearchablePath::Directory(root) => WalkDir::new(&root)
+                .into_iter()
+                .collect::<walkdir::Result<Vec<_>>>()?
+                .into_iter()
+                .filter_map(|dirent| WeblocFile::from_path(dirent.path()))
+                .map(TryInto::try_into)
+                .collect(),
+        }
+    }
 }
 
 fn main() {
-    for root in env::args().skip(1) {
-        let paths = find_weblocs(root.as_ref()).unwrap_or_else(|err| {
-            eprintln!("error: {err}");
-            exit(1);
+    env::args()
+        .skip(1)
+        .map(|arg| arg.parse())
+        .collect::<Result<Vec<SearchablePath>>>()
+        .unwrap_or_else(Error::die)
+        .into_iter()
+        .map(SearchablePath::try_into) // path -> links; may be >1 link if path is a directory
+        .collect::<Result<Vec<Vec<Link>>>>()
+        .unwrap_or_else(Error::die)
+        .into_iter()
+        .flatten()
+        .for_each(|link| {
+            // Markdown list item.  See also:
+            // <https://daringfireball.net/projects/markdown/syntax#list>
+            println!("* {link}");
         });
-        for path in paths.into_iter() {
-            let stem = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("file lacking UTF-8 stem");
-            let links = read_links(&path).unwrap_or_else(|err| {
-                eprintln!("error: {}: {err}", path.display());
-                exit(1);
-            });
-            for link in links {
-                println!("* [{stem}]({link})");
-            }
-        }
-    }
 }
