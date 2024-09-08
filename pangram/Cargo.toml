@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 arg5 = { path = "../arg5" }
+
+[lints]
+workspace = true

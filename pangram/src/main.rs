@@ -5,11 +5,11 @@
 //! pangram LETTERS [WORDS_FILE]
 //! ```
 //!
-//! Any uppercase LETTERS are considered mandatory.  Each solution is printed on
+//! Any uppercase `LETTERS` are considered mandatory.  Each solution is printed on
 //! a separate line, and pangrams (that is, words that use all available
-//! LETTERS) are prefixed with asterisks.
+//! `LETTERS`) are prefixed with asterisks.
 //!
-//! The default WORDS_FILE is /usr/share/dict/words.  Note that this file may
+//! The default `WORDS_FILE` is /usr/share/dict/words.  Note that this file may
 //! not match the New York Times' word list.  In particular, it may contain
 //! proper nouns, which you can grep out, as in the following example.
 //!
@@ -38,7 +38,7 @@ const DEFAULT_MIN_LENGTH: usize = 4;
 const DEFAULT_WORDS_FILE: &str = "/usr/share/dict/words";
 
 fn to_charset<I: Iterator<Item = char>>(chars: I) -> HashSet<char> {
-    chars.flat_map(|c| c.to_lowercase()).collect()
+    chars.flat_map(char::to_lowercase).collect()
 }
 
 struct Args {
@@ -68,9 +68,9 @@ fn format_line(line: &str, args: &Args) -> Option<String> {
         let set = to_charset(line.chars());
         if set.is_superset(&args.mandatory) && set.is_subset(&args.available) {
             if set.is_superset(&args.available) {
-                Some(format!("* {}", line)) // a pangram
+                Some(format!("* {line}")) // a pangram
             } else {
-                Some(format!("  {}", line)) // not a pangram, but an anagram
+                Some(format!("  {line}")) // not a pangram, but an anagram
             }
         } else {
             None // not an anagram
@@ -80,22 +80,22 @@ fn format_line(line: &str, args: &Args) -> Option<String> {
     }
 }
 
-fn format_lines(args: Args) -> Result<Vec<String>, MainError> {
+fn format_lines(args: &Args) -> Result<Vec<String>, MainError> {
     let mut lines = Vec::new();
     let file =
         File::open(&args.words_file).map_err(|err| format!("{}: {}", args.words_file, err))?;
     for word in BufReader::new(file).lines() {
-        if let Some(line) = format_line(&word?, &args) {
+        if let Some(line) = format_line(&word?, args) {
             lines.push(line);
         }
     }
-    lines.sort_by_key(|line| line.len());
+    lines.sort_by_key(String::len);
     Ok(lines)
 }
 
 fn main_imp() -> Result<(), MainError> {
-    for line in format_lines(parse_args()?)? {
-        println!("{}", line);
+    for line in format_lines(&parse_args()?)? {
+        println!("{line}");
     }
     Ok(())
 }

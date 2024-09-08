@@ -12,6 +12,9 @@ use std::{
 
 use thiserror::Error;
 
+#[allow(clippy::cast_possible_truncation)]
+const IPV4_ADDR_BITS: u8 = Ipv4Addr::BITS as u8;
+
 #[derive(Debug, Error)]
 enum ParseNetmaskError {
     #[error(transparent)]
@@ -26,7 +29,7 @@ fn keep_left(ip: Ipv4Addr, len: u8) -> Ipv4Addr {
 
 /// Returns a value in which the leftmost len bits are 1s, and the remaining 32 - len bits are 0s.
 fn mask_left(len: u8) -> u32 {
-    let len = len as u32;
+    let len = u32::from(len);
     assert!(len <= u32::BITS);
     u32::MAX
         - ((1u32.checked_shl(u32::BITS - len))
@@ -44,13 +47,13 @@ struct Netmask {
 impl Netmask {
     /// Returns the narrowest netmask allowing a superset of self and other.
     fn ancestor(&self, other: &Netmask) -> Netmask {
-        let these = self.ip.to_bits();
-        let those = other.ip.to_bits();
+        let ours = self.ip.to_bits();
+        let theirs = other.ip.to_bits();
         let max_len = self.len.min(other.len);
         let len = (0..max_len)
             .find(|&len| {
                 let mask = mask_left(len + 1);
-                these & mask != those & mask
+                ours & mask != theirs & mask
             })
             .unwrap_or(max_len);
         Netmask {
@@ -83,7 +86,7 @@ impl FromStr for Netmask {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (ip, len) = match s.split_once('/') {
             Some((ip, len)) => (ip, len.parse()?),
-            None => (s, Ipv4Addr::BITS as u8),
+            None => (s, IPV4_ADDR_BITS),
         };
         let ip = ip.parse()?;
         let netmask = Netmask {
@@ -91,7 +94,7 @@ impl FromStr for Netmask {
             len,
         };
         if ip != netmask.ip {
-            eprintln!("warning: dropping extra bits from {ip} for {}", netmask);
+            eprintln!("warning: dropping extra bits from {ip} for {netmask}");
         }
         Ok(netmask)
     }

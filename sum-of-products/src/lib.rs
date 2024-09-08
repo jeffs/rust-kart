@@ -7,6 +7,7 @@ pub struct SumOfProducts {
     pub sum: f64,
 }
 
+#[must_use]
 pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
     let products: Vec<f64> = parsed
         .iter()
@@ -16,25 +17,21 @@ pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
     SumOfProducts { products, sum }
 }
 
+/// # Errors
+///
+/// Will return any `Err` from `lines`, or an `Err` if any word cannot be parsed as an f64.
 pub fn parse<I: Iterator<Item = io::Result<String>>>(
     lines: I,
 ) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
     lines
-        .map(|line| -> Result<_, Box<dyn Error>> {
+        .map(|line| -> Result<Vec<f64>, _> {
             // Convert each line from a string to a vector of numbers.
-            let values: Result<Vec<f64>, _> = line?
-                .split_ascii_whitespace()
-                .map(|word| word.parse())
-                .collect();
+            let values: Result<Vec<f64>, _> =
+                line?.split_ascii_whitespace().map(str::parse).collect();
             Ok(values?)
         })
-        .filter(|result| {
-            // Discard empty vectors.
-            !result
-                .as_ref()
-                .map(|values| values.is_empty())
-                .unwrap_or_default()
-        })
+        // Discard empty vectors.
+        .filter(|result| !result.as_ref().is_ok_and(Vec::is_empty))
         .collect()
 }
 

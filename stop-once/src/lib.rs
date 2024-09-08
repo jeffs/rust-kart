@@ -19,7 +19,7 @@ pub trait Stopper: Iterator
 where
     Self: Sized,
 {
-    /// Like Iterator::take_while, but additionally yields the terminal item.
+    /// Like `Iterator::take_while`, but additionally yields the terminal item.
     fn stop_once<P: FnMut(&Self::Item) -> bool>(self, predicate: P) -> StopOnce<Self, P>;
 }
 

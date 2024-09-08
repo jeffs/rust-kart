@@ -8,8 +8,8 @@ fn main() {
     let mut base: Option<&str> = None;
     let mut flags: Vec<&str> = Vec::new();
     let our_args: Vec<String> = env::args().skip(1).collect();
-    for arg in our_args.iter() {
-        if arg.starts_with("-") {
+    for arg in &our_args {
+        if arg.starts_with('-') {
             flags.push(arg);
         } else if base.is_none() {
             base = Some(arg);

@@ -2,7 +2,7 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str>
     let word_vecs = render_values(parsed);
     let column_count = word_vecs
         .iter()
-        .map(|words| words.len())
+        .map(Vec::len)
         .max()
         .ok_or("expected at least one input value")?;
     Ok((0..column_count)
@@ -10,7 +10,7 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str>
         .map(|index| {
             word_vecs
                 .iter()
-                .flat_map(|words| words.iter().nth_back(index).map(|word| word.len()))
+                .filter_map(|words| words.iter().nth_back(index).map(String::len))
                 .max()
                 .unwrap_or_default()
         })
@@ -40,7 +40,7 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
             let columns: Vec<String> = values
                 .iter()
                 .zip(widths[empty_count..].iter())
-                .map(|(value, width)| format!("{value:>0$}", width))
+                .map(|(value, width)| format!("{value:>width$}"))
                 .collect();
             empty_columns.concat() + &columns.join(mul)
         })
@@ -50,6 +50,6 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
 fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
     parsed
         .iter()
-        .map(|values| values.iter().map(|value| value.to_string()).collect())
+        .map(|values| values.iter().map(ToString::to_string).collect())
         .collect()
 }

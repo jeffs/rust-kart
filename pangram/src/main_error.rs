@@ -27,7 +27,7 @@ impl From<String> for MainError {
 impl From<io::Error> for MainError {
     fn from(err: io::Error) -> Self {
         Self {
-            what: format!("{}", err),
+            what: err.to_string(),
         }
     }
 }
