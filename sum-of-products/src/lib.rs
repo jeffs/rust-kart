@@ -7,6 +7,9 @@ pub struct SumOfProducts {
     pub sum: f64,
 }
 
+const EQ: &str = " = ";
+const SEP: &str = "----";
+
 #[must_use]
 pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
     let products: Vec<f64> = parsed
@@ -35,21 +38,17 @@ pub fn parse<I: Iterator<Item = io::Result<String>>>(
         .collect()
 }
 
-pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> Result<String, &'static str> {
-    use rendering::*;
+#[must_use]
+pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> String {
     let SumOfProducts { products, sum } = output;
-    let eq = " = ";
-    let formulas = render_formulas(input)?;
+    let formulas = rendering::render_formulas(input);
     let sum_width = sum.to_string().len();
-    let total_width = formula_width(&formulas) + eq.len() + sum_width;
-    let lines: Vec<String> = formulas
+    let width = rendering::formula_width(&formulas) + EQ.len() + sum_width;
+    formulas
         .iter()
         .zip(products.iter())
-        .map(|(formula, product)| format!("{formula}{eq}{product:>0$}", sum_width))
-        .chain(iter::once(format!(
-            "{:>1$}\n{sum:>1$}",
-            "----", total_width
-        )))
-        .collect();
-    Ok(lines.join("\n"))
+        .map(|(formula, product)| format!("{formula}{EQ}{product:>sum_width$}"))
+        .chain(iter::once(format!("{SEP:>width$}\n{sum:>width$}")))
+        .collect::<Vec<_>>()
+        .join("\n")
 }

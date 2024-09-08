@@ -1,11 +1,9 @@
-fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str> {
+fn compute_value_widths(parsed: &[Vec<f64>]) -> Vec<usize> {
     let word_vecs = render_values(parsed);
-    let column_count = word_vecs
-        .iter()
-        .map(Vec::len)
-        .max()
-        .ok_or("expected at least one input value")?;
-    Ok((0..column_count)
+    let Some(column_count) = word_vecs.iter().map(Vec::len).max() else {
+        return vec![];
+    };
+    (0..column_count)
         .rev()
         .map(|index| {
             word_vecs
@@ -14,7 +12,7 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Result<Vec<usize>, &'static str>
                 .max()
                 .unwrap_or_default()
         })
-        .collect())
+        .collect()
 }
 
 pub fn formula_width(formulas: &[String]) -> usize {
@@ -27,10 +25,10 @@ pub fn formula_width(formulas: &[String]) -> usize {
 }
 
 // TODO: Align decimal points.
-pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str> {
+pub fn render_formulas(parsed: &[Vec<f64>]) -> Vec<String> {
     let mul = " * ";
-    let widths = compute_value_widths(parsed)?;
-    Ok(parsed
+    let widths = compute_value_widths(parsed);
+    parsed
         .iter()
         .map(|values| {
             let empty_count = widths.len() - values.len();
@@ -44,7 +42,7 @@ pub fn render_formulas(parsed: &[Vec<f64>]) -> Result<Vec<String>, &'static str>
                 .collect();
             empty_columns.concat() + &columns.join(mul)
         })
-        .collect())
+        .collect()
 }
 
 fn render_values(parsed: &[Vec<f64>]) -> Vec<Vec<String>> {
