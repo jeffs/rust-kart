@@ -40,12 +40,8 @@ impl<'a> Store<'a> {
     #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         match self {
-            Store::I32(_) => Capacity::Mandatory,
-            Store::OptI32(_) => Capacity::Optional,
-            Store::Str(_) => Capacity::Mandatory,
-            Store::OptStr(_) => Capacity::Optional,
-            Store::U32(_) => Capacity::Mandatory,
-            Store::OptU32(_) => Capacity::Optional,
+            Store::I32(_) | Store::Str(_) | Store::U32(_) => Capacity::Mandatory,
+            Store::OptI32(_) | Store::OptStr(_) | Store::OptU32(_) => Capacity::Optional,
         }
     }
 }
@@ -67,13 +63,13 @@ impl<'a> Binding<'a> {
         match &mut self.store {
             Store::I32(target) => {
                 **target = arg.parse().map_err(|err| ParseError {
-                    what: format!("{} '{}'", err, arg),
+                    what: format!("{err} '{arg}'"),
                 })?;
                 self.appetite = Appetite::Full;
             }
             Store::OptI32(target) => {
                 **target = Some(arg.parse().map_err(|err| ParseError {
-                    what: format!("{} '{}'", err, arg),
+                    what: format!("{err} '{arg}'"),
                 })?);
                 self.appetite = Appetite::Full;
             }
@@ -87,13 +83,13 @@ impl<'a> Binding<'a> {
             }
             Store::U32(target) => {
                 **target = arg.parse().map_err(|err| ParseError {
-                    what: format!("{} '{}'", err, arg),
+                    what: format!("{err} '{arg}'"),
                 })?;
                 self.appetite = Appetite::Full;
             }
             Store::OptU32(target) => {
                 **target = Some(arg.parse().map_err(|err| ParseError {
-                    what: format!("{} '{}'", err, arg),
+                    what: format!("{err} '{arg}'"),
                 })?);
                 self.appetite = Appetite::Full;
             }
@@ -215,10 +211,19 @@ impl<'a> Parser<'a> {
         exit(0)
     }
 
+    #[must_use]
     pub fn new() -> Parser<'a> {
         Parser::default()
     }
 
+    /// # Errors
+    ///
+    /// Will return `Err` if any mandatory argument is not provided, or if any supplied argument
+    /// cannot be parsed.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the current program name cannot be determined.
     pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
     where
         S: ToString,
@@ -236,7 +241,7 @@ impl<'a> Parser<'a> {
         for name in &self.positionals {
             if self.parameters[name].appetite() == Appetite::Hungry {
                 return Err(ParseError {
-                    what: format!("expected {}", name),
+                    what: format!("expected {name}"),
                 });
             }
         }
@@ -248,7 +253,7 @@ impl<'a> Parser<'a> {
         if let Some(arg) = arg.strip_prefix("--") {
             for name in self.parameters.keys() {
                 if arg == *name {
-                    todo!("parse {}", name);
+                    todo!("parse {name}");
                 }
             }
             if arg == "--help" {
@@ -271,20 +276,21 @@ impl<'a> Parser<'a> {
             Ok(())
         } else {
             Err(ParseError {
-                what: format!("unexpected positional argument '{}'", arg),
+                what: format!("unexpected positional argument '{arg}'"),
             })
         }
     }
 
+    #[must_use]
     pub fn usage(&self, arg0: &str) -> String {
         let mut text = arg0.to_string();
         // TODO: Print nonpositional parameters.
         for name in &self.positionals {
             let parameter = &self.parameters[name];
             text = match parameter.capacity() {
-                Capacity::Mandatory => format!("{} <{}>", text, name),
-                Capacity::Optional => format!("{} [{}]", text, name),
-                Capacity::Variadic => format!("{} [{}...]", text, name),
+                Capacity::Mandatory => format!("{text} <{name}>"),
+                Capacity::Optional => format!("{text} [{name}]"),
+                Capacity::Variadic => format!("{text} [{name}...]"),
             };
         }
         text

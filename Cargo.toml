@@ -23,3 +23,8 @@ members = [
     "uuid",
     "wl2md",
 ]
+
+[workspace.lints.clippy]
+# Deny pedantic lints, but with low priority so we can override them.
+pedantic = { level = "deny", priority = -1 }
+similar-names = "allow"
