@@ -20,14 +20,10 @@ fn main() {
     // a subcommand (as in "cargo norm"), cargo-norm receives both the
     // subcommand ("norm") and the file path.
     let args: Vec<_> = env::args().collect();
-    let args: Vec<_> = args.iter().map(|s| s.as_ref()).collect();
-    let file = match &args[..] {
-        [_, file] => file,
-        [_, "norm", file] => file,
-        _ => {
-            eprintln!("Usage: cargo-norm FILE");
-            exit(2);
-        }
+    let args: Vec<_> = args.iter().map(AsRef::as_ref).collect();
+    let ([_, file] | [_, "norm", file]) = &args[..] else {
+        eprintln!("Usage: cargo-norm FILE");
+        exit(2);
     };
 
     // Convert the argument to an absolute path.
@@ -46,8 +42,7 @@ fn main() {
         .filter_map(|s| s.as_os_str().to_str())
         .collect();
     let name = match &parts[..] {
-        [.., name, "src", "main.rs"] => Some(*name),
-        [.., name, "src", "bin", "main.rs"] => Some(*name),
+        [.., name, "src", "main.rs"] | [.., name, "src", "bin", "main.rs"] => Some(*name),
         [.., "src", "bin", file] => {
             let path: &Path = file.as_ref();
             path.file_stem().and_then(|s| s.to_str())
@@ -62,9 +57,9 @@ fn main() {
     };
 
     if let Some(name) = name {
-        println!("{}", name);
+        println!("{name}");
     } else if let Some(name) = find_src_bin_dir_name(parts) {
-        println!("{}", name);
+        println!("{name}");
     } else {
         eprintln!("Error: {}: can't find bin name", file.display());
         exit(3);

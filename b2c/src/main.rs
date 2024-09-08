@@ -19,7 +19,7 @@ fn execute() -> Result<(), Box<dyn Error>> {
 
 fn main() {
     if let Err(err) = execute() {
-        eprintln!("error: {}", err);
+        eprintln!("error: {err}");
         std::process::exit(1);
     }
 }
