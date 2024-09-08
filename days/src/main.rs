@@ -14,6 +14,7 @@ fn format_part((count, unit): (i64, &str)) -> Option<String> {
 }
 
 fn print_parts(parts: &[String]) {
+    // TODO: Destructure slice rather than switching on length.
     match parts.len() {
         0 => println!("now"),
         1 => println!("{}", parts[0]),
@@ -21,7 +22,7 @@ fn print_parts(parts: &[String]) {
         _ => {
             let m = parts.len() - 1;
             for part in &parts[0..m] {
-                print!("{}, ", part);
+                print!("{part}, ");
             }
             println!("and {}", parts[m]);
         }

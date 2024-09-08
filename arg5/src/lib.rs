@@ -224,6 +224,7 @@ impl<'a> Parser<'a> {
     /// # Panics
     ///
     /// Will panic if the current program name cannot be determined.
+    #[allow(clippy::similar_names)] // args, arg0
     pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
     where
         S: ToString,

@@ -16,14 +16,15 @@ pub enum Unit {
 }
 
 impl Unit {
+    #[must_use]
     pub fn dual(self) -> Unit {
         match self {
             Unit::Gram => Unit::Ounce,
-            Unit::Ounce => Unit::Gram,
-            Unit::Pound => Unit::Gram,
+            Unit::Ounce | Unit::Pound => Unit::Gram,
         }
     }
 
+    #[must_use]
     pub fn per(self, unit: Unit) -> f64 {
         match (self, unit) {
             (Unit::Gram, Unit::Gram) | (Unit::Ounce, Unit::Ounce) | (Unit::Pound, Unit::Pound) => {

@@ -1,4 +1,4 @@
-/// Wraps an iterator of type I by creating it on the first call to .next().
+/// Wraps an iterator of type I by creating it on the first call to `next()`.
 /// Creates the wrapped iterator by calling F.
 enum DelayState<I: Iterator, F: FnOnce() -> I> {
     // New wraps an Option only so that we can take F out of it during the
@@ -36,7 +36,7 @@ impl<I: Iterator, F: FnOnce() -> I> Iterator for Delayed<I, F> {
 }
 
 /// Wraps an iterator created by `new` on the first  call to
-/// [.next()][Iterator::next()].
+/// [`next()`][Iterator::next()].
 ///
 /// For example, consider Haskell's [canonical zipWith implementation][hs]:
 /// ```hs

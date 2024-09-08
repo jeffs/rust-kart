@@ -4,6 +4,17 @@ use kcal::{BadFood, BadPortion, Food, Portion, Unit};
 
 const USAGE: &str = "usage: convert SIZE [FOOD]";
 
+#[allow(clippy::similar_names)] // args, arg1, arg2, arg3
+fn args() -> Result<(String, Option<String>), String> {
+    let mut args = env::args().skip(1);
+    let arg1 = args.next().ok_or(USAGE)?;
+    let arg2 = args.next();
+    if let Some(arg3) = args.next() {
+        return Err(format!("{arg3}: unexpected argument"));
+    }
+    Ok((arg1, arg2))
+}
+
 // TODO: Support SIZE/SIZExKCAL,G for one-off foods.
 // TODO: Support creation and storage of new foods from the CLI.
 struct Args {
@@ -13,13 +24,7 @@ struct Args {
 
 impl Args {
     fn from_env() -> Result<Args, String> {
-        let mut args = env::args().skip(1);
-        let arg1 = args.next().ok_or(USAGE)?;
-        let arg2 = args.next();
-        if let Some(extra) = args.next() {
-            return Err(format!("{extra}: unexpected argument"));
-        }
-
+        let (arg1, arg2) = args()?;
         if let Ok(size) = arg1.parse::<Portion>() {
             if let Some(food) = arg2 {
                 let food = food.parse().map_err(|err: BadFood| err.to_string())?;

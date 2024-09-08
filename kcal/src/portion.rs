@@ -19,16 +19,19 @@ impl Display for BadPortion {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Portion {
     pub number: f64,
     pub unit: Unit,
 }
 
 impl Portion {
+    #[must_use]
     pub fn convert(&self) -> Portion {
         self.convert_to(self.unit.dual())
     }
 
+    #[must_use]
     pub fn convert_to(&self, unit: Unit) -> Portion {
         Portion {
             number: self.number * unit.per(self.unit),
