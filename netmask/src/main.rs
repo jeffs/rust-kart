@@ -8,7 +8,6 @@ use std::{
     net::{AddrParseError, Ipv4Addr},
     num::ParseIntError,
     str::FromStr,
-    u32,
 };
 
 use thiserror::Error;

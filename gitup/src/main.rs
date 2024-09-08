@@ -93,7 +93,7 @@ where
         }
     }
 
-    Ok((stderr + &stdout).into())
+    Ok(stderr + &stdout)
 }
 
 async fn git<S, I>(args: I) -> Result<String, SimpleError>
@@ -105,7 +105,7 @@ where
     if !status.success() {
         return Err(stderr.into());
     }
-    Ok((stderr + &stdout).into())
+    Ok(stderr + &stdout)
 }
 
 /// Returns the local main branch (trunk) name, or an error.

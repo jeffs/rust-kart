@@ -20,10 +20,10 @@ impl Display for BadCodepoint {
 impl error::Error for BadCodepoint {}
 
 fn parse_codepoint(arg: &str) -> Result<char, BadCodepoint> {
-    let Ok(codepoint) = u32::from_str_radix(&arg, 16) else {
+    let Ok(codepoint) = u32::from_str_radix(arg, 16) else {
         return Err(BadCodepoint::from_arg(arg));
     };
-    Ok(char::from_u32(codepoint).ok_or_else(|| BadCodepoint::from_arg(arg))?)
+    char::from_u32(codepoint).ok_or_else(|| BadCodepoint::from_arg(arg))
 }
 
 #[rustfmt::skip]

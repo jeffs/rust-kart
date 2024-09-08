@@ -42,7 +42,7 @@ pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> Result<String, &'sta
     use rendering::*;
     let SumOfProducts { products, sum } = output;
     let eq = " = ";
-    let formulas = render_formulas(&input)?;
+    let formulas = render_formulas(input)?;
     let sum_width = sum.to_string().len();
     let total_width = formula_width(&formulas) + eq.len() + sum_width;
     let lines: Vec<String> = formulas

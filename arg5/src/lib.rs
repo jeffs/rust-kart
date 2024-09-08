@@ -245,8 +245,7 @@ impl<'a> Parser<'a> {
 
     // arg0 is the name of the current program, to appear in usage messages.
     fn parse_arg(&mut self, arg: String, arg0: &str) -> Result<(), ParseError> {
-        if arg.starts_with("--") {
-            let arg = &arg[2..];
+        if let Some(arg) = arg.strip_prefix("--") {
             for name in self.parameters.keys() {
                 if arg == *name {
                     todo!("parse {}", name);
