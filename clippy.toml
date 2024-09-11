@@ -1,2 +1,2 @@
 # Let clippy::module-prefix-names tolerate names like `thing::BadThing`.
-allowed-prefixes = ["..", "bad"] 
+allowed-prefixes = ["bad", ".."]
