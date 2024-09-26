@@ -169,7 +169,6 @@ impl<'a> Parameter<'a> {
         self.binding.appetite
     }
 
-    #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         self.binding.capacity()
     }
