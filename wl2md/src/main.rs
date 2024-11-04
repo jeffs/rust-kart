@@ -158,10 +158,9 @@ impl TryFrom<SearchablePath> for Vec<Link> {
     }
 }
 
-fn main() {
-    env::args()
-        .skip(1)
-        .map(|arg| arg.parse())
+fn main_imp<S: AsRef<str>>(args: impl IntoIterator<Item = S>) {
+    args.into_iter()
+        .map(|arg| arg.as_ref().parse())
         .collect::<Result<Vec<SearchablePath>>>()
         .unwrap_or_else(Error::die)
         .into_iter()
@@ -175,4 +174,12 @@ fn main() {
             // <https://daringfireball.net/projects/markdown/syntax#list>
             println!("* {link}");
         });
+}
+
+fn main() {
+    if env::args().nth(1).is_some() {
+        main_imp(env::args().skip(1));
+    } else {
+        main_imp(["."]);
+    }
 }
