@@ -5,6 +5,7 @@ members = [
     "arg5",
     "b2c",
     "cargo-norm",
+    "csv2json",
     "days",
     "delay",
     "fix-quotes",
