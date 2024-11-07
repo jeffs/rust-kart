@@ -10,13 +10,14 @@ members = [
     "delay",
     "fix-quotes",
     "gitup",
-    "head1",           # To be rebranded "head" when ready.
+    "head1",            # To be rebranded "head" when ready.
     "hexify",
     "kcal",
     "module-from-path",
     "netmask",
     "pangram",
     "perpetuity",
+    "primes",
     "since",
     "stop-once",
     "sum-of-products",
