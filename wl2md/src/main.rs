@@ -27,9 +27,13 @@ impl Error {
         |err| Error::for_path(path, err)
     }
 
-    /// Semantically, this function should return !, and shouldn't be generic.  For reasons beyond
-    /// my ken, the Rust compiler doesn't realize that ! should type check as anything, even though
-    /// it accepts exit(1) (which returns !) as any old unbounded T.
+    /// Prints an error message to `stderr`, and exits the current process with non-zero status. The
+    /// return type is generic so that this function can be used in contexts where any specific
+    /// return type `T` is required.  Semantically, this function returns [the never type][1]
+    /// `!`--meaning it never actually returns at all--but in practice, returning `!` would often
+    /// require callers to coerce the result to some specific type.
+    ///
+    /// [1]: https://doc.rust-lang.org/reference/types/never.html
     fn die<T>(self) -> T {
         eprintln!("error: {self}");
         exit(1)
