@@ -9,12 +9,12 @@ fn is_prime_known(n: u32, known: &[u32]) -> bool {
     !known.iter().take_while(|&&p| p < n).any(|p| n % p == 0)
 }
 
-pub struct CachePrimes<'a> {
+pub struct Primes<'a> {
     cache: &'a Cache,
     next: u32,
 }
 
-impl<'a> Iterator for CachePrimes<'a> {
+impl<'a> Iterator for Primes<'a> {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -58,14 +58,15 @@ impl Cache {
         self.known.borrow().binary_search(&n).is_ok()
     }
 
+    #[must_use]
     pub fn new(known: &[u32]) -> Cache {
         Cache {
             known: RefCell::new(known.to_vec()),
         }
     }
 
-    pub fn primes(&self) -> CachePrimes {
-        CachePrimes {
+    pub fn primes(&self) -> Primes {
+        Primes {
             cache: self,
             next: 2,
         }

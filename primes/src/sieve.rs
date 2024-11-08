@@ -22,14 +22,14 @@ const WORD_BITS: usize = Word::BITS as usize;
 //    7     * 2 + 1 =   15        0
 //    8     * 2 + 1 =   17        1
 //    9     * 2 + 1 =   19        1
-const FIRST_WORD: Word = 0x816d129a64b4cb6e;
+const FIRST_WORD: Word = 0x816d_129a_64b4_cb6e;
 
-pub struct SievePrimes<'a> {
+pub struct Primes<'a> {
     sieve: &'a mut Sieve,
     known: u32,
 }
 
-impl<'a> Iterator for SievePrimes<'a> {
+impl<'a> Iterator for Primes<'a> {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -46,7 +46,7 @@ impl<'a> Iterator for SievePrimes<'a> {
 }
 
 pub struct Factors<'a> {
-    primes: SievePrimes<'a>,
+    primes: Primes<'a>,
     value: u32,
 }
 
@@ -119,9 +119,9 @@ impl Sieve {
         self.words[index / WORD_BITS] & (1 << (index % WORD_BITS)) != 0
     }
 
-    // TODO: Why is this a u32 rather than a usize?  Why not support1<<32 primes?
+    // TODO: Why is this a u32 rather than a usize?  Why not support 1<<32 primes?
     fn num_values(&self) -> u32 {
-        (self.words.len() * WORD_BITS * 2) as u32
+        u32::try_from(self.words.len() * WORD_BITS * 2).expect("sieve max size exceeded")
     }
 
     pub fn grow(&mut self) {
@@ -163,8 +163,8 @@ impl Sieve {
         self.is_known_prime(value)
     }
 
-    pub fn primes(&mut self) -> SievePrimes {
-        SievePrimes {
+    pub fn primes(&mut self) -> Primes {
+        Primes {
             sieve: self,
             known: 0,
         }
