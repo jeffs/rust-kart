@@ -22,7 +22,7 @@ impl Error {
         Error(format!("{}: {err}", path.display()))
     }
 
-    /// Callback for std::io::Result::map_err.  io::Error messages often omit the path.
+    /// Callback for `std::io::Result::map_err`. `io::Error` messages often omit the path.
     fn add_path(path: &Path) -> impl Fn(io::Error) -> Error + Copy + '_ {
         |err| Error::for_path(path, err)
     }
@@ -42,7 +42,7 @@ impl fmt::Display for Error {
     }
 }
 
-/// walkdir::Error, unlike io::Error, always includes the path where the error occurred.
+/// `walkdir::Error`, unlike `io::Error`, always includes the path where the error occurred.
 impl From<walkdir::Error> for Error {
     fn from(value: walkdir::Error) -> Self {
         Error(format!("{value}"))
