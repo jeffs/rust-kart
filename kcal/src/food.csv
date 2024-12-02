@@ -1,4 +1,5 @@
 food,description,source
+banana,"Banana",https://www.google.com/search?q=banana+nutrition
 broccoli,"Broccoli, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/170379/nutrients
 brussels,"Brussels sprouts, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/170383/nutrients
 cabbage,"Cabbage, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/169975/nutrients

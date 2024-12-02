@@ -33,6 +33,7 @@ macro_rules! food {
 // TODO: Move to food.csv.
 #[rustfmt::skip]
 const FOODS: &[(&str, Food)] = &[
+    food!(banana,          89,  1.1, 100),
     food!(broccoli,        34,  2.8, 100),
     food!(brussels,        43,  3.4, 100),
     food!(cheese,         110,  7.0,  28),
