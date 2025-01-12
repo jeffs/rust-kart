@@ -2,18 +2,17 @@
 //! deletes any local branches that are not ahead of main, and finally checks
 //! back out the original branch.  The main branch defaults to `main`, but
 //! `master` is used as a fallback if no `main` branch is found.
+//!
+//! # TODO
+//!
+//! * [ ] Delete remote branches behind trunk.
+//! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_
+//!   checking out main, but after fetch --prune, the user still sees a list of
+//!   obsolete branches the next time they pull --prune; so now this program
+//!   checks out main just so it can run pull --prune per se.
+//! * [ ] Support squashed merges.
 
-// TODO: Call `git branch --merged` rather than looping through branches.
-//
-// TODO: Delete remote branches behind trunk.
-//
-// TODO: Don't mess up "checkout -" by checking out main.  I tried _not_
-//   checking out main, but after fetch --prune, the user still sees a list of
-//   obsolete branches the next time they pull --prune; so now this program
-//   checks out main just so it can run pull --prune per se.
-//
-// TODO: Support squashed merges.
-
+use std::collections::HashSet;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::path::Path;
@@ -158,19 +157,12 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    let branches = git(["branch"]).await?;
-    let branches = branches
+    let branches = git(["branch", "--merged"]).await?;
+    let dead_branches = branches
         .lines()
         .filter(|line| !line.starts_with("* "))
-        .map(|line| &line[2..]); // Remove leading ' '.
-
-    let mut dead_branches = Vec::new();
-    for branch in branches {
-        let range = format!("{trunk}..{branch}");
-        if git(["rev-list", "--count", &range]).await? == "0\n" {
-            dead_branches.push(branch);
-        }
-    }
+        .map(str::trim_ascii_start)
+        .collect::<HashSet<_>>();
 
     if dead_branches.contains(&orig) {
         // Let the user know we're not leaving HEAD on the original branch.
