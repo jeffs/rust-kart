@@ -19,9 +19,13 @@ fn main() {
         }
     }
 
-    Command::new("git")
+    let err = Command::new("git")
         .args(["log", "--first-parent", "--oneline"])
         .args(flags)
         .arg(format!("{}..", base.unwrap_or("main")))
         .exec();
+
+    // If `exec` returned, something has gone wrong.
+    eprintln!("error: {err}");
+    exit(1);
 }
