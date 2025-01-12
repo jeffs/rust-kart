@@ -132,11 +132,11 @@ mod tests {
     fn test_ancestor_exclude_first_difference() {
         // The ancestor length should be one _less_ than the index of the first differing bit.
         let lhs = Netmask {
-            ip: Ipv4Addr::from_bits(0xff000000),
+            ip: Ipv4Addr::from_bits(0xff00_0000),
             len: 8,
         };
         let rhs = Netmask {
-            ip: Ipv4Addr::from_bits(0xfe000000),
+            ip: Ipv4Addr::from_bits(0xfe00_0000),
             len: 8,
         };
         assert_eq!(lhs.ancestor(&rhs).len, 7);
@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn test_mask_left() {
         assert_eq!(mask_left(0), 0);
-        assert_eq!(mask_left(8), 0xff000000);
-        assert_eq!(mask_left(32), 0xffffffff);
+        assert_eq!(mask_left(8), 0xff00_0000);
+        assert_eq!(mask_left(32), 0xffff_ffff);
     }
 }
