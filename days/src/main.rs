@@ -43,18 +43,6 @@ fn parse_args() -> Result<NaiveDate, arg5::ParseError> {
     })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::format_part;
-
-    #[test]
-    fn test_format_part() {
-        assert_eq!(format_part((1, "week")), Some(String::from("1 week")));
-        assert_eq!(format_part((0, "week")), None);
-        assert_eq!(format_part((2, "week")), Some(String::from("2 weeks")));
-    }
-}
-
 fn main() {
     let date = parse_args().unwrap_or_else(|error| {
         eprintln!("Error: {}", error.what);
@@ -72,4 +60,16 @@ fn main() {
     .filter_map(format_part)
     .collect();
     print_parts(&parts);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_part;
+
+    #[test]
+    fn test_format_part() {
+        assert_eq!(format_part((1, "week")), Some(String::from("1 week")));
+        assert_eq!(format_part((0, "week")), None);
+        assert_eq!(format_part((2, "week")), Some(String::from("2 weeks")));
+    }
 }

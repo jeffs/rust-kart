@@ -19,7 +19,7 @@ impl Command {
         let mut parser = arg5::Parser::new();
         parser.declare_positional("count", &mut command.count);
         parser.declare_positional("word", &mut command.word);
-        parser.parse(env::args()).map(|_| command)
+        parser.parse(env::args()).map(|()| command)
     }
 
     fn run(self) {

@@ -36,7 +36,7 @@ pub enum Store<'a> {
     OptU32(&'a mut Option<u32>),
 }
 
-impl<'a> Store<'a> {
+impl Store<'_> {
     #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         match self {
@@ -52,7 +52,7 @@ pub struct Binding<'a> {
     appetite: Appetite,
 }
 
-impl<'a> Binding<'a> {
+impl Binding<'_> {
     #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         self.store.capacity()

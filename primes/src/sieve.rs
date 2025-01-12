@@ -29,7 +29,7 @@ pub struct Primes<'a> {
     known: u32,
 }
 
-impl<'a> Iterator for Primes<'a> {
+impl Iterator for Primes<'_> {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -50,7 +50,7 @@ pub struct Factors<'a> {
     value: u32,
 }
 
-impl<'a> Iterator for Factors<'a> {
+impl Iterator for Factors<'_> {
     type Item = (u32, u32); // (factor, exponent)
 
     fn next(&mut self) -> Option<Self::Item> {

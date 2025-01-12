@@ -18,6 +18,13 @@ fn hexify(mut text: &str) -> String {
     result + text
 }
 
+fn main() {
+    std::env::args()
+        .skip(1)
+        .map(|arg| hexify(&arg))
+        .for_each(|result| println!("{result}"));
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -30,11 +37,4 @@ mod test {
         assert_eq!(hexify("172.31.64.0/20"), "ac.1f.40.0/14");
         assert_eq!(hexify("a172.31.64.0/20b"), "aac.1f.40.0/14b");
     }
-}
-
-fn main() {
-    std::env::args()
-        .skip(1)
-        .map(|arg| hexify(&arg))
-        .for_each(|result| println!("{result}"));
 }

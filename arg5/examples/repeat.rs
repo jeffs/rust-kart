@@ -19,8 +19,8 @@ fn main() {
 
     if count > 0 {
         for _ in 1..count {
-            print!("{} ", word);
+            print!("{word} ");
         }
-        println!("{}", word);
+        println!("{word}");
     }
 }

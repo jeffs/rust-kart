@@ -112,7 +112,7 @@ mod a_parser {
             let mut got: Option<i32> = None;
             let mut parser = Parser::new();
             parser.declare_positional("opt", &mut got);
-            parser.parse(args).map(|_| got)
+            parser.parse(args).map(|()| got)
         }
 
         #[test]
@@ -151,7 +151,7 @@ mod a_parser {
             let mut got: Option<String> = None;
             let mut parser = Parser::new();
             parser.declare_positional("opt", &mut got);
-            parser.parse(args).map(|_| got)
+            parser.parse(args).map(|()| got)
         }
 
         #[test]

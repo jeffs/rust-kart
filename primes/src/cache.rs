@@ -14,7 +14,7 @@ pub struct Primes<'a> {
     next: u32,
 }
 
-impl<'a> Iterator for Primes<'a> {
+impl Iterator for Primes<'_> {
     type Item = u32;
 
     fn next(&mut self) -> Option<Self::Item> {

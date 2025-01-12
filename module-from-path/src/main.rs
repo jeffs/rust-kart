@@ -32,7 +32,7 @@ fn main_imp() -> Result<()> {
         .collect();
     let parts = match parts.first() {
         Some(&"src") => &parts[1..],
-        _ => &parts.as_slice(),
+        _ => parts.as_slice(),
     };
     let module = parts.join(&args.sep);
     println!("{module}");
