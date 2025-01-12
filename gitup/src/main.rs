@@ -20,6 +20,20 @@ use std::process::{exit, ExitStatus};
 use std::{env, fmt};
 use tokio::process::Command;
 
+/// Options specifying removal of local branches meeting various criteria.
+#[allow(dead_code)]
+enum Removal {
+    /// Specifies removal of local branches merged to local trunk.  Note that
+    /// this does not include GitHub "squash merges," which do not actually
+    /// merge the original branch.
+    Merged,
+
+    /// Specifies removal of local branches whose upstreams are gone.  Upstream
+    /// branches are often deleted after being merged to trunk, even if they
+    /// were "squash merged," so this is a useful way to detect such "merges."
+    UpstreamGone,
+}
+
 #[derive(Debug)]
 struct SimpleError(String);
 
@@ -157,12 +171,20 @@ async fn main_imp() -> Result<(), SimpleError> {
         }
     }
 
-    let branches = git(["branch", "--merged"]).await?;
-    let dead_branches = branches
+    let dead_branches = git(["branch", "--merged"]).await?;
+    let dead_branches = dead_branches
         .lines()
         .filter(|line| !line.starts_with("* "))
         .map(str::trim_ascii_start)
         .collect::<HashSet<_>>();
+
+    // let mut dead_branches = Vec::new();
+    // for branch in branches {
+    //     let range = format!("{trunk}..{branch}");
+    //     if git(["rev-list", "--count", &range]).await? == "0\n" {
+    //         dead_branches.push(branch);
+    //     }
+    // }
 
     if dead_branches.contains(&orig) {
         // Let the user know we're not leaving HEAD on the original branch.
@@ -183,7 +205,8 @@ async fn main_imp() -> Result<(), SimpleError> {
 
 #[tokio::main]
 async fn main() {
-    let mut args = env::args_os();
+    let mut args = env::args_os().fuse();
+
     let name = args
         .next()
         .expect("argv[0] should hold the path to this executable");
@@ -197,6 +220,7 @@ async fn main() {
         eprintln!("{name}: error: {arg:?}: unexpected argument");
         exit(2);
     }
+
     if let Err(err) = main_imp().await {
         eprintln!("{name}: error: {err}");
         exit(1);
