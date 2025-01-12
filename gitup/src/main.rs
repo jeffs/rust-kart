@@ -1,58 +1,61 @@
-//! This program pulls the main branch of the repo from which it's called, then
-//! deletes any local branches that are not ahead of main, and finally checks
-//! back out the original branch.  The main branch defaults to `main`, but
-//! `master` is used as a fallback if no `main` branch is found.
+//! This program pulls the main branch of the repo from which it's called, then deletes any local
+//! branches that are not ahead of main, and finally checks back out the original branch.  The main
+//! branch defaults to `main`, but `master` is used as a fallback if no `main` branch is found.
 //!
 //! # TODO
 //!
 //! * [ ] Delete remote branches behind trunk.
-//! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_
-//!   checking out main, but after fetch --prune, the user still sees a list of
-//!   obsolete branches the next time they pull --prune; so now this program
-//!   checks out main just so it can run pull --prune per se.
+//! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_ checking out main, but
+//!   after fetch --prune, the user still sees a list of obsolete branches the next time they pull
+//!   --prune; so now this program checks out main just so it can run pull --prune per se.
 //! * [ ] Support squashed merges.
 
 use std::collections::HashSet;
-use std::error::Error;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process::{exit, ExitStatus};
 use std::{env, fmt};
 use tokio::process::Command;
 
+/// Possible names of local trunk branches, in order of preference.
+const TRUNKS: [&str; 2] = ["main", "master"];
+
+#[derive(Debug)]
+enum Error {
+    /// Git returned bad status, and printed the supplied text to standard error.
+    Git(String),
+
+    /// The Git working copy has uncommitted changes.
+    Unclean,
+
+    /// No local trunk branch could be identified.
+    Trunk,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::Git(stderr) => write!(f, "{stderr}"),
+            Error::Unclean => write!(f, "working copy is unclean"),
+            Error::Trunk => write!(f, "can't find local trunk; any of {TRUNKS:?}"),
+        }
+    }
+}
+
+type Result<T> = std::result::Result<T, Error>;
+
 /// Options specifying removal of local branches meeting various criteria.
 #[allow(dead_code)]
 enum Removal {
-    /// Specifies removal of local branches merged to local trunk.  Note that
-    /// this does not include GitHub "squash merges," which do not actually
-    /// merge the original branch.
+    /// Specifies removal of local branches merged to local trunk.  Note that this does not include
+    /// GitHub "squash merges," which do not actually merge the original branch.
     Merged,
 
-    /// Specifies removal of local branches whose upstreams are gone.  Upstream
-    /// branches are often deleted after being merged to trunk, even if they
-    /// were "squash merged," so this is a useful way to detect such "merges."
-    UpstreamGone,
+    /// Specifies removal of local branches whose upstreams are gone.  Upstream branches are often
+    /// deleted after being merged to trunk, even if they were "squash merged," so this is a useful
+    /// way to detect such "merges."
+    Gone,
 }
-
-#[derive(Debug)]
-struct SimpleError(String);
-
-impl fmt::Display for SimpleError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl<S> From<S> for SimpleError
-where
-    S: Into<String>,
-{
-    fn from(value: S) -> Self {
-        SimpleError(value.into())
-    }
-}
-
-impl Error for SimpleError {}
 
 fn format_git_command<S, I>(args: I) -> String
 where
@@ -83,7 +86,7 @@ where
 }
 
 #[allow(dead_code)]
-async fn git_loud<S, I>(args: I) -> Result<String, SimpleError>
+async fn git_loud<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -93,7 +96,7 @@ where
 
     let (status, stdout, stderr) = run_git(args).await;
     if !status.success() {
-        return Err(stderr.into());
+        return Err(Error::Git(stderr));
     }
 
     let lines: Vec<_> = stdout.lines().collect();
@@ -111,28 +114,26 @@ where
     Ok(stderr + &stdout)
 }
 
-async fn git<S, I>(args: I) -> Result<String, SimpleError>
+async fn git<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
     let (status, stdout, stderr) = run_git(args).await;
     if !status.success() {
-        return Err(stderr.into());
+        return Err(Error::Git(stderr));
     }
     Ok(stderr + &stdout)
 }
 
 /// Returns the local main branch (trunk) name, or an error.
-async fn local_trunk() -> Result<&'static str, String> {
-    let names = ["main", "master"];
-    for branch in names {
+async fn local_trunk() -> Result<&'static str> {
+    for branch in TRUNKS {
         if git(["show-ref", branch]).await.is_ok() {
             return Ok(branch);
         }
     }
-    let names = names.join(" or ");
-    Err(format!("expected trunk; can't find {names}"))
+    Err(Error::Trunk)
 }
 
 async fn upstream(branch: &str) -> Option<String> {
@@ -147,13 +148,13 @@ async fn upstream(branch: &str) -> Option<String> {
     .map(|s| s.trim().to_owned())
 }
 
-async fn is_working_copy_clean() -> Result<bool, SimpleError> {
+async fn is_working_copy_clean() -> Result<bool> {
     Ok(git(["status", "--porcelain"]).await?.is_empty())
 }
 
-async fn main_imp() -> Result<(), SimpleError> {
+async fn main_imp() -> Result<()> {
     if !is_working_copy_clean().await? {
-        return Err(SimpleError("working copy is unclean".to_owned()));
+        return Err(Error::Unclean);
     }
 
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
