@@ -10,7 +10,6 @@
 //!   --prune; so now this program checks out main just so it can run pull --prune per se.
 //! * [ ] Support squashed merges.
 
-use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
 use std::io::Write;
 use std::path::Path;
@@ -148,6 +147,15 @@ where
     Ok(stderr + &stdout)
 }
 
+/// Splits the specified `git branch` standard output into lines and trims leading whitespace from
+/// them, excluding the current `HEAD` if any (as indicated by a leading "*").
+fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
+    stdout
+        .lines()
+        .filter(|line| !line.starts_with("* "))
+        .map(str::trim_ascii_start)
+}
+
 /// Returns the local main branch (trunk) name, or an error.
 async fn local_trunk() -> Result<&'static str> {
     for branch in TRUNKS {
@@ -170,12 +178,16 @@ async fn upstream(branch: &str) -> Option<String> {
     .map(|s| s.trim().to_owned())
 }
 
+fn is_gone(_branch: &str) -> bool {
+    todo!()
+}
+
 async fn is_working_copy_clean() -> Result<bool> {
     Ok(git(["status", "--porcelain"]).await?.is_empty())
 }
 
 async fn main_imp() -> Result<()> {
-    let args = Args::from_env()?;
+    let rm = Args::from_env()?; // Branch removal policy.
 
     if !is_working_copy_clean().await? {
         return Err(Error::Unclean);
@@ -196,22 +208,20 @@ async fn main_imp() -> Result<()> {
         }
     }
 
-    let dead_branches = git(["branch", "--merged"]).await?;
-    let dead_branches = dead_branches
-        .lines()
-        .filter(|line| !line.starts_with("* "))
-        .map(str::trim_ascii_start)
-        .collect::<HashSet<_>>();
+    let mut dead_branches = Vec::<String>::new();
+    if rm.merged {
+        dead_branches.extend(trim_branches(&git(["branch", "--merged"]).await?).map(str::to_owned));
+    }
 
-    // let mut dead_branches = Vec::new();
-    // for branch in branches {
-    //     let range = format!("{trunk}..{branch}");
-    //     if git(["rev-list", "--count", &range]).await? == "0\n" {
-    //         dead_branches.push(branch);
-    //     }
-    // }
+    if rm.gone {
+        dead_branches.extend(
+            trim_branches(&git(["branch"]).await?)
+                .filter(|&s| is_gone(s))
+                .map(str::to_owned),
+        );
+    }
 
-    if dead_branches.contains(&orig) {
+    if dead_branches.iter().any(|s| s == orig) {
         // Let the user know we're not leaving HEAD on the original branch.
         println!("co {trunk}");
     } else if trunk != orig {
@@ -222,7 +232,10 @@ async fn main_imp() -> Result<()> {
         for zombie in &dead_branches {
             println!("rm {zombie}");
         }
-        git(["branch", "-D"].into_iter().chain(dead_branches)).await?;
+        git(["branch", "-D"]
+            .into_iter()
+            .chain(dead_branches.iter().map(String::as_str)))
+        .await?;
     }
 
     Ok(())
