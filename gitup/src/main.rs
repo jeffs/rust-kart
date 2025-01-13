@@ -10,7 +10,7 @@
 //!   --prune; so now this program checks out main just so it can run pull --prune per se.
 //! * [ ] Support squashed merges.
 
-use std::ffi::{OsStr, OsString};
+use std::ffi::OsStr;
 use std::io::Write;
 use std::path::Path;
 use std::process::{exit, ExitStatus};
@@ -23,7 +23,7 @@ const TRUNKS: [&str; 2] = ["main", "master"];
 #[derive(Debug)]
 enum Error {
     /// An unrecognized command line argument was supplied.
-    Arg(OsString),
+    Arg(String),
 
     /// Git returned bad status, and printed the supplied text to standard error.
     Git(String),
@@ -64,17 +64,19 @@ struct Args {
 impl Args {
     /// Returns the name of this program for use in error logs, and the branch removal policy.
     fn from_env() -> Result<Args> {
-        let mut args = env::args_os().fuse();
+        let mut args = env::args().skip(1);
 
         if let Some(arg) = args.next() {
             return Err(Error::Arg(arg));
         }
 
         // TODO: Set branch removal policy from CLI.
-        Ok(Args {
+        let args = Args {
             merged: true,
             gone: true,
-        })
+        };
+
+        Ok(args)
     }
 }
 
@@ -257,7 +259,7 @@ async fn main() {
         io::stderr()
             .write(name.as_encoded_bytes())
             .expect("stderr should be writable");
-        eprintln!("error: {err}");
+        eprintln!(": error: {err}");
         exit(1);
     }
 }
