@@ -11,10 +11,11 @@
 //! * [ ] Support squashed merges.
 
 use std::collections::HashSet;
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
+use std::io::Write;
 use std::path::Path;
 use std::process::{exit, ExitStatus};
-use std::{env, fmt};
+use std::{env, fmt, io};
 use tokio::process::Command;
 
 /// Possible names of local trunk branches, in order of preference.
@@ -22,39 +23,60 @@ const TRUNKS: [&str; 2] = ["main", "master"];
 
 #[derive(Debug)]
 enum Error {
+    /// An unrecognized command line argument was supplied.
+    Arg(OsString),
+
     /// Git returned bad status, and printed the supplied text to standard error.
     Git(String),
 
-    /// The Git working copy has uncommitted changes.
-    Unclean,
-
     /// No local trunk branch could be identified.
     Trunk,
+
+    /// The Git working copy has uncommitted changes.
+    Unclean,
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::Arg(arg) => write!(f, "{arg:?}: unexpected argument"),
             Error::Git(stderr) => write!(f, "{stderr}"),
-            Error::Unclean => write!(f, "working copy is unclean"),
             Error::Trunk => write!(f, "can't find local trunk; any of {TRUNKS:?}"),
+            Error::Unclean => write!(f, "working copy is unclean"),
         }
     }
 }
 
 type Result<T> = std::result::Result<T, Error>;
 
-/// Options specifying removal of local branches meeting various criteria.
+/// Policy for which branches to delete.
 #[allow(dead_code)]
-enum Removal {
+struct Args {
     /// Specifies removal of local branches merged to local trunk.  Note that this does not include
     /// GitHub "squash merges," which do not actually merge the original branch.
-    Merged,
+    merged: bool,
 
     /// Specifies removal of local branches whose upstreams are gone.  Upstream branches are often
     /// deleted after being merged to trunk, even if they were "squash merged," so this is a useful
     /// way to detect such "merges."
-    Gone,
+    gone: bool,
+}
+
+impl Args {
+    /// Returns the name of this program for use in error logs, and the branch removal policy.
+    fn from_env() -> Result<Args> {
+        let mut args = env::args_os().fuse();
+
+        if let Some(arg) = args.next() {
+            return Err(Error::Arg(arg));
+        }
+
+        // TODO: Set branch removal policy from CLI.
+        Ok(Args {
+            merged: true,
+            gone: true,
+        })
+    }
 }
 
 fn format_git_command<S, I>(args: I) -> String
@@ -153,6 +175,8 @@ async fn is_working_copy_clean() -> Result<bool> {
 }
 
 async fn main_imp() -> Result<()> {
+    let args = Args::from_env()?;
+
     if !is_working_copy_clean().await? {
         return Err(Error::Unclean);
     }
@@ -206,7 +230,7 @@ async fn main_imp() -> Result<()> {
 
 #[tokio::main]
 async fn main() {
-    let mut args = env::args_os().fuse();
+    let mut args = env::args_os();
 
     let name = args
         .next()
@@ -214,16 +238,15 @@ async fn main() {
     let name: &Path = name.as_ref();
     let name = name
         .file_stem()
-        .expect("executable path should terminate in file name")
-        .to_string_lossy();
-
-    if let Some(arg) = args.next() {
-        eprintln!("{name}: error: {arg:?}: unexpected argument");
-        exit(2);
-    }
+        .expect("executable path should terminate in file name");
 
     if let Err(err) = main_imp().await {
-        eprintln!("{name}: error: {err}");
+        // [`OsStr::display`] is not yet stable:
+        // <https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.display>
+        io::stderr()
+            .write(name.as_encoded_bytes())
+            .expect("stderr should be writable");
+        eprintln!("error: {err}");
         exit(1);
     }
 }
