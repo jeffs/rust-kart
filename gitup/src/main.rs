@@ -147,8 +147,9 @@ where
     Ok(stderr + &stdout)
 }
 
-/// Splits the specified `git branch` standard output into lines and trims leading whitespace from
-/// them, excluding the current `HEAD` if any (as indicated by a leading "*").
+/// Splits the specified Git output into lines, excludes any line beginning with "*", and trims
+/// leading whitespace from each line.  Note that the output is not necessarily a list of simple
+/// branch names; e.g., if the output is from `git branch --verbose`.
 fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
     stdout
         .lines()
@@ -176,10 +177,6 @@ async fn upstream(branch: &str) -> Option<String> {
     .await
     .ok()
     .map(|s| s.trim().to_owned())
-}
-
-fn is_gone(_branch: &str) -> bool {
-    todo!()
 }
 
 async fn is_working_copy_clean() -> Result<bool> {
@@ -215,8 +212,9 @@ async fn main_imp() -> Result<()> {
 
     if rm.gone {
         dead_branches.extend(
-            trim_branches(&git(["branch"]).await?)
-                .filter(|&s| is_gone(s))
+            trim_branches(&git(["branch", "--list", "--verbose"]).await?)
+                .filter(|line| line.contains("[gone]"))
+                .flat_map(|line| line.split_ascii_whitespace().next())
                 .map(str::to_owned),
         );
     }
