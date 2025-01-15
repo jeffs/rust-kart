@@ -12,6 +12,7 @@ members = [
     "gitup",
     "head1",            # To be rebranded "head" when ready.
     "hexify",
+    "hexwords",
     "kcal",
     "module-from-path",
     "netmask",
