@@ -1,0 +1,1 @@
+searchState.loadedDescShard("stop_once", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.\nLike <code>Iterator::take_while</code>, but additionally yields the …")

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TRUNKS"],"enum":["Error"],"fn":["format_git_command","git","git_loud","is_working_copy_clean","local_trunk","main","main_imp","run_git","trim_branches","upstream"],"struct":["Args"],"type":["Result"]};

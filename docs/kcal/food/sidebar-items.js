@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FOODS"],"fn":["parse_custom"],"macro":["food"],"struct":["BadFood","Food"]};
