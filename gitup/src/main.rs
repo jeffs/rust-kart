@@ -217,7 +217,7 @@ async fn main_imp() -> Result<()> {
         dead_branches.extend(
             trim_branches(&git(["branch", "--list", "--verbose"]).await?)
                 .filter(|line| line.contains("[gone]"))
-                .flat_map(|line| line.split_ascii_whitespace().next())
+                .filter_map(|line| line.split_ascii_whitespace().next())
                 .map(str::to_owned),
         );
     }

@@ -38,7 +38,7 @@ fn main() {
         };
 
         buf.clear();
-        buf.extend(line.chars().flat_map(to_hex));
+        buf.extend(line.chars().filter_map(to_hex));
         if buf.chars().count() != line.chars().count() {
             continue;
         }
