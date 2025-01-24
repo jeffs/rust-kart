@@ -258,7 +258,7 @@ async fn main() {
         // [`OsStr::display`] is not yet stable:
         // <https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.display>
         io::stderr()
-            .write(name.as_encoded_bytes())
+            .write_all(name.as_encoded_bytes())
             .expect("stderr should be writable");
         eprintln!(": error: {err}");
         exit(1);
