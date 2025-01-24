@@ -1,6 +1,36 @@
+//! Provides a trait similar to the standard [`Iterator`], but for sequences that never terminate.
+//! In particular, [`Perpetuity::next_item`] returns `Self::Item`, not `Option<Self::Item>`.  The
+//! interface to functions like `successors` can also be much simpler, as neither the initial value
+//! nor the callback need deal with options.  For example, compare the following two expressions:
+//!
+//! ```ignore
+//! use std::iter;
+//! use perpetuity as infi;
+//!
+//! let powers_of_two = iter::successors(Some(1), |a| Some(a * 2));
+//! let powers_of_two = infi::successors(1, |a| a * 2);
+//! ```
+//!
+//! One common form of infinite range is sequences of IDs.  For example:
+//!
+//! ```ignore
+//! let mut ids = 1..;
+//! let thing1 = Thing { id: ids.next().unwrap() };
+//! let thing2 = Thing { id: ids.next().unwrap() };
+//! // ...
+//! ```
+//!
+//! Using Perpetuity, we no longer need to unwrap anything:
+//!
+//! ```ignore
+//! let mut ids = infi::from_range(1..);
+//! let thing1 = Thing { id: ids.next_item() };
+//! let thing2 = Thing { id: ids.next_item() };
+//! ```
+
 use std::{mem, ops::RangeFrom};
 
-// Like std::iter::Iterator, but returns items directly, rather than options.
+/// Like [`Iterator`], but returns items directly, rather than [`Option`]s.
 pub trait Perpetuity: Sized {
     type Item;
 
@@ -17,15 +47,14 @@ pub trait Perpetuity: Sized {
     }
 }
 
-// TODO: Define a feature for "todo" stuff.  This currently freaks rust-analyzer out.
-// #[cfg(todo)]
-// pub trait IntoPerpetuity {
-//     type Item;
-//     type IntoPerp: Perpetuity<Item = Self::Item>;
-//     fn into_perp(self) -> Self::IntoPerp;
-// }
+#[cfg(any())] // TODO
+pub trait IntoPerpetuity {
+    type Item;
+    type IntoPerp: Perpetuity<Item = Self::Item>;
+    fn into_perp(self) -> Self::IntoPerp;
+}
 
-/// Returns the specified Perpetuity, erasing any further type information.
+/// Returns the specified [`Perpetuity`], erasing any further type information.
 /// ```
 /// let _: Vec<i32> = (0..).take(4).collect();
 /// ```
@@ -75,24 +104,33 @@ impl<T, F: FnMut(&T) -> T> Perpetuity for Successors<T, F> {
     }
 }
 
-// We can't implement traits for RangeFrom<A> as Iterator<Item=A> without
-// declaring A: std::iter::Step, but Step is unstable (even though it's used in
-// the implementation of RangeFrom, which is stable).  So, we can't impl traits
-// for RangeFrom as Iterator in stable Rust.  See also:
-// https://stackoverflow.com/a/56986698/3116635
-//
-// If we could use Step in stable Rust, the impl might look like this:
-//
-// ```
-// impl<A: Step> Perpetuity for RangeFrom<A> {
-//     type Item = A;
-//     fn next_item(&mut self) -> Self::Item {
-//         self.next().unwrap()
-//     }
-// }
-// ```
-//
-// So instead, we crank out implementations for specific types of RangeFrom.
+/// Implements [`Perpetuity`] for infinite ranges.
+///
+/// # Implementation
+///
+/// We can't implement traits for [`RangeFrom<A>`] as [`Iterator<Item=A>`] without declaring `A:`
+/// [`Step`], but [`Step`] is unstable (even though it's used in the implementation of
+/// [`RangeFrom`], which is stable).  So, we can't impl traits for [`RangeFrom`] as [`Iterator`] in
+/// stable Rust. See also: <https://stackoverflow.com/a/56986698/3116635>
+///
+/// If we could use [`Step`] in stable Rust, the impl might look like this:
+///
+/// ```ignore
+/// impl<A: Step> Perpetuity for RangeFrom<A> {
+///     type Item = A;
+///     fn next_item(&mut self) -> Self::Item {
+///         self.next().unwrap()
+///     }
+/// }
+/// ```
+///
+/// So instead, we crank out implementations for specific types of [`RangeFrom`].
+///
+/// # TODO
+///
+/// * [ ] Define a `perpetuity::RangeFrom` tpye that doesn't require `unwrap` in `next_item`.
+///
+/// [`Step`]: std::iter::Step
 macro_rules! range_from {
     ($t:ty) => {
         impl Perpetuity for RangeFrom<$t> {
