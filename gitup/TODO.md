@@ -1,5 +1,6 @@
 # To Do
 
+* Rename this crate to avoid confusion with the unrelated [GitUp](https://github.com/git-up/GitUp).
 * Save rev-parse results in case user wants to restore deleted branches.
   - Support `restore` subcommand that accepts rev-parse output.
 * Support custom remote names rather than hard-coding origin.
