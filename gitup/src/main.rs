@@ -18,8 +18,13 @@ use std::process::{exit, ExitStatus};
 use std::{env, fmt, io};
 use tokio::process::Command;
 
-/// Possible names of local trunk branches, in order of preference.
-const TRUNKS: [&str; 2] = ["main", "master"];
+/// Default names to consider when searching for local trunk branch, in order of preference.
+/// Overridden by the value of the [`GITUP_TRUNKS`] environment variable.
+const DEFAULT_TRUNKS: [&str; 2] = ["main", "master"];
+
+/// Environment variable to check for comma-separated list of local trunk branch names.  If the
+/// variable is unset, the value defaults to [`DEFAULT_TRUNKS`].
+const GITUP_TRUNKS: &str = "GITUP_TRUNKS";
 
 #[derive(Debug)]
 enum Error {
@@ -29,8 +34,8 @@ enum Error {
     /// Git returned bad status, and printed the supplied text to standard error.
     Git(String),
 
-    /// No local trunk branch could be identified.
-    Trunk,
+    /// No local trunk branch could be identified; i.e., no branch having any of the supplied names.
+    Trunk(Vec<String>),
 
     /// The Git working copy has uncommitted changes.
     Unclean,
@@ -41,7 +46,7 @@ impl fmt::Display for Error {
         match self {
             Error::Arg(arg) => write!(f, "{arg:?}: unexpected argument"),
             Error::Git(stderr) => write!(f, "{stderr}"),
-            Error::Trunk => write!(f, "can't find local trunk; any of {TRUNKS:?}"),
+            Error::Trunk(names) => write!(f, "can't find any of {names:?}"),
             Error::Unclean => write!(f, "working copy is unclean"),
         }
     }
@@ -160,14 +165,14 @@ fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
         .map(str::trim_ascii_start)
 }
 
-/// Returns the local main branch (trunk) name, or an error.
-async fn local_trunk() -> Result<&'static str> {
-    for branch in TRUNKS {
+/// Returns the first of the specified names that identifies any local branch name.
+async fn local_trunk<'a>(names: &[&'a str]) -> Result<&'a str> {
+    for branch in names {
         if git(["show-ref", branch]).await.is_ok() {
-            return Ok(branch);
+            return Ok(&branch);
         }
     }
-    Err(Error::Trunk)
+    Err(Error::Trunk(names.iter().map(|&s| s.to_owned()).collect()))
 }
 
 async fn upstream(branch: &str) -> Option<String> {
@@ -196,7 +201,12 @@ async fn main_imp() -> Result<()> {
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
 
-    let trunk = local_trunk().await?;
+    let trunks = env::var(GITUP_TRUNKS);
+    let trunks = trunks
+        .as_ref()
+        .map(|s| s.split(',').collect())
+        .unwrap_or_else(|_| DEFAULT_TRUNKS.to_vec());
+    let trunk = local_trunk(&trunks).await?;
 
     if trunk != orig {
         git(["checkout", trunk]).await?;
