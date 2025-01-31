@@ -8,7 +8,7 @@
 //! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_ checking out main, but
 //!   after fetch --prune, the user still sees a list of obsolete branches the next time they pull
 //!   --prune; so now this program checks out main just so it can run pull --prune per se.
-//! * [ ] Support squashed merges.
+//! * [ ] Factor out trunk config, so you can reuse it in `since`.
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -230,6 +230,13 @@ async fn main_imp() -> Result<()> {
                 .filter_map(|line| line.split_ascii_whitespace().next())
                 .map(str::to_owned),
         );
+    }
+
+    // Don't delete potential trunks, even if they're behind the actual trunk.  When you have an
+    // integration branch (dev or staging or whatever) that's ahead of main, you want to be able to
+    // use that branch as trunk, without deleting main simply because it's behind staging.
+    for trunk in trunks {
+        dead_branches.remove(trunk);
     }
 
     if dead_branches.contains(orig) {
