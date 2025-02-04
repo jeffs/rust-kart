@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // * All parameters have names.
 // * One parameter may receive positional arguments.
 // * Arity is determined by type.
@@ -6,6 +8,10 @@
 
 use std::collections::HashMap;
 use std::process::exit;
+
+struct ShortFlag(char);
+struct LongFlag(&'static str);
+struct Flag(char, &'static str);
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
