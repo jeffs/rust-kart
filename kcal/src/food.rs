@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::{food, Portion, Unit};
+use crate::{Portion, Unit};
 
 pub struct BadFood(String);
 

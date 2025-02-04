@@ -169,7 +169,7 @@ fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
 async fn local_trunk<'a>(names: &[&'a str]) -> Result<&'a str> {
     for branch in names {
         if git(["show-ref", branch]).await.is_ok() {
-            return Ok(&branch);
+            return Ok(branch);
         }
     }
     Err(Error::Trunk(names.iter().map(|&s| s.to_owned()).collect()))
@@ -204,8 +204,7 @@ async fn main_imp() -> Result<()> {
     let trunks = env::var(GITUP_TRUNKS);
     let trunks = trunks
         .as_ref()
-        .map(|s| s.split(',').collect())
-        .unwrap_or_else(|_| DEFAULT_TRUNKS.to_vec());
+        .map_or_else(|_| DEFAULT_TRUNKS.to_vec(), |s| s.split(',').collect());
     let trunk = local_trunk(&trunks).await?;
 
     if trunk != orig {
