@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::{Portion, Unit};
+use crate::{food, Portion, Unit};
 
 pub struct BadFood(String);
 
@@ -33,6 +33,7 @@ macro_rules! food {
 // TODO: Move to food.csv.
 #[rustfmt::skip]
 const FOODS: &[(&str, Food)] = &[
+    food!(avocado,         80,  1.0,  50),
     food!(banana,          89,  1.1, 100),
     food!(broccoli,        34,  2.8, 100),
     food!(brussels,        43,  3.4, 100),
