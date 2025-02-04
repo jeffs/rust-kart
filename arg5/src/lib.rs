@@ -13,6 +13,21 @@ struct ShortFlag(char);
 struct LongFlag(&'static str);
 struct Flag(char, &'static str);
 
+struct ShortOption {
+    parameter: &'static str,
+}
+
+struct LongOption {
+    name: &'static str,
+    parameter: &'static str,
+}
+
+struct Option {
+    short_name: char,
+    long_name: &'static str,
+    parameter: &'static str,
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseError {
     pub what: String,
