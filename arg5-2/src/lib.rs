@@ -2,6 +2,12 @@ use std::ffi::OsString;
 use std::fmt;
 use std::os::unix::ffi::OsStrExt;
 
+/// The number of ASCII values.
+const ASCII_COUNT: usize = 1 << 7;
+
+/// Maps ASCII code points to variables.
+type CharMap<'a, T> = [Option<&'a mut T>; ASCII_COUNT];
+
 #[derive(Debug, PartialEq)]
 pub enum InitError {
     /// The target variable for a Boolean flag was already true when the variable was registered.
@@ -10,11 +16,13 @@ pub enum InitError {
     CharTautology(char),
     LongTautology(&'static str),
     FlexTautology(char, &'static str),
-    /// A flag or option name included the supplied non-ASCII byte.  Future versions of this library
-    /// may be extended to support non-ASCII flag/option names, but the current version remains
-    /// conservative in the name of portability.  Note that the limitation to ASCII applies only to
-    /// argument names, not values; e.g., a supplied file name may be any [`OsString`].
-    NonAscii(char),
+    /// The supplied flag or option name is not supported.  Future versions of this library may be
+    /// extended to support non-ASCII and/or non-alphanumeric flag/option names, but the current
+    /// version remains conservative in the name of portability.  Note that the current limitations
+    /// apply only to argument names, not values; e.g., args like `--date mañana` are fine.
+    CharName(char),
+    /// The supplied flag or option name was bound to multiple target variables.
+    CharDup(char),
 }
 
 impl fmt::Display for InitError {
@@ -23,7 +31,8 @@ impl fmt::Display for InitError {
             InitError::CharTautology(c) => write!(f, "flag -{c} would always be true"),
             InitError::LongTautology(s) => write!(f, "flag --{s} would always be true"),
             InitError::FlexTautology(c, s) => write!(f, "flag -{c}|--{s} would always be true"),
-            InitError::NonAscii(c) => write!(f, "non-ASCII flag name -{c} is unsupported"),
+            InitError::CharName(c) => write!(f, "non-ASCII flag name -{c} is unsupported"),
+            InitError::CharDup(c) => write!(f, "flag -{c} cannot be bound to multiple variables"),
         }
     }
 }
@@ -53,24 +62,22 @@ impl FlagName for (char, &'static str) {
     }
 }
 
-fn parse_char_flag(vars: &mut Vec<(u8, &mut bool)>, name: u8) {
-    for item in vars {
-        if item.0 == name {
-            *item.1 = true;
-        }
+fn parse_char_flag(vars: &mut CharMap<bool>, name: u8) {
+    if let Some(Some(var)) = vars.get_mut(usize::from(name)) {
+        **var = true;
     }
 }
 
 /// The `&mut Vec` here is purely a weirdness of Rust.  We're not modifying the `Vec` at all.  We
 /// are, however, potentially modifying the bools to which the `Vec` items refer.
-fn parse_char_flags(vars: &mut Vec<(u8, &mut bool)>, names: &[u8]) {
+fn parse_char_flags(vars: &mut CharMap<bool>, names: &[u8]) {
     for &name in names {
         parse_char_flag(vars, name);
     }
 }
 
 pub struct Parser<'a> {
-    char_flags: Vec<(u8, &'a mut bool)>,
+    char_flags: CharMap<'a, bool>,
 }
 
 impl<'a> Parser<'a> {
@@ -83,15 +90,15 @@ impl<'a> Parser<'a> {
         name: char,
         _description: &str,
     ) -> Result<(), InitError> {
-        let byte = name
-            .is_ascii()
+        let byte: u8 = name
+            .is_ascii_alphanumeric()
             .then_some(())
             .and_then(|()| name.try_into().ok())
-            .ok_or(InitError::NonAscii(name))?;
+            .ok_or(InitError::CharName(name))?;
         (!*var)
             .then_some(())
             .ok_or(InitError::CharTautology(name))?;
-        self.char_flags.push((byte, var));
+        self.char_flags[usize::from(byte)] = Some(var);
         Ok(())
     }
 
@@ -111,9 +118,9 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub fn new() -> Parser<'a> {
+    pub const fn new() -> Parser<'a> {
         Parser {
-            char_flags: Vec::new(),
+            char_flags: [const { None }; ASCII_COUNT],
         }
     }
 }
@@ -136,7 +143,7 @@ mod tests {
         let mut parser = Parser::new();
         assert_eq!(
             parser.char_flag(&mut ñ, 'ñ', "fake flag with non-ASCII name ñ"),
-            Err(InitError::NonAscii('ñ'))
+            Err(InitError::CharName('ñ'))
         );
     }
 
