@@ -1,10 +1,8 @@
-#![allow(dead_code, unused_imports)]
-
 use std::ffi::OsString;
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
-enum Error {
+pub enum Error {
     /// The target variable for a Boolean flag was already true when the variable was registered.
     /// The variable should have been initialized to false, or else there is no way to tell whether
     /// the flag was specified in arguments.
@@ -16,25 +14,50 @@ enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::CharTautology(c) => write!(f, "flag {c} would always be true"),
-            Error::LongTautology(s) => write!(f, "flag {s} would always be true"),
-            Error::FlexTautology(c, s) => write!(f, "flag {c}|{s} would always be true"),
+            Error::CharTautology(c) => write!(f, "flag -{c} would always be true"),
+            Error::LongTautology(s) => write!(f, "flag --{s} would always be true"),
+            Error::FlexTautology(c, s) => write!(f, "flag -{c}|--{s} would always be true"),
         }
     }
 }
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
-struct Parser {}
+pub trait FlagName: Copy {
+    fn tautology(self) -> Error;
+}
+
+impl FlagName for char {
+    fn tautology(self) -> Error {
+        Error::CharTautology(self)
+    }
+}
+
+impl FlagName for &'static str {
+    fn tautology(self) -> Error {
+        Error::LongTautology(self)
+    }
+}
+
+impl FlagName for (char, &'static str) {
+    fn tautology(self) -> Error {
+        Error::FlexTautology(self.0, self.1)
+    }
+}
+
+pub struct Parser {}
 
 impl Parser {
     /// # Errors
     ///
     /// Will return an [`Error`] if the specified variable is already `true`.
-    fn flag(&mut self, variable: &mut bool, c: char, _description: &str) -> Result<()> {
-        (!*variable)
-            .then_some(())
-            .ok_or_else(|| Error::CharTautology(c))?;
+    pub fn flag(
+        &mut self,
+        variable: &mut bool,
+        name: impl FlagName,
+        _description: &str,
+    ) -> Result<()> {
+        (!*variable).then_some(()).ok_or_else(|| name.tautology())?;
 
         // TODO: save arg for use in parsing
 
@@ -44,18 +67,18 @@ impl Parser {
     /// # Errors
     ///
     /// Will return an [`Error`] if the specified arguments cannot be parsed.
-    fn parse(self, _args: impl IntoIterator<Item = OsString>) -> Result<()> {
+    pub fn parse(self, _args: impl IntoIterator<Item = OsString>) -> Result<()> {
         todo!()
     }
 
-    fn new() -> Parser {
+    pub fn new() -> Parser {
         Parser {}
     }
 }
 
+#[cfg(test)]
 mod tests {
     use std::ffi::OsStr;
-    use std::iter;
 
     use super::*;
 
@@ -66,7 +89,7 @@ mod tests {
     }
 
     #[test]
-    fn short_flag_tautology() {
+    fn char_flag_tautology() {
         let (mut f, mut t) = (false, true);
 
         let mut parser = Parser::new();
