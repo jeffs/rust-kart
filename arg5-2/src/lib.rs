@@ -45,22 +45,18 @@ impl FlagName for (char, &'static str) {
     }
 }
 
-pub struct Parser {}
+pub struct Parser<'a> {
+    #[allow(dead_code)]
+    char_flags: Vec<(char, &'a mut bool)>,
+}
 
-impl Parser {
+impl<'a> Parser<'a> {
     /// # Errors
     ///
     /// Will return an [`Error`] if the specified variable is already `true`.
-    pub fn flag(
-        &mut self,
-        variable: &mut bool,
-        name: impl FlagName,
-        _description: &str,
-    ) -> Result<()> {
-        (!*variable).then_some(()).ok_or_else(|| name.tautology())?;
-
-        // TODO: save arg for use in parsing
-
+    pub fn char_flag(&mut self, var: &'a mut bool, name: char, _description: &str) -> Result<()> {
+        (!*var).then_some(()).ok_or(Error::CharTautology(name))?;
+        self.char_flags.push((name, var));
         Ok(())
     }
 
@@ -71,8 +67,10 @@ impl Parser {
         todo!()
     }
 
-    pub fn new() -> Parser {
-        Parser {}
+    pub fn new() -> Parser<'a> {
+        Parser {
+            char_flags: Vec::new(),
+        }
     }
 }
 
@@ -94,11 +92,11 @@ mod tests {
 
         let mut parser = Parser::new();
         assert_eq!(
-            parser.flag(&mut f, 'f', "fake flag initialized false"),
+            parser.char_flag(&mut f, 'f', "fake flag initialized false"),
             Ok(())
         );
         assert_eq!(
-            parser.flag(&mut t, 't', "fake flag initialized true"),
+            parser.char_flag(&mut t, 't', "fake flag initialized true"),
             Err(Error::CharTautology('t')),
         );
     }
@@ -109,7 +107,7 @@ mod tests {
             let mut got = false;
 
             let mut parser = Parser::new();
-            parser.flag(&mut got, 'v', "fake flag").unwrap();
+            parser.char_flag(&mut got, 'v', "fake flag").unwrap();
 
             assert_eq!(parser.parse(args), Ok(()));
             assert_eq!(got, want);
