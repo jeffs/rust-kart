@@ -225,14 +225,15 @@ mod tests {
     }
 
     #[test]
-    fn long_flag_non_ascii() {
-        const NAME: &str = "año";
-        let mut var = false;
-        let mut parser = Parser::new();
-        assert_eq!(
-            parser.long_flag(&mut var, NAME, "fake long flag with non-ASCII name"),
-            Err(InitError::LongName(NAME))
-        );
+    fn long_flag_bad_name() {
+        for name in ["año", "has a space", "-leading-hyphen", "camelCase"] {
+            let mut var = false;
+            let mut parser = Parser::new();
+            assert_eq!(
+                parser.long_flag(&mut var, name, "fake long flag with bad name"),
+                Err(InitError::LongName(name)),
+            );
+        }
     }
 
     #[test]
