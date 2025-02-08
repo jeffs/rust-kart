@@ -22,18 +22,21 @@ fn is_long_name(s: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() && !c.is_uppercase() || c == '-')
 }
 
-fn parse_char_flag(vars: &mut CharMap<bool>, name: u8) {
-    if let Some(Some(var)) = vars.get_mut(usize::from(name)) {
-        **var = true;
-    }
+fn parse_char_flag(vars: &mut CharMap<bool>, name: u8) -> Result<(), ParseError> {
+    **vars
+        .get_mut(usize::from(name))
+        .and_then(|var| var.as_mut())
+        .ok_or(ParseError::CharName(name))? = true;
+    Ok(())
 }
 
-/// The `&mut Vec` here is purely a weirdness of Rust.  We're not modifying the `Vec` at all.  We
-/// are, however, potentially modifying the bools to which the `Vec` items refer.
-fn parse_char_flags(vars: &mut CharMap<bool>, names: &[u8]) {
+/// The `&mut` here is purely a weirdness of Rust.  We're not modifying `vars` at all.  We are,
+/// however, potentially modifying the bools referenced by `vars`.
+fn parse_char_flags(vars: &mut CharMap<bool>, names: &[u8]) -> Result<(), ParseError> {
     for &name in names {
-        parse_char_flag(vars, name);
+        parse_char_flag(vars, name)?;
     }
+    Ok(())
 }
 
 /// Returns true on success, and false if the map has no entry for the name.  Note that a single
@@ -107,7 +110,7 @@ impl<'a> Parser<'a> {
                     .is_ok_and(|name| parse_long_flag(&mut self.long_flags, name))
                     .then_some(())
                     .ok_or(ParseError::LongName(arg))?,
-                [b'-', bytes @ ..] => parse_char_flags(&mut self.char_flags, bytes),
+                [b'-', bytes @ ..] => parse_char_flags(&mut self.char_flags, bytes)?,
                 _ => todo!("positional"),
             }
         }

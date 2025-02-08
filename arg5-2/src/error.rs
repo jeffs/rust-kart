@@ -35,5 +35,6 @@ impl fmt::Display for Init {
 #[derive(Debug, PartialEq)]
 pub enum Parse {
     /// A flag/option name was not recognized.
+    CharName(u8),
     LongName(OsString),
 }
