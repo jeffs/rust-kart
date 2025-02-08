@@ -41,7 +41,10 @@ impl fmt::Display for InitError {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum ParseError {}
+pub enum ParseError {
+    /// A flag/option name was not recognized.
+    LongName(OsString),
+}
 
 pub trait FlagName: Copy {
     fn tautology(self) -> InitError;
@@ -65,9 +68,12 @@ impl FlagName for (char, &'static str) {
     }
 }
 
-/// Returns true if the specified character is supported in flag or option names.
-fn is_long_name(c: char) -> bool {
-    c.is_ascii_alphanumeric() && !c.is_uppercase() || c == '-'
+/// Returns true if the specified string is a valid flag or option name.
+fn is_long_name(s: &str) -> bool {
+    !s.is_empty()
+        && !s.starts_with('-')
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() && !c.is_uppercase() || c == '-')
 }
 
 fn parse_char_flag(vars: &mut CharMap<bool>, name: u8) {
@@ -84,12 +90,18 @@ fn parse_char_flags(vars: &mut CharMap<bool>, names: &[u8]) {
     }
 }
 
-fn parse_long_flag(vars: &mut LongMap<bool>, name: &str) {
+/// Returns true on success, and false if the map has no entry for the name.  Note that a single
+/// name may be mapped to multiple target variables: This function does not stop at the first match.
+#[must_use]
+fn parse_long_flag(vars: &mut LongMap<bool>, name: &str) -> bool {
+    let mut seen = false;
     for (key, var) in vars.iter_mut() {
         if *key == name {
             **var = true;
+            seen = true;
         }
     }
+    seen
 }
 
 pub struct Parser<'a> {
@@ -128,8 +140,7 @@ impl<'a> Parser<'a> {
         name: &'static str,
         _description: &'static str,
     ) -> Result<(), InitError> {
-        name.chars()
-            .all(is_long_name)
+        is_long_name(&name)
             .then_some(())
             .ok_or(InitError::LongName(name))?;
         (!*var)
@@ -144,14 +155,14 @@ impl<'a> Parser<'a> {
     /// Will return an [`Error`] if the specified arguments cannot be parsed.
     pub fn parse(mut self, args: impl IntoIterator<Item = OsString>) -> Result<(), ParseError> {
         for arg in args.into_iter().skip(1) {
-            if let [b'-', b'-', bytes @ ..] = arg.as_bytes() {
-                if let Ok(name) = std::str::from_utf8(bytes) {
-                    parse_long_flag(&mut self.long_flags, name);
-                }
-            } else if let [b'-', bytes @ ..] = arg.as_bytes() {
-                parse_char_flags(&mut self.char_flags, bytes);
-            } else {
-                todo!("positional");
+            match arg.as_bytes() {
+                b"--" => todo!("all remaining args are positional"),
+                [b'-', b'-', bytes @ ..] => std::str::from_utf8(bytes)
+                    .is_ok_and(|name| parse_long_flag(&mut self.long_flags, name))
+                    .then_some(())
+                    .ok_or(ParseError::LongName(arg))?,
+                [b'-', bytes @ ..] => parse_char_flags(&mut self.char_flags, bytes),
+                _ => todo!("positional"),
             }
         }
         Ok(())
