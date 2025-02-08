@@ -1,6 +1,9 @@
+mod error;
+
 use std::ffi::OsString;
-use std::fmt;
 use std::os::unix::ffi::OsStrExt;
+
+pub use error::{Init as InitError, Parse as ParseError};
 
 /// The number of ASCII values.
 const ASCII_COUNT: usize = 1 << 7;
@@ -8,65 +11,6 @@ const ASCII_COUNT: usize = 1 << 7;
 /// Maps ASCII code points to variables.
 type CharMap<'a, T> = [Option<&'a mut T>; ASCII_COUNT];
 type LongMap<'a, T> = Vec<(&'static str, &'a mut T)>;
-
-#[derive(Debug, PartialEq)]
-pub enum InitError {
-    /// The target variable for a Boolean flag was already true when the variable was registered.
-    /// The variable should have been initialized to false, or else there is no way to tell whether
-    /// the flag was specified in arguments.
-    CharTautology(char),
-    LongTautology(&'static str),
-    FlexTautology(char, &'static str),
-    /// The supplied flag or option name is not supported.  Future versions of this library may be
-    /// extended to support non-ASCII and/or non-alphanumeric flag/option names, but the current
-    /// version remains conservative in the name of portability.  Note that the current limitations
-    /// apply only to argument names, not values; e.g., args like `--date Mañana` are fine.
-    CharName(char),
-    LongName(&'static str),
-    /// The supplied flag or option name was bound to multiple target variables.
-    CharDup(char),
-}
-
-impl fmt::Display for InitError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InitError::CharTautology(c) => write!(f, "flag -{c} would always be true"),
-            InitError::LongTautology(s) => write!(f, "flag --{s} would always be true"),
-            InitError::FlexTautology(c, s) => write!(f, "flag -{c}|--{s} would always be true"),
-            InitError::CharName(c) => write!(f, "non-ASCII flag name -{c} is unsupported"),
-            InitError::LongName(s) => write!(f, "non-ASCII flag name --{s} is unsupported"),
-            InitError::CharDup(c) => write!(f, "flag -{c} cannot be bound to multiple variables"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ParseError {
-    /// A flag/option name was not recognized.
-    LongName(OsString),
-}
-
-pub trait FlagName: Copy {
-    fn tautology(self) -> InitError;
-}
-
-impl FlagName for char {
-    fn tautology(self) -> InitError {
-        InitError::CharTautology(self)
-    }
-}
-
-impl FlagName for &'static str {
-    fn tautology(self) -> InitError {
-        InitError::LongTautology(self)
-    }
-}
-
-impl FlagName for (char, &'static str) {
-    fn tautology(self) -> InitError {
-        InitError::FlexTautology(self.0, self.1)
-    }
-}
 
 /// Returns true if the specified string is a valid flag or option name.
 fn is_long_name(s: &str) -> bool {
