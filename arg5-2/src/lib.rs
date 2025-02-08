@@ -2,7 +2,7 @@ mod error;
 #[cfg(test)]
 mod tests;
 
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
 use std::os::unix::ffi::OsStrExt;
 
 pub use error::{Init as InitError, Parse as ParseError};
@@ -39,18 +39,22 @@ fn parse_char_flags(vars: &mut CharMap<bool>, names: &[u8]) -> Result<(), ParseE
     Ok(())
 }
 
-/// Returns true on success, and false if the map has no entry for the name.  Note that a single
-/// name may be mapped to multiple target variables: This function does not stop at the first match.
+/// Returns true on success, and false if the map has no entry for the name.
 #[must_use]
-fn parse_long_flag(vars: &mut LongMap<bool>, name: &str) -> bool {
-    let mut seen = false;
-    for (key, var) in vars.iter_mut() {
-        if *key == name {
-            **var = true;
-            seen = true;
-        }
-    }
-    seen
+fn parse_long_flag(vars: &mut LongMap<bool>, name: &[u8]) -> Result<(), ParseError> {
+    std::str::from_utf8(name)
+        .is_ok_and(|name| {
+            let mut seen = false;
+            for (key, var) in vars.iter_mut() {
+                if *key == name {
+                    **var = true;
+                    seen = true;
+                }
+            }
+            seen
+        })
+        .then_some(())
+        .ok_or(ParseError::LongName(OsStr::from_bytes(name).to_owned()))
 }
 
 pub struct Parser<'a> {
@@ -82,7 +86,11 @@ impl<'a> Parser<'a> {
 
     /// # Errors
     ///
-    /// Will return an [`Error`] if the specified variable is already `true`.
+    /// Will return [`Err`] if the specified variable is already `true`.
+    ///
+    /// # TODO
+    ///
+    /// * [ ] Return [`Err`] if the name is already bound.
     pub fn long_flag(
         &mut self,
         var: &'a mut bool,
@@ -106,10 +114,7 @@ impl<'a> Parser<'a> {
         for arg in args.into_iter().skip(1) {
             match arg.as_bytes() {
                 b"--" => todo!("all remaining args are positional"),
-                [b'-', b'-', bytes @ ..] => std::str::from_utf8(bytes)
-                    .is_ok_and(|name| parse_long_flag(&mut self.long_flags, name))
-                    .then_some(())
-                    .ok_or(ParseError::LongName(arg))?,
+                [b'-', b'-', bytes @ ..] => parse_long_flag(&mut self.long_flags, bytes)?,
                 [b'-', bytes @ ..] => parse_char_flags(&mut self.char_flags, bytes)?,
                 _ => todo!("positional"),
             }
