@@ -1,6 +1,10 @@
 use std::ffi::OsString;
 use std::fmt;
 
+/// Something was wrong with the initialization of a [`Parser`].  In principle, this should be a
+/// compile-time error.  The appropriate response may be to [`panic`].
+///
+/// [`Parser`]: super::Parser
 #[derive(Debug, PartialEq)]
 pub enum Init {
     /// The target variable for a Boolean flag was already true when the variable was registered.
@@ -32,6 +36,10 @@ impl fmt::Display for Init {
     }
 }
 
+/// A correctly initialized [`Parser`] has rejected rutime arguments.  This is normal, and typically
+/// indicates end user error (a bad command line), rather than incorrect usage of this crate.
+///
+/// [`Parser`]: super::Parser
 #[derive(Debug, PartialEq)]
 pub enum Parse {
     /// A flag/option name was not recognized.
