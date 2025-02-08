@@ -86,7 +86,7 @@ impl<'a> Parser<'a> {
         name: &'static str,
         _description: &'static str,
     ) -> Result<(), InitError> {
-        is_long_name(&name)
+        is_long_name(name)
             .then_some(())
             .ok_or(InitError::LongName(name))?;
         (!*var)
@@ -114,10 +114,17 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
+    #[must_use]
     pub const fn new() -> Parser<'a> {
         Parser {
             char_flags: [const { None }; ASCII_COUNT],
             long_flags: Vec::new(),
         }
+    }
+}
+
+impl Default for Parser<'_> {
+    fn default() -> Self {
+        Parser::new()
     }
 }
