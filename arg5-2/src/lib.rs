@@ -256,8 +256,8 @@ mod tests {
             let mut got = false;
             let mut parser = Parser::new();
             parser.long_flag(&mut got, "fake", "fake flag").unwrap();
-            assert_eq!(parser.parse(args), Ok(()));
-            assert_eq!(got, want);
+            assert_eq!(parser.parse(args.clone()), Ok(()), "{args:?}");
+            assert_eq!(got, want, "{args:?}");
         }
     }
 }
