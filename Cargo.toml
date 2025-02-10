@@ -14,6 +14,7 @@ members = [
     "hexify",
     "hexwords",
     "kcal",
+    "leap",
     "module-from-path",
     "netmask",
     "pangram",
