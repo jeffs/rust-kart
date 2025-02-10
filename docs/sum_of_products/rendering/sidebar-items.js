@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["compute_value_widths","formula_width","render_formulas","render_values"]};

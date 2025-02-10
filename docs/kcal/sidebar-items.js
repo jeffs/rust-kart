@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BadPortion","Unit"],"mod":["food","portion","unit"],"struct":["BadFood","Food","Portion"]};

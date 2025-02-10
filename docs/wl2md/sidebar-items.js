@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SearchablePath"],"fn":["main","main_imp"],"static":["LINK_PATTERN"],"struct":["Error","Link","LinkPattern","WeblocFile"],"type":["Result"]};

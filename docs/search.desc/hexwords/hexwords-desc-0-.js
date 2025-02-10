@@ -1,0 +1,1 @@
+searchState.loadedDescShard("hexwords", 0, "Prints lines from standard input that contain only …")

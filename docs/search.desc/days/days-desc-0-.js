@@ -1,0 +1,1 @@
+searchState.loadedDescShard("days", 0, "This program prints the time remaining until a specified …")

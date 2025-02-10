@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"mod":["date","error","week"],"struct":["Date"],"type":["Result"]};
