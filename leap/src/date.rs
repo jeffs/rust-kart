@@ -41,7 +41,31 @@ impl Date {
         day: 31,
     };
 
-    /// Returns the date [one week later](https://www.youtube.com/watch?v=BKP3Qe_zZ18).
+    fn day_of_next_month(self, day: u8) -> Date {
+        let month = self.month + 1;
+        let (year, month) = if MONTHS.contains(&month) {
+            (self.year, month)
+        } else {
+            (self.year + 1, 1)
+        };
+        Date { year, month, day }
+    }
+
+    /// Returns the date [one day later](https://www.youtube.com/watch?v=Ph1M0F99Xv8) than self.
+    ///
+    /// # Panics
+    ///
+    /// Will panic in debug mode only if the resulting date would exceed [`Date::MAX`].
+    pub fn plus_one_day(self) -> Date {
+        let day = self.day + 1;
+        if month_days(self.year, self.month).contains(&day) {
+            Date { day, ..self }
+        } else {
+            self.day_of_next_month(1)
+        }
+    }
+
+    /// Returns the date [one week later](https://www.youtube.com/watch?v=BKP3Qe_zZ18) than self.
     ///
     /// # Panics
     ///
@@ -50,27 +74,13 @@ impl Date {
         let month_days = month_days(self.year, self.month);
         let day = self.day + DAYS_PER_WEEK;
         if month_days.contains(&day) {
-            return Date { day, ..self };
-        }
-
-        let day = day - month_days.end();
-        let month = self.month + 1;
-        if MONTHS.contains(&month) {
-            return Date { month, day, ..self };
-        }
-
-        Date {
-            year: self.year + 1,
-            month: 1,
-            day,
+            Date { day, ..self }
+        } else {
+            self.day_of_next_month(day - month_days.end())
         }
     }
 
-    pub fn day(self) -> u8 {
-        self.day
-    }
-
-    /// Constructs a date in the specified year CE, on the specified 1-based month and day indexes.
+    /// Constructs a date in the specified year, month, and day.  All three fields are 1-based.
     ///
     /// # Examples
     ///
@@ -91,12 +101,21 @@ impl Date {
             .ok_or(Error::Date { year, month, day })
     }
 
+    pub fn day(self) -> u8 {
+        self.day
+    }
+
     pub fn month(self) -> u8 {
         self.month
     }
 
     pub fn year(self) -> u16 {
         self.year
+    }
+
+    /// Returns true iff this date is February 29.
+    pub fn is_leap_day(self) -> bool {
+        self.month == 2 && self.day == 29
     }
 }
 
