@@ -8,7 +8,11 @@
 //! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_ checking out main, but
 //!   after fetch --prune, the user still sees a list of obsolete branches the next time they pull
 //!   --prune; so now this program checks out main just so it can run pull --prune per se.
-//! * [ ] Factor out trunk config, so you can reuse it in `since`.
+//! * [ ] Replace `since` and `gitup` with a single `grit` command:
+//!   - `si|since` to replace `since`
+//!   - `up|update` to replace `gitup`
+//!   - `tr|trunk` to print trunk name
+//!   - `co|checkout`; support aliases, such as `-t` for trunk
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
