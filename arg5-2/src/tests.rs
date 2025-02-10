@@ -9,7 +9,7 @@ fn fake_args(args: impl IntoIterator<Item = &'static str>) -> Vec<OsString> {
 }
 
 #[test]
-fn char_flag_non_ascii() {
+fn init_char_flag_err_name() {
     const NAME: char = 'ñ';
     let mut var = false;
     let mut parser = Parser::new();
@@ -20,7 +20,19 @@ fn char_flag_non_ascii() {
 }
 
 #[test]
-fn char_flag_tautology() {
+fn init_long_flag_err_name() {
+    for name in ["año", "has a space", "-leading-hyphen", "camelCase"] {
+        let mut var = false;
+        let mut parser = Parser::new();
+        assert_eq!(
+            parser.long_flag(&mut var, name, "fake long flag with bad name"),
+            Err(InitError::LongName(name)),
+        );
+    }
+}
+
+#[test]
+fn init_char_flag_err_tautology() {
     let (mut f, mut t) = (false, true);
     let mut parser = Parser::new();
     assert_eq!(
@@ -34,30 +46,7 @@ fn char_flag_tautology() {
 }
 
 #[test]
-fn char_flag_parse() {
-    for (args, want) in [(fake_args([]), false), (fake_args(["-v"]), true)] {
-        let mut got = false;
-        let mut parser = Parser::new();
-        parser.char_flag(&mut got, 'v', "fake flag").unwrap();
-        assert_eq!(parser.parse(args), Ok(()));
-        assert_eq!(got, want);
-    }
-}
-
-#[test]
-fn long_flag_bad_name() {
-    for name in ["año", "has a space", "-leading-hyphen", "camelCase"] {
-        let mut var = false;
-        let mut parser = Parser::new();
-        assert_eq!(
-            parser.long_flag(&mut var, name, "fake long flag with bad name"),
-            Err(InitError::LongName(name)),
-        );
-    }
-}
-
-#[test]
-fn long_flag_tautology() {
+fn init_long_flag_err_tautology() {
     let (mut f, mut t) = (false, true);
     let mut parser = Parser::new();
     assert_eq!(
@@ -71,7 +60,25 @@ fn long_flag_tautology() {
 }
 
 #[test]
-fn long_flag_parse() {
+fn parse_char_flag() {
+    for (args, want) in [(fake_args([]), false), (fake_args(["-v"]), true)] {
+        let mut got = false;
+        let mut parser = Parser::new();
+        parser.char_flag(&mut got, 'v', "fake flag").unwrap();
+        assert_eq!(parser.parse(args), Ok(()));
+        assert_eq!(got, want);
+    }
+}
+
+#[test]
+fn parse_char_flag_err_name() {
+    let args = fake_args(["-v"]);
+    let parser = Parser::new();
+    assert_eq!(parser.parse(args), Ok(()));
+}
+
+#[test]
+fn pare_long_flag() {
     for (args, want) in [(fake_args([]), false), (fake_args(["--fake"]), true)] {
         let mut got = false;
         let mut parser = Parser::new();

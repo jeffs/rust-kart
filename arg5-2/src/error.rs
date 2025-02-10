@@ -1,5 +1,5 @@
 use std::ffi::OsString;
-use std::fmt;
+use std::fmt::{self, Debug};
 
 /// Something was wrong with the initialization of a [`Parser`].  In principle, this should be a
 /// compile-time error.  The appropriate response may be to [`panic`].
@@ -7,12 +7,6 @@ use std::fmt;
 /// [`Parser`]: super::Parser
 #[derive(Debug, PartialEq)]
 pub enum Init {
-    /// The target variable for a Boolean flag was already true when the variable was registered.
-    /// The variable should have been initialized to false, or else there is no way to tell whether
-    /// the flag was specified in arguments.
-    CharTautology(char),
-    LongTautology(&'static str),
-    FlexTautology(char, &'static str),
     /// The supplied flag or option name is not supported.  Future versions of this library may be
     /// extended to support non-ASCII and/or non-alphanumeric flag/option names, but the current
     /// version remains conservative in the name of portability.  Note that the current limitations
@@ -21,6 +15,12 @@ pub enum Init {
     LongName(&'static str),
     /// The supplied flag or option name was bound to multiple target variables.
     CharDup(char),
+    /// The target variable for a Boolean flag was already true when the variable was registered.
+    /// The variable should have been initialized to false, or else there is no way to tell whether
+    /// the flag was specified in arguments.
+    CharTautology(char),
+    LongTautology(&'static str),
+    FlexTautology(char, &'static str),
 }
 
 impl fmt::Display for Init {
@@ -40,9 +40,18 @@ impl fmt::Display for Init {
 /// indicates end user error (a bad command line), rather than incorrect usage of this crate.
 ///
 /// [`Parser`]: super::Parser
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub enum Parse {
     /// A flag/option name was not recognized.
     CharName(u8),
     LongName(OsString),
+}
+
+impl Debug for Parse {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            &Parse::CharName(b) => write!(f, "CharName({})", char::from(b)),
+            Parse::LongName(s) => (),
+        }
+    }
 }
