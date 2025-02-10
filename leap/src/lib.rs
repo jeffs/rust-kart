@@ -1,5 +1,6 @@
 mod date;
 mod error;
+pub mod week;
 
 pub use date::Date;
 pub use error::Error;

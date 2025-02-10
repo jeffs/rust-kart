@@ -3,9 +3,10 @@ use std::{fmt, u16};
 
 use crate::{Error, Result};
 
-const DAYS_PER_WEEK: u8 = 7;
 const MONTHS: RangeInclusive<u8> = 1..=12;
 const YEARS: RangeFrom<u16> = 1..;
+
+const DAYS_PER_WEEK: u8 = crate::week::DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     let month = usize::from(month);
@@ -26,7 +27,7 @@ fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     ][month - 1]
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Date {
     year: u16,
     month: u8,
