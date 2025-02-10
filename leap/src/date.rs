@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::RangeInclusive;
 
 use crate::{Error, Result};
@@ -33,6 +34,21 @@ impl Date {
         self.day
     }
 
+    /// Constructs a date in the specified year CE, on the specified 1-based month and day indexes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use leap::Date;
+    ///
+    /// assert_eq!(
+    ///     Date::from_ymd(2000, 1, 1)
+    ///         .expect("January 1st, 2000")
+    ///         .to_string(),
+    ///     "2000-01-01"
+    /// );
+    /// ```
+    #[must_use]
     pub fn from_ymd(year: u16, month: u8, day: u8) -> Result<Date> {
         (0 < year && (1..=12).contains(&month) && month_days(year, month).contains(&day))
             .then_some(Date { year, month, day })
@@ -45,5 +61,12 @@ impl Date {
 
     pub fn year(self) -> u16 {
         self.year
+    }
+}
+
+impl fmt::Display for Date {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let Date { year, month, day } = self;
+        write!(f, "{year:04}-{month:02}-{day:02}")
     }
 }
