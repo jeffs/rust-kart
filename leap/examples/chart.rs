@@ -1,4 +1,4 @@
-use leap::week::{Day, DAYS};
+use leap::week::Day;
 use leap::Date;
 
 fn is_friday_the_13th(day: Day, date: Date) -> bool {
@@ -8,7 +8,7 @@ fn is_friday_the_13th(day: Day, date: Date) -> bool {
 fn main() {
     // The first day of 1764 happened to be a Sunday, which is the first item of `days`.
     let mut date = Date::from_ymd(1764, 1, 1).expect("hard-coded start date");
-    let mut days = DAYS.iter().cycle();
+    // let mut days = DAYS.iter().cycle();
 
     let stop = Date::from_ymd(2123, 1, 1).expect("hard-coded stop date");
 
@@ -17,7 +17,8 @@ fn main() {
             print!("{}: ", date.year())
         }
 
-        let day = *days.next().expect("there's always tomorrow");
+        let day = date.day_of_week();
+        // *days.next().expect("there's always tomorrow");
 
         // Sanity check.
         #[cfg(debug_assertions)]
