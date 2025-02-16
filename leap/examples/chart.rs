@@ -1,38 +1,28 @@
 use leap::week::Day;
 use leap::Date;
 
-fn is_friday_the_13th(day: Day, date: Date) -> bool {
-    day == Day::Fri && date.day() == 13
-}
-
 fn main() {
-    // The first day of 1764 happened to be a Sunday, which is the first item of `days`.
-    let mut date = Date::from_ymd(1764, 1, 1).expect("hard-coded start date");
-    // let mut days = DAYS.iter().cycle();
+    for year in 1800..2200 {
+        print!("{year}: ");
 
-    let stop = Date::from_ymd(2123, 1, 1).expect("hard-coded stop date");
+        let mut date = Date::from_ymd(year - 1, 12, 31).expect("last day before starting year");
+        while {
+            date = date.plus_one_day();
+            date.year() == year
+        } {
+            if date.day_of_week() == Day::Fri && date.day() == 13 {
+                print!("X");
+            } else {
+                print!(" ");
+            }
 
-    while date != stop {
-        if (date.month(), date.day()) == (1, 1) {
-            print!("{}: ", date.year())
+            // Sanity check.
+            #[cfg(debug_assertions)]
+            if date == Date::from_ymd(2025, 2, 10).expect("hard-coded date") {
+                assert_eq!(date.day_of_week(), Day::Mon);
+            }
         }
 
-        let day = date.day_of_week();
-        // *days.next().expect("there's always tomorrow");
-
-        // Sanity check.
-        #[cfg(debug_assertions)]
-        if date == Date::from_ymd(2025, 2, 10).expect("hard-coded date") {
-            assert_eq!(day, Day::Mon);
-        }
-
-        let b = is_friday_the_13th(day, date);
-        print!("{}", if b { 'X' } else { ' ' });
-
-        if (date.month(), date.day()) == (12, 31) {
-            println!()
-        }
-
-        date = date.plus_one_day();
+        println!();
     }
 }
