@@ -1,12 +1,13 @@
 use std::ops::{RangeFrom, RangeInclusive};
 use std::{fmt, u16};
 
+use crate::week::{Day, DAYS};
 use crate::{Error, Result};
 
 const MONTHS: RangeInclusive<u8> = 1..=12;
 const YEARS: RangeFrom<u16> = 1..;
 
-const DAYS_PER_WEEK: u8 = crate::week::DAYS.len() as u8;
+const DAYS_PER_WEEK: u8 = DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     let month = usize::from(month);
@@ -27,6 +28,23 @@ fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     ][month - 1]
 }
 
+/// Returns the number of days between the first days of the year 1 and the specified year.
+fn days_before_year(year: u16) -> usize {
+    debug_assert!(YEARS.contains(&year));
+    let years = usize::from(year - 1);
+    years * 365       // Number of years, times days per year,
+        + years / 4   // plus leap years, which are divisible by 4,
+        - years / 100 // but not by 100, 
+        + years / 400 // unless also divisible by 400.  I don't make the rules.
+}
+
+fn days_before_month(year: u16, month: u8) -> usize {
+    debug_assert!(YEARS.contains(&year));
+    debug_assert!(MONTHS.contains(&month));
+    (1..month).map(|m| month_days(year, m).count()).sum()
+}
+
+/// Proleptic Gregorian calendar date.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Date {
     year: u16,
@@ -41,6 +59,17 @@ impl Date {
         month: 12,
         day: 31,
     };
+
+    /// Returns the number of days between the first day of the year 1 and this date.
+    fn count_days(self) -> usize {
+        let days = usize::from(self.day - 1);
+        days_before_year(self.year) + days_before_month(self.year, self.month) + days
+    }
+
+    pub fn day_of_week(self) -> Day {
+        // +1 because January 1st of the year 1 CE would have been a Monday.
+        DAYS[(self.count_days() + 1) % DAYS.len()]
+    }
 
     fn day_of_next_month(self, day: u8) -> Date {
         let month = self.month + 1;
@@ -124,5 +153,32 @@ impl fmt::Display for Date {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let Date { year, month, day } = self;
         write!(f, "{year:04}-{month:02}-{day:02}")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fields_are_one_based() {
+        assert!(Date::from_ymd(1, 1, 1).is_ok());
+        assert!(Date::from_ymd(1, 1, 0).is_err());
+        assert!(Date::from_ymd(1, 0, 1).is_err());
+        assert!(Date::from_ymd(0, 1, 1).is_err());
+    }
+
+    #[test]
+    fn day_of_week_works() {
+        for (year, day) in [
+            (1, Day::Mon), // 0001-01-01 would have been a Monday.
+            (2, Day::Tue), // 365 % 7 == 1, so each year starts one week day later than the last.
+            (3, Day::Wed),
+            (4, Day::Thu),
+            (5, Day::Sat), // 0004 would have been a leap year, pushing 0005 back an extra day.
+        ] {
+            let got = Date::from_ymd(year, 1, 1).map(Date::day_of_week);
+            assert_eq!(got, Ok(day), "{year}-01-01");
+        }
     }
 }
