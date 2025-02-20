@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DAYS_PER_WEEK","MONTHS","YEARS"],"fn":["days_before_month","days_before_year","month_days"],"struct":["Date"]};

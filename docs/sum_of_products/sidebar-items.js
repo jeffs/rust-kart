@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EQ","SEP"],"fn":["compute","parse","render"],"mod":["rendering"],"struct":["SumOfProducts"]};

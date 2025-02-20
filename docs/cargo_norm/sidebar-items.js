@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["find_src_bin_dir_name","main"]};

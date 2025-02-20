@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FIRST_WORD","WORD_BITS"],"struct":["Factors","Primes","Sieve"],"type":["Word"]};

@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["kcal",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"kcal/enum.Unit.html\" title=\"enum kcal::Unit\">Unit</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"kcal/struct.Food.html\" title=\"struct kcal::Food\">Food</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"kcal/struct.Portion.html\" title=\"struct kcal::Portion\">Portion</a>"]]],["netmask",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"struct\" href=\"netmask/struct.Netmask.html\" title=\"struct netmask::Netmask\">Netmask</a>"]]],["wl2md",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/str/traits/trait.FromStr.html\" title=\"trait core::str::traits::FromStr\">FromStr</a> for <a class=\"enum\" href=\"wl2md/enum.SearchablePath.html\" title=\"enum wl2md::SearchablePath\">SearchablePath</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[772,282,291]}

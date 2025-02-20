@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_MIN_LENGTH","DEFAULT_WORDS_FILE"],"fn":["format_line","format_lines","main","main_imp","parse_args","to_charset"],"mod":["main_error"],"struct":["Args"]};

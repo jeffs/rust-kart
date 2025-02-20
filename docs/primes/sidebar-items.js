@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["UNDER_1000"],"fn":["is_prime","primes"],"mod":["basic","cache","sieve","under1000","under100000"],"static":["UNDER_100000"],"struct":["Cache","Primes","Sieve"]};

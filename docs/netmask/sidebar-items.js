@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IPV4_ADDR_BITS"],"enum":["ParseNetmaskError"],"fn":["keep_left","main","mask_left"],"struct":["Netmask"]};

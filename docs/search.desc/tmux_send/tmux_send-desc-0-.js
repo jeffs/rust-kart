@@ -1,0 +1,1 @@
+searchState.loadedDescShard("tmux_send", 0, "Sends standard input to the bottom-right tmux pane.")
