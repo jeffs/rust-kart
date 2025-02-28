@@ -68,6 +68,22 @@ impl fmt::Display for Link {
     }
 }
 
+enum Line {
+    Link(Link),
+    Header { level: u8, text: String },
+}
+
+impl fmt::Display for Line {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Line::Link(link) => link.fmt(f),
+            Line::Header { level, text } => {
+                write!(f, "{:#<level$} {text}", "", level = usize::from(*level))
+            }
+        }
+    }
+}
+
 struct LinkPattern(Regex);
 
 impl LinkPattern {
@@ -116,13 +132,15 @@ impl TryFrom<WeblocFile> for Link {
             .map_err(add_path)?
             .into_iter()
             .filter_map(|line| LINK_PATTERN.match_line(&line));
-        match (links.next(), links.next()) {
-            (Some(link), None) => Ok(Link {
-                name: value.name(),
-                link,
-            }),
-            _ => Err(Error::for_path(path, "expected exactly one link")),
-        }
+
+        let (Some(link), None) = (links.next(), links.next()) else {
+            return Err(Error::for_path(path, "expected exactly one link"));
+        };
+
+        Ok(Link {
+            name: value.name(),
+            link,
+        })
     }
 }
 
@@ -146,17 +164,18 @@ impl FromStr for SearchablePath {
     }
 }
 
-impl TryFrom<SearchablePath> for Vec<Link> {
+impl TryFrom<SearchablePath> for Vec<Line> {
     type Error = Error;
     fn try_from(value: SearchablePath) -> Result<Self> {
         match value {
-            SearchablePath::File(file) => Ok(vec![file.try_into()?]),
+            SearchablePath::File(file) => Ok(vec![Line::Link(file.try_into()?)]),
             SearchablePath::Directory(root) => WalkDir::new(&root)
                 .into_iter()
                 .collect::<walkdir::Result<Vec<_>>>()?
                 .into_iter()
                 .filter_map(|dirent| WeblocFile::from_path(dirent.path()))
-                .map(TryInto::try_into)
+                .map(Link::try_from)
+                .map(Line::Link)
                 .collect(),
         }
     }
