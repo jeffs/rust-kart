@@ -21,6 +21,7 @@ members = [
     "perpetuity",
     "primes",
     "since",
+    "snitty",
     "stop-once",
     "sum-of-products",
     "tmux-send",
