@@ -66,6 +66,7 @@ impl Date {
         days_before_year(self.year) + days_before_month(self.year, self.month) + days
     }
 
+    #[must_use]
     pub fn day_of_week(self) -> Day {
         // +1 because January 1st of the year 1 CE would have been a Monday.
         DAYS[(self.count_days() + 1) % DAYS.len()]
@@ -86,6 +87,7 @@ impl Date {
     /// # Panics
     ///
     /// Will panic in debug mode only if the resulting date would exceed [`Date::MAX`].
+    #[must_use]
     pub fn plus_one_day(self) -> Date {
         let day = self.day + 1;
         if month_days(self.year, self.month).contains(&day) {
@@ -100,6 +102,7 @@ impl Date {
     /// # Panics
     ///
     /// Will panic in debug mode only if the resulting date would exceed [`Date::MAX`].
+    #[must_use]
     pub fn plus_one_week(self) -> Date {
         let month_days = month_days(self.year, self.month);
         let day = self.day + DAYS_PER_WEEK;
@@ -131,19 +134,23 @@ impl Date {
             .ok_or(Error::Date { year, month, day })
     }
 
+    #[must_use]
     pub fn day(self) -> u8 {
         self.day
     }
 
+    #[must_use]
     pub fn month(self) -> u8 {
         self.month
     }
 
+    #[must_use]
     pub fn year(self) -> u16 {
         self.year
     }
 
     /// Returns true iff this date is February 29.
+    #[must_use]
     pub fn is_leap_day(self) -> bool {
         self.month == 2 && self.day == 29
     }
