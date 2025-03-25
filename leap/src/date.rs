@@ -1,5 +1,5 @@
+use std::fmt;
 use std::ops::{RangeFrom, RangeInclusive};
-use std::{fmt, u16};
 
 use crate::week::{Day, DAYS};
 use crate::{Error, Result};
@@ -7,6 +7,7 @@ use crate::{Error, Result};
 const MONTHS: RangeInclusive<u8> = 1..=12;
 const YEARS: RangeFrom<u16> = 1..;
 
+#[allow(clippy::cast_possible_truncation)]
 const DAYS_PER_WEEK: u8 = DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
@@ -115,6 +116,11 @@ impl Date {
 
     /// Constructs a date in the specified year, month, and day.  All three fields are 1-based.
     ///
+    /// # Errors
+    ///
+    /// Returns [`Err`] if the date is invalid.  For example, you can't construct a nonsensical date
+    /// like February 40th.
+    ///
     /// # Examples
     ///
     /// ```
@@ -127,7 +133,6 @@ impl Date {
     ///     "2000-01-01"
     /// );
     /// ```
-    #[must_use]
     pub fn from_ymd(year: u16, month: u8, day: u8) -> Result<Date> {
         (YEARS.contains(&year) && MONTHS.contains(&month) && month_days(year, month).contains(&day))
             .then_some(Date { year, month, day })

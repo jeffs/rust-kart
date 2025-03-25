@@ -1,10 +1,11 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt, str::FromStr};
 
 use crate::{Portion, Unit};
 
+#[derive(Debug)]
 pub struct BadFood(String);
 
-impl Display for BadFood {
+impl fmt::Display for BadFood {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}: bad food", self.0)
     }

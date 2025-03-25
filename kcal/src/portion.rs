@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt, str::FromStr};
 
 use crate::unit::Unit;
 
@@ -9,8 +9,8 @@ pub enum BadPortion {
     MissingUnit,
 }
 
-impl Display for BadPortion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for BadPortion {
+    fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
         match self {
             BadPortion::BadAmount(value) => write!(f, "{value}: bad amount"),
             BadPortion::BadUnit(value) => write!(f, "{value}: bad unit"),
@@ -40,7 +40,7 @@ impl Portion {
     }
 }
 
-impl Display for Portion {
+impl fmt::Display for Portion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.unit {
             // There's no point in showing fractions of a gram.
