@@ -5,3 +5,6 @@ edition = "2024"
 
 [lints]
 workspace = true
+
+[dependencies]
+chrono = { version = "0.4.40", features = ["alloc"] }

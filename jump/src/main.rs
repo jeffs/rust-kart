@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::{env, fmt, fs, io};
 
 #[derive(Debug)]
@@ -98,8 +98,6 @@ pub struct Database(
     HashMap<String, PathBuf>,
 );
 
-// struct
-
 impl Database {
     fn read_file(path: impl AsRef<Path>) -> Result<Self, DbError> {
         let path = path.as_ref();
@@ -130,6 +128,51 @@ impl Database {
 
         Ok(Database(jumps))
     }
+
+    fn get(&self, name: &str) -> Option<&PathBuf> {
+        self.0.get(name)
+    }
+}
+
+enum Expansion<'a, 'b> {
+    Path(&'a Path),
+    Component(Component<'b>),
+    String(String),
+}
+
+impl<'a, 'b> AsRef<Path> for Expansion<'a, 'b> {
+    fn as_ref(&self) -> &Path {
+        match self {
+            Self::Path(p) => p,
+            Self::Component(c) => c.as_ref(),
+            Self::String(s) => Path::new(s),
+        }
+    }
+}
+
+struct Expander<'a> {
+    home: &'a Path,
+}
+
+impl<'a> Expander<'a> {
+    fn expand<'b>(&self, part: Component<'b>) -> Expansion<'a, 'b> {
+        let Component::Normal(s) = part else {
+            return Expansion::Component(part);
+        };
+
+        let Some(s) = s.to_str() else {
+            return Expansion::Component(part);
+        };
+
+        if s.starts_with('%') {
+            let today = chrono::Local::now().date_naive();
+            Expansion::String(today.format(s).to_string())
+        } else if s == "~" {
+            Expansion::Path(self.home)
+        } else {
+            Expansion::Component(part)
+        }
+    }
 }
 
 /// # Notes
@@ -148,20 +191,23 @@ impl Database {
 fn main_imp() -> Result<(), DbError> {
     #[allow(deprecated)]
     let home = env::home_dir().expect("user should have a home directory");
-    let db_path = home.join(".config/jump/targets.csv");
 
+    let db_path = home.join(".config/jump/targets.csv");
     let db = Database::read_file(&db_path)?;
+
+    let expander = Expander { home: &home };
+
     for arg in env::args().skip(1) {
-        let Some(path) = db.0.get(&arg) else {
+        let Some(path) = db.get(&arg) else {
             return Err(DbError::arg(db_path, arg));
         };
 
-        if let Ok(tail) = path.strip_prefix("~") {
-            // Expand leading `~`.
-            println!("{}", home.join(tail).display())
-        } else {
-            println!("{}", path.display());
-        }
+        let buf = path
+            .components()
+            .map(|c| expander.expand(c))
+            .collect::<PathBuf>();
+
+        println!("{}", buf.display());
     }
     Ok(())
 }
