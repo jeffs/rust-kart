@@ -150,28 +150,22 @@ impl<'a, 'b> AsRef<Path> for Expansion<'a, 'b> {
     }
 }
 
-struct Expander<'a> {
-    home: &'a Path,
-}
+fn expand_component<'a, 'b>(home: &'a Path, part: Component<'b>) -> Expansion<'a, 'b> {
+    let Component::Normal(s) = part else {
+        return Expansion::Component(part);
+    };
 
-impl<'a> Expander<'a> {
-    fn expand<'b>(&self, part: Component<'b>) -> Expansion<'a, 'b> {
-        let Component::Normal(s) = part else {
-            return Expansion::Component(part);
-        };
+    let Some(s) = s.to_str() else {
+        return Expansion::Component(part);
+    };
 
-        let Some(s) = s.to_str() else {
-            return Expansion::Component(part);
-        };
-
-        if s.starts_with('%') {
-            let today = chrono::Local::now().date_naive();
-            Expansion::String(today.format(s).to_string())
-        } else if s == "~" {
-            Expansion::Path(self.home)
-        } else {
-            Expansion::Component(part)
-        }
+    if s.starts_with('%') {
+        let today = chrono::Local::now().date_naive();
+        Expansion::String(today.format(s).to_string())
+    } else if s == "~" {
+        Expansion::Path(home)
+    } else {
+        Expansion::Component(part)
     }
 }
 
@@ -195,8 +189,6 @@ fn main_imp() -> Result<(), DbError> {
     let db_path = home.join(".config/jump/targets.csv");
     let db = Database::read_file(&db_path)?;
 
-    let expander = Expander { home: &home };
-
     for arg in env::args().skip(1) {
         let Some(path) = db.get(&arg) else {
             return Err(DbError::arg(db_path, arg));
@@ -204,7 +196,7 @@ fn main_imp() -> Result<(), DbError> {
 
         let buf = path
             .components()
-            .map(|c| expander.expand(c))
+            .map(|c| expand_component(&home, c))
             .collect::<PathBuf>();
 
         println!("{}", buf.display());
