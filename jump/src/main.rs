@@ -23,6 +23,7 @@ enum DbErrorKind {
     Io(io::Error),
     Syntax,
     Duplicate(String),
+    Arg(String),
 }
 
 impl fmt::Display for DbErrorKind {
@@ -31,6 +32,7 @@ impl fmt::Display for DbErrorKind {
             Self::Io(e) => e.fmt(f),
             Self::Syntax => write!(f, "syntax error"),
             Self::Duplicate(s) => write!(f, "duplicate entry for {s}"),
+            Self::Arg(s) => write!(f, "no such target: {s}"),
         }
     }
 }
@@ -58,11 +60,35 @@ impl DbError {
     fn duplicate(location: DbErrorLocation, name: String) -> Self {
         Self::new(location, DbErrorKind::Duplicate(name))
     }
+
+    fn arg(file: PathBuf, arg: String) -> Self {
+        let location = DbErrorLocation { file, line: None };
+        Self::new(location, DbErrorKind::Arg(arg))
+    }
 }
 
 impl fmt::Display for DbError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}: {}", self.location, self.kind)
+    }
+}
+
+#[derive(Debug)]
+enum Error {
+    Db(DbError),
+}
+
+impl From<DbError> for Error {
+    fn from(e: DbError) -> Self {
+        Self::Db(e)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Db(e) => e.fmt(f),
+        }
     }
 }
 
@@ -121,11 +147,22 @@ impl Database {
 /// Support database file path specfication via environment variables.
 fn main_imp() -> Result<(), DbError> {
     #[allow(deprecated)]
-    let mut db_path = env::home_dir().expect("user should have a home directory");
+    let home = env::home_dir().expect("user should have a home directory");
+    let db_path = home.join(".config/jump/targets.csv");
 
-    db_path.extend([".config", "jump/targets.csv"]);
+    let db = Database::read_file(&db_path)?;
+    for arg in env::args().skip(1) {
+        let Some(path) = db.0.get(&arg) else {
+            return Err(DbError::arg(db_path, arg));
+        };
 
-    let _db = Database::read_file(db_path)?;
+        if let Ok(tail) = path.strip_prefix("~") {
+            // Expand leading `~`.
+            println!("{}", home.join(tail).display())
+        } else {
+            println!("{}", path.display());
+        }
+    }
     Ok(())
 }
 
