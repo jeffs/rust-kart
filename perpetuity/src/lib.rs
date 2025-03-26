@@ -73,6 +73,10 @@ impl<I: Perpetuity> Iterator for IntoIter<I> {
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.0.next_item())
     }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (usize::MAX, None)
+    }
 }
 
 pub struct Take<I: Perpetuity> {
