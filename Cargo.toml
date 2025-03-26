@@ -13,6 +13,7 @@ members = [
     "head1",            # To be rebranded "head" when ready.
     "hexify",
     "hexwords",
+    "jump",
     "kcal",
     "leap",
     "module-from-path",
