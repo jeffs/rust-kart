@@ -183,6 +183,8 @@ fn expand_component<'a, 'b>(home: &'a Path, part: Component<'b>) -> Expansion<'a
 ///
 /// Support database file path specfication via environment variables.
 fn main_imp() -> Result<(), DbError> {
+    let mut is_verbose = false;
+
     #[allow(deprecated)]
     let home = env::home_dir().expect("user should have a home directory");
 
@@ -190,6 +192,11 @@ fn main_imp() -> Result<(), DbError> {
     let db = Database::read_file(&db_path)?;
 
     for arg in env::args().skip(1) {
+        if arg == "-v" {
+            is_verbose = true;
+            continue;
+        }
+
         let Some(path) = db.get(&arg) else {
             return Err(DbError::arg(db_path, arg));
         };
@@ -199,7 +206,19 @@ fn main_imp() -> Result<(), DbError> {
             .map(|c| expand_component(&home, c))
             .collect::<PathBuf>();
 
-        println!("{}", buf.display());
+        if is_verbose {
+            if buf == *path {
+                eprintln!("{}", buf.display());
+            } else {
+                eprintln!("{} -> {}", path.display(), buf.display());
+            }
+        }
+
+        if buf.starts_with("http://") || buf.starts_with("https://") {
+            println!("open {}", buf.display());
+        } else {
+            println!("cd {}", buf.display());
+        }
     }
     Ok(())
 }
