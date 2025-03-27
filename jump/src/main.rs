@@ -2,6 +2,19 @@ use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
 use std::{env, fmt, fs, io};
 
+/// The name of a command to be executed by the calling shell.
+///
+/// TODO: Read shell commands from config, rather than hard-coding them here.
+mod command {
+    /// Change directory.
+    pub const CD: &str = "mc";
+
+    /// Use the OS native file association.
+    ///
+    /// TODO: Compare macOS `open`, Windows `start`, and Linux `xdg-open`.
+    pub const OPEN: &str = "open";
+}
+
 #[derive(Debug)]
 struct DbErrorLocation {
     file: PathBuf,
@@ -214,11 +227,12 @@ fn main_imp() -> Result<(), DbError> {
             }
         }
 
-        if buf.starts_with("http://") || buf.starts_with("https://") {
-            println!("open {}", buf.display());
+        let command = if buf.starts_with("http://") || buf.starts_with("https://") {
+            command::OPEN
         } else {
-            println!("cd {}", buf.display());
-        }
+            command::CD
+        };
+        println!("{command} {}", buf.display());
     }
     Ok(())
 }
