@@ -11,5 +11,5 @@
   - Other semantic operations not directly supported by git, and/or by gh?
 * Optionally format output as table or JSON
 * List commits from a given merge `M`; i.e., `M^..M^2`
-* Support `rebase` to fetch and then reabse onto autommatically detected trunk.
+* Support `rebase` to fetch and then rebase onto autommatically detected trunk.
   - `git rebase` defaults to the remote tracking branch, if any.
