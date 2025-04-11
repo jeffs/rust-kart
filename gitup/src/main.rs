@@ -216,8 +216,10 @@ async fn main_imp() -> Result<()> {
     }
 
     if upstream(trunk).await.is_some() {
-        if let Err(err) = git(["pull", "--prune", "--quiet"]).await {
-            eprintln!("warning: can't pull {trunk}: {err}");
+        match git(["pull", "--prune"]).await.as_deref() {
+            Ok("Already up to date.\n") => (),
+            Ok(out) => print!("{out}"),
+            Err(err) => eprintln!("warning: can't pull {trunk}: {err}"),
         }
     }
 
@@ -247,7 +249,7 @@ async fn main_imp() -> Result<()> {
         println!("co {trunk}");
     } else if trunk != orig {
         git(["checkout", orig]).await?;
-    };
+    }
 
     if !dead_branches.is_empty() {
         for zombie in &dead_branches {
