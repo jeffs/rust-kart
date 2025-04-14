@@ -5,9 +5,12 @@ use std::io::{self, Read};
 use std::os::unix::process::ExitStatusExt;
 use std::process::{self, Command, ExitStatus};
 
-fn read_stdin() -> io::Result<Vec<u8>> {
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+fn slurp_stdin() -> Result<String> {
     let mut bytes = Vec::new();
-    io::stdin().read_to_end(&mut bytes).map(|_| bytes)
+    let bytes = io::stdin().read_to_end(&mut bytes).map(|_| bytes)?;
+    Ok(String::from_utf8(bytes)?)
 }
 
 fn run_tmux(text: &str) -> io::Result<ExitStatus> {
@@ -25,12 +28,27 @@ fn run_zellij(text: &str) -> io::Result<ExitStatus> {
     zellij_action(["focus-previous-pane"])
 }
 
-fn run() -> Result<ExitStatus, Box<dyn std::error::Error>> {
-    let text = String::from_utf8(read_stdin()?)?;
+fn run_wez() -> Result<ExitStatus> {
+    let output = Command::new("wezterm")
+        .args(["cli", "get-pane-direction", "Next"])
+        .output()?;
+    let pane_id = std::str::from_utf8(&output.stdout)?.trim_ascii_end();
+
+    // Bail unless the pane ID is a nonnegative integer.
+    pane_id.parse::<u32>()?;
+
+    Ok(Command::new("wezterm")
+        .args(["cli", "send-text", "--no-paste", "--pane-id", pane_id])
+        .status()?)
+}
+
+fn run() -> Result<ExitStatus> {
     Ok(if env::var_os("ZELLIJ").is_some() {
-        run_zellij(&text)?
+        run_zellij(&slurp_stdin()?)?
+    } else if env::var("TERM_PROGRAM").as_deref() == Ok("WezTerm") {
+        run_wez()?
     } else {
-        run_tmux(&text)?
+        run_tmux(&slurp_stdin()?)?
     })
 }
 
