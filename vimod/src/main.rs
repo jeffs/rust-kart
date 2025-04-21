@@ -1,15 +1,21 @@
 //! Opens any modified files from the current Git working copy in ${EDITOR:-vi}.
 
-use std::env;
 use std::ffi::OsStr;
+use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::process::{Command, exit};
+use std::{env, io};
 
 fn main() {
     let output = Command::new("git").arg("status").output().unwrap();
-    let status = std::str::from_utf8(&output.stdout).unwrap();
 
-    let files = status
+    if !output.status.success() {
+        io::stderr().write_all(&output.stderr).unwrap();
+        exit(output.status.code().unwrap_or(1));
+    }
+
+    let files = std::str::from_utf8(&output.stdout)
+        .unwrap()
         .lines()
         .filter_map(|line| line.strip_prefix("\tmodified:").map(str::trim_ascii))
         .collect::<Vec<_>>();
