@@ -8,8 +8,9 @@ const OUNCES_PER_GRAM: f64 = OUNCES_PER_POUND / GRAMS_PER_POUND;
 
 pub struct BadUnit;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum Unit {
+    #[default]
     Gram,
     Ounce,
     Pound,
@@ -56,6 +57,7 @@ impl FromStr for Unit {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "" => Ok(Unit::default()),
             "g" => Ok(Unit::Gram),
             "lb" | "lbs" | "#" => Ok(Unit::Pound),
             "oz" => Ok(Unit::Ounce),

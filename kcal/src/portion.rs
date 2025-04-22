@@ -55,18 +55,16 @@ impl FromStr for Portion {
     type Err = BadPortion;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let unit_begin = s
-            .find(|c: char| c != '.' && !c.is_ascii_digit())
-            .ok_or(BadPortion::MissingUnit)?;
-        let (amount, unit) = s.split_at(unit_begin);
-        let amount = amount
+            .bytes()
+            .position(|c| c != b'.' && !c.is_ascii_digit())
+            .unwrap_or(s.len());
+        let (number, unit) = s.split_at(unit_begin);
+        let number = number
             .parse()
-            .map_err(|_| BadPortion::BadAmount(amount.to_string()))?;
+            .map_err(|_| BadPortion::BadAmount(number.to_string()))?;
         let unit = unit
             .parse()
             .map_err(|_| BadPortion::BadUnit(unit.to_string()))?;
-        Ok(Portion {
-            number: amount,
-            unit,
-        })
+        Ok(Portion { number, unit })
     }
 }
