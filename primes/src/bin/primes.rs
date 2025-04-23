@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use primes::{Sieve, UNDER_100000};
+use rk_primes::{Sieve, UNDER_100000};
 
 fn print_n(items: impl IntoIterator<Item = u32>, n: usize) {
     items
