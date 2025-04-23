@@ -3,6 +3,13 @@ name = "primes"
 version = "0.1.0"
 edition = "2024"
 
+license = "MIT OR Apache-2.0"
+description = "Prime number generator"
+homepage = "https://jeffs.github.io/rust-kart/primes/index.html"
+repository = "https://github.com/jeffs/rust-kart"
+keywords = ["mathematics", "prime-numbers"]
+categories = ["command-line-utilities", "mathematics"]
+
 [dependencies]
 
 [lints]
