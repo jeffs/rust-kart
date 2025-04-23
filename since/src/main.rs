@@ -1,7 +1,7 @@
 use std::{
     env,
     os::unix::process::CommandExt,
-    process::{exit, Command},
+    process::{Command, exit},
 };
 
 fn main() {

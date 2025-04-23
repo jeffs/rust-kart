@@ -18,7 +18,7 @@ use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::io::Write;
 use std::path::Path;
-use std::process::{exit, ExitStatus};
+use std::process::{ExitStatus, exit};
 use std::{env, fmt, io};
 use tokio::process::Command;
 
