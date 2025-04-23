@@ -20,7 +20,7 @@ pub struct Food {
 }
 
 macro_rules! food {
-    ($name: ident, $kcal: expr, $protein: expr, $per: expr) => {
+    ($name: ident, $kcal: expr_2021, $protein: expr_2021, $per: expr_2021) => {
         (
             stringify!($name),
             Food {

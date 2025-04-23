@@ -2,7 +2,7 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{prelude::*, BufReader},
+    io::{BufReader, prelude::*},
 };
 
 fn main() -> Result<(), Box<dyn Error>> {

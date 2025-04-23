@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::{RangeFrom, RangeInclusive};
 
-use crate::week::{Day, DAYS};
+use crate::week::{DAYS, Day};
 use crate::{Error, Result};
 
 const MONTHS: RangeInclusive<u8> = 1..=12;

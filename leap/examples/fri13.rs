@@ -1,7 +1,7 @@
 use std::iter;
 
-use leap::week::Day;
 use leap::Date;
+use leap::week::Day;
 
 fn main() {
     for year in 1800..2200 {
