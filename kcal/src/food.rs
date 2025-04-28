@@ -61,6 +61,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(spinach,         23,  2.9, 100),
     food!(strawberry,      32,  0.7, 100),
     food!(sugar,          385,  0.0, 100),
+    food!(tofu,            94, 10.0, 124),
     food!(thigh,          149, 18.6, 100),
     food!(tomato,          22,  0.7, 100),
     food!(turkey,          64,  7.7,  57),
