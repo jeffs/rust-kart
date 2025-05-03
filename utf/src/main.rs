@@ -1,4 +1,10 @@
-// TODO: Support [emoticons](https://gist.github.com/jordanorelli/11229304)
+// # TODO
+//
+// * [] Support [emoticons](https://gist.github.com/jordanorelli/11229304)
+// * [] Support both "juicy" and dry variants; e.g., 🐸 vs 𓆏, or ♟️ vs ♟
+// * [] Figure out why Wezterm doesn't support support [Egyptian hieroglyphs].
+//
+// [Egyptian hieroglyphs]: https://unicode-explorer.com/b/13000
 
 use std::{env, error, fmt::Display, process};
 
@@ -32,6 +38,7 @@ fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
         "cent" | "cents"                    => '¢',
         "command" | "cmd"                   => '⌘',
         "facepalm"                          => '🤦',
+        "frog"                              => '🐸',
         "grimace" | "grim"                  => '😬',
         "horns"                             => '🤘',
         "lol"                               => '😂',
