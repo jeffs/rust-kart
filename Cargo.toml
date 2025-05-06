@@ -19,7 +19,7 @@ members = [
   "netmask",
   "pangram",
   "perpetuity",
-  "primes",
+  "primes", "rot13",
   "since",
   "snitty",
   "stop-once",

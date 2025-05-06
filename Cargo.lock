@@ -517,6 +517,10 @@ name = "rk-primes"
 version = "0.1.0"
 
 [[package]]
+name = "rot13"
+version = "0.1.0"
+
+[[package]]
 name = "rust-kart-uuid"
 version = "0.1.0"
 dependencies = [
