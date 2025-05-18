@@ -3,7 +3,12 @@ use std::{env, process::exit};
 
 use kcal::{BadFood, BadPortion, Food, Portion, Unit};
 
-const USAGE: &str = "usage: convert SIZE [FOOD]";
+const USAGE: &str = "Usage:
+
+    kcal {FOOD SIZE | SIZE FOOD}    # show calories and protein
+    kcal FOOD                       # show calories and protein per 100g
+    kcal SIZE                       # convert to common alternative unit
+";
 
 #[derive(Debug)]
 enum Error {
@@ -125,7 +130,10 @@ fn main_imp() -> Result<()> {
 
 fn main() {
     if let Err(err) = main_imp() {
-        eprintln!("error: {err}");
+        if !matches!(err, Error::Usage) {
+            eprint!("error: ");
+        }
+        eprintln!("{err}");
         exit(2);
     }
 }
