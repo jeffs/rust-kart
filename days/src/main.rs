@@ -26,7 +26,7 @@ fn print_parts(parts: &[String]) {
             }
             println!("and {}", parts[m]);
         }
-    };
+    }
 }
 
 fn parse_args() -> Result<NaiveDate, arg5::ParseError> {
