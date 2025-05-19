@@ -24,7 +24,7 @@ members = [
   "snitty",
   "stop-once",
   "sum-of-products",
-  "tmux-send",
+  "tmux-send", "trunk",
   "utf",
   "uuid",
   "vimod",
