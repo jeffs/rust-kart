@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let masks: Result<Vec<Netmask>, _> = env::args().skip(1).map(|arg| arg.parse()).collect();
     if let Some(ancestor) = masks?.into_iter().reduce(|lhs, rhs| lhs.ancestor(&rhs)) {
         println!("{ancestor}");
-    };
+    }
     Ok(())
 }
 

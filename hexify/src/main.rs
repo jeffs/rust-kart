@@ -1,5 +1,7 @@
 //! Converts each sequence of decimal digits in each arg to hexadecimal.
 
+use std::fmt::Write;
+
 fn hexify(mut text: &str) -> String {
     let mut result = String::new();
     while let Some(begin) = text.find(|c: char| c.is_ascii_digit()) {
@@ -12,7 +14,7 @@ fn hexify(mut text: &str) -> String {
         let value: u64 = text[begin..end]
             .parse()
             .expect("Can't parse ASCII digits as u64; value too big?");
-        result += &format!("{}{value:x}", &text[..begin]);
+        write!(&mut result, "{}{value:x}", &text[..begin]).expect("write to string should succeed");
         text = &text[end..];
     }
     result + text

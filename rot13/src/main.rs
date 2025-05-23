@@ -1,8 +1,7 @@
 use std::io::{self, Read, Write};
 
 fn main() {
-    // Stdin and stdout are both typically line-buffered.
-    for byte in io::stdin().bytes() {
+    for byte in io::BufReader::new(io::stdin()).bytes() {
         let Ok(byte) = byte else {
             return;
         };
