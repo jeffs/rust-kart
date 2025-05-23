@@ -1,5 +1,7 @@
-use std::fmt;
+//! Prints kilocalories and grams of protein in specified food portions.
+
 use std::{env, process::exit};
+use std::{fmt, mem::take};
 
 use kcal::{BadFood, BadPortion, Food, Portion, Unit};
 
@@ -12,13 +14,18 @@ const USAGE: &str = "Usage:
 
 #[derive(Debug)]
 enum Error {
+    /// The food was not recognized.
     Food(BadFood),
+    /// The portion size could not be parsed.
     Portion(BadPortion),
     /// The first argument could not be parsed.
     Arg1(String),
-    /// A third argument was received, but we support only one or two.
-    Arg3(String),
+    /// The command was called incorrectly.
     Usage,
+    /// The user passed a flag requesting help, so any other args are moot.
+    ///
+    /// TODO: Support help on specific topics.
+    Help,
 }
 
 impl fmt::Display for Error {
@@ -27,8 +34,7 @@ impl fmt::Display for Error {
             Error::Food(e) => e.fmt(f),
             Error::Portion(e) => e.fmt(f),
             Error::Arg1(arg) => write!(f, "{arg}: expected food or portion size"),
-            Error::Arg3(arg) => write!(f, "{arg}: unexpected argument"),
-            Error::Usage => f.write_str(USAGE),
+            Error::Help | Error::Usage => f.write_str(USAGE),
         }
     }
 }
@@ -47,15 +53,13 @@ impl From<BadPortion> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[allow(clippy::similar_names)] // args, arg1, arg2, arg3
 fn args() -> Result<(String, Option<String>)> {
-    let mut args = env::args().skip(1);
-    let arg1 = args.next().ok_or(Error::Usage)?;
-    let arg2 = args.next();
-    if let Some(arg3) = args.next() {
-        return Err(Error::Arg3(arg3));
+    match &mut env::args().skip(1).collect::<Vec<_>>()[..] {
+        [first, ..] if matches!(first.as_str(), "-h" | "--help") => Err(Error::Help),
+        [first] => Ok((take(first), None)),
+        [first, second] => Ok((take(first), Some(take(second)))),
+        _ => Err(Error::Usage),
     }
-    Ok((arg1, arg2))
 }
 
 // TODO: Support creation and storage of new foods from the CLI.
@@ -130,6 +134,10 @@ fn main_imp() -> Result<()> {
 
 fn main() {
     if let Err(err) = main_imp() {
+        if let Error::Help = err {
+            println!("{err}");
+            exit(0);
+        }
         if !matches!(err, Error::Usage) {
             eprint!("error: ");
         }
