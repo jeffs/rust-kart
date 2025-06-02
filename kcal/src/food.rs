@@ -39,6 +39,7 @@ macro_rules! food {
 const FOODS: &[(&str, Food)] = &[
     food!(asparagus,       20,  2.2, 100),
     food!(avocado,         80,  1.0,  50),
+    food!(bacon,           80,  6.0,  16), // each
     food!(banana,          89,  1.1, 100),
     food!(broccoli,        34,  2.8, 100),
     food!(brussels,        43,  3.4, 100),
