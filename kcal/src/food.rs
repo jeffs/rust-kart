@@ -19,6 +19,10 @@ pub struct Food {
     pub protein: f64,
 }
 
+/// # TODO
+///
+/// * Load data dynamically, rather than using a macro.
+/// * Support non-identifier names, such as "matcha-cake".
 macro_rules! food {
     ($name: ident, $kcal: expr_2021, $protein: expr_2021, $per: expr_2021) => {
         (
@@ -31,7 +35,6 @@ macro_rules! food {
     };
 }
 
-// TODO: Move to food.csv.
 #[rustfmt::skip]
 const FOODS: &[(&str, Food)] = &[
     food!(asparagus,       20,  2.2, 100),
@@ -46,12 +49,14 @@ const FOODS: &[(&str, Food)] = &[
     food!(cauliflower,     25,  1.9, 100),
     food!(celery,          14,  0.7, 100),
     food!(chicken,         60, 11.0,  56),
+    food!(coconutroll,    100,  0.0,  20), // each
     food!(cucumber,        15,  0.6, 100),
     food!(eggwhite,        25,  5.0,  46),
     food!(endive,          17,  1.3, 100),
     food!(enoki,           44,  2.4, 100),
     food!(ham,             61,  9.1,  57),
     food!(lettuce,         17,  1.0, 100),
+    food!(matchacake,     167,  1.8,  36), // each
     food!(mushroom,        22,  3.1, 100),
     food!(oil,            884,  0.0, 100),
     food!(onion,           41,  1.3, 100),
