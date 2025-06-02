@@ -25,6 +25,9 @@ impl Unit {
         }
     }
 
+    /// TODO: Set this per item, so you can define `Unit::Each`.  For example,
+    /// the number of grams per egg is not necessarily the same as the number of
+    /// grams per banana.
     #[must_use]
     pub fn per(self, unit: Unit) -> f64 {
         match (self, unit) {
