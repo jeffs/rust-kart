@@ -1,4 +1,11 @@
 //! Prints kilocalories and grams of protein in specified food portions.
+//!
+//! # TODO
+//!
+//! * Support refinement within each food
+//!   - e.g., "cheese/brie" or "apple/red-delicious"
+//! * Support help on specific topics; e.g., `kcal --help units`
+//! * Support creation and storage of new foods from the CLI.
 
 use std::{env, process::exit};
 use std::{fmt, mem::take};
@@ -23,8 +30,6 @@ enum Error {
     /// The command was called incorrectly.
     Usage,
     /// The user passed a flag requesting help, so any other args are moot.
-    ///
-    /// TODO: Support help on specific topics.
     Help,
 }
 
@@ -62,7 +67,6 @@ fn args() -> Result<(String, Option<String>)> {
     }
 }
 
-// TODO: Support creation and storage of new foods from the CLI.
 struct Args {
     size: Option<Portion>,
     food: Option<Food>,
