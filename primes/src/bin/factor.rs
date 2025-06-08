@@ -22,7 +22,7 @@ fn factor(mut n: u32) -> Vec<(u32, u32)> {
         }
     }
 
-    pairs
+    unreachable!()
 }
 
 fn main_imp() -> Result<(), String> {

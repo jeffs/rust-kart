@@ -1,6 +1,6 @@
 use crate::UNDER_100000;
 
-/// Returns true if n is prime.  Checks a fixed set of known primes, then loops.
+/// Returns true if n is prime.  Checks using brute force.
 #[must_use]
 pub fn is_prime(n: u32) -> bool {
     !(n < 2

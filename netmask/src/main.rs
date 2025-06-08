@@ -1,5 +1,9 @@
 //! Prints the narrowest netmask that's inclusive of all specified netmasks.  Netmasks may be in
 //! CIDR notation, or may be literal IP addresses (implicitly requiring all 32 bits).
+//!
+//! # TODO
+//!
+//! Can [ipcalc](https://github.com/kjokjo/ipcalc) already do this?
 
 use std::{
     env,

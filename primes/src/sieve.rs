@@ -95,12 +95,16 @@ impl Iterator for Factors<'_> {
     }
 }
 
-#[derive(Default)]
 pub struct Sieve {
     words: Vec<Word>,
 }
 
 impl Sieve {
+    #[must_use]
+    pub fn new() -> Self {
+        Sieve { words: Vec::new() }
+    }
+
     fn mark_nonprime(&mut self, value: u32) {
         if value % 2 == 0 {
             return; // We don't store bits for even numbers, anyway.
@@ -175,6 +179,12 @@ impl Sieve {
             primes: self.primes(),
             value,
         }
+    }
+}
+
+impl Default for Sieve {
+    fn default() -> Self {
+        Sieve::new()
     }
 }
 
