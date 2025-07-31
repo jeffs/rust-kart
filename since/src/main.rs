@@ -1,10 +1,16 @@
 use std::{
-    env,
+    env, fmt,
     os::unix::process::CommandExt,
     process::{Command, exit},
 };
 
-fn main() {
+fn die(code: i32, err: impl fmt::Display) -> ! {
+    eprintln!("error: {err}");
+    exit(code)
+}
+
+#[tokio::main]
+async fn main() {
     let mut base: Option<&str> = None;
     let mut flags: Vec<&str> = Vec::new();
     let our_args: Vec<String> = env::args().skip(1).collect();
@@ -14,18 +20,24 @@ fn main() {
         } else if base.is_none() {
             base = Some(arg);
         } else {
-            eprintln!("{arg}: unexpected argument");
-            exit(2);
+            die(2, "unexpected argument");
         }
     }
+
+    let range = match base {
+        Some(some) => format!("{some}.."),
+        None => match gitup::local_trunk().await {
+            Ok(ok) => format!("{ok}.."),
+            Err(err) => die(3, err),
+        },
+    };
 
     let err = Command::new("git")
         .args(["log", "--first-parent", "--oneline"])
         .args(flags)
-        .arg(format!("{}..", base.unwrap_or("main")))
+        .arg(range)
         .exec();
 
     // If `exec` returned, something has gone wrong.
-    eprintln!("error: {err}");
-    exit(1);
+    die(1, err);
 }
