@@ -15,43 +15,36 @@
 //!   - `co|checkout`; support aliases, such as `-t` for trunk
 
 use std::collections::HashSet;
-use std::ffi::OsStr;
 use std::io::Write;
 use std::path::Path;
-use std::process::{ExitStatus, exit};
+use std::process::exit;
 use std::{env, fmt, io};
-use tokio::process::Command;
 
-/// Default names to consider when searching for local trunk branch, in order of preference.
-/// Overridden by the value of the [`GITUP_TRUNKS`] environment variable.
-const DEFAULT_TRUNKS: [&str; 2] = ["main", "master"];
-
-/// Environment variable to check for comma-separated list of local trunk branch names.  If the
-/// variable is unset, the value defaults to [`DEFAULT_TRUNKS`].
-const GITUP_TRUNKS: &str = "GITUP_TRUNKS";
+use gitup::{git, local_trunk, trunk_names};
 
 #[derive(Debug)]
 enum Error {
     /// An unrecognized command line argument was supplied.
     Arg(String),
 
-    /// Git returned bad status, and printed the supplied text to standard error.
-    Git(String),
-
-    /// No local trunk branch could be identified; i.e., no branch having any of the supplied names.
-    Trunk(Vec<String>),
-
     /// The Git working copy has uncommitted changes.
     Unclean,
+
+    Lib(gitup::Error),
+}
+
+impl From<gitup::Error> for Error {
+    fn from(value: gitup::Error) -> Self {
+        Error::Lib(value)
+    }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Arg(arg) => write!(f, "{arg:?}: unexpected argument"),
-            Error::Git(stderr) => write!(f, "{stderr}"),
-            Error::Trunk(names) => write!(f, "can't find any of {names:?}"),
-            Error::Unclean => write!(f, "working copy is unclean"),
+            Error::Lib(err) => err.fmt(f),
+            Error::Unclean => "working copy is unclean".fmt(f),
         }
     }
 }
@@ -90,75 +83,6 @@ impl Args {
     }
 }
 
-fn format_git_command<S, I>(args: I) -> String
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let args: Vec<_> = args.into_iter().collect();
-    let strs: Vec<_> = args.iter().map(|s| s.as_ref().to_string_lossy()).collect();
-    format!("git {}", strs.join(" "))
-}
-
-/// Returns (success, stdout, stderr).
-async fn run_git<S, I>(args: I) -> (ExitStatus, String, String)
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let output = Command::new("git")
-        .args(args)
-        .output()
-        .await
-        .expect("git should be executable");
-    (
-        output.status,
-        String::from_utf8_lossy(&output.stdout).to_string(),
-        String::from_utf8_lossy(&output.stderr).to_string(),
-    )
-}
-
-#[allow(dead_code)]
-async fn git_loud<S, I>(args: I) -> Result<String>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let args: Vec<_> = args.into_iter().collect();
-    print!("{}", format_git_command(&args));
-
-    let (status, stdout, stderr) = run_git(args).await;
-    if !status.success() {
-        return Err(Error::Git(stderr));
-    }
-
-    let lines: Vec<_> = stdout.lines().collect();
-    match lines.len() {
-        0 => println!(),
-        1 => println!(": {}", lines[0].trim()),
-        _ => {
-            println!(":");
-            for line in lines {
-                println!("  {line}");
-            }
-        }
-    }
-
-    Ok(stderr + &stdout)
-}
-
-async fn git<S, I>(args: I) -> Result<String>
-where
-    I: IntoIterator<Item = S>,
-    S: AsRef<OsStr>,
-{
-    let (status, stdout, stderr) = run_git(args).await;
-    if !status.success() {
-        return Err(Error::Git(stderr));
-    }
-    Ok(stderr + &stdout)
-}
-
 /// Splits the specified Git output into lines, excludes any line beginning with "*", and trims
 /// leading whitespace from each line.  Note that the output is not necessarily a list of simple
 /// branch names; e.g., if the output is from `git branch --verbose`.
@@ -167,16 +91,6 @@ fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
         .lines()
         .filter(|line| !line.starts_with("* "))
         .map(str::trim_ascii_start)
-}
-
-/// Returns the first of the specified names that identifies any local branch name.
-async fn local_trunk<'a>(names: &[&'a str]) -> Result<&'a str> {
-    for branch in names {
-        if git(["show-ref", branch]).await.is_ok() {
-            return Ok(branch);
-        }
-    }
-    Err(Error::Trunk(names.iter().map(|&s| s.to_owned()).collect()))
 }
 
 async fn upstream(branch: &str) -> Option<String> {
@@ -205,17 +119,13 @@ async fn main_imp() -> Result<()> {
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
 
-    let trunks = env::var(GITUP_TRUNKS);
-    let trunks = trunks
-        .as_ref()
-        .map_or_else(|_| DEFAULT_TRUNKS.to_vec(), |s| s.split(',').collect());
-    let trunk = local_trunk(&trunks).await?;
+    let trunk = local_trunk().await?;
 
     if trunk != orig {
-        git(["checkout", trunk]).await?;
+        git(["checkout", &trunk]).await?;
     }
 
-    if upstream(trunk).await.is_some() {
+    if upstream(&trunk).await.is_some() {
         match git(["pull", "--prune"]).await.as_deref() {
             Ok("Already up to date.\n") => (),
             Ok(out) => print!("{out}"),
@@ -240,8 +150,8 @@ async fn main_imp() -> Result<()> {
     // Don't delete potential trunks, even if they're behind the actual trunk.  When you have an
     // integration branch (dev or staging or whatever) that's ahead of main, you want to be able to
     // use that branch as trunk, without deleting main simply because it's behind staging.
-    for trunk in trunks {
-        dead_branches.remove(trunk);
+    for trunk in trunk_names() {
+        dead_branches.remove(&trunk);
     }
 
     if dead_branches.contains(orig) {
