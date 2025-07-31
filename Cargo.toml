@@ -20,7 +20,6 @@ members = [
   "pangram",
   "perpetuity",
   "primes", "rot13",
-  "since",
   "snitty",
   "stop-once",
   "sum-of-products",
