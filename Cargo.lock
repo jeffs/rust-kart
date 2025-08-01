@@ -288,7 +288,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
 
 [[package]]
-name = "gitup"
+name = "grit"
 version = "0.1.0"
 dependencies = [
  "tokio",
@@ -599,14 +599,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9203b8055f63a2a00e2f593bb0510367fe707d7ff1e5c872de2f537b339e5410"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "since"
-version = "0.1.0"
-dependencies = [
- "gitup",
- "tokio",
 ]
 
 [[package]]

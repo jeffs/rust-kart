@@ -1,40 +1,37 @@
-//! This program pulls the main branch of the repo from which it's called, then deletes any local
-//! branches that are not ahead of main, and finally checks back out the original branch.  The main
-//! branch defaults to `main`, but `master` is used as a fallback if no `main` branch is found.
+//! Provides command-line access to the [`since`] and [`update`] functions.
 //!
 //! # TODO
 //!
-//! * [ ] Delete remote branches behind trunk.
-//! * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_ checking out main, but
-//!   after fetch --prune, the user still sees a list of obsolete branches the next time they pull
-//!   --prune; so now this program checks out main just so it can run pull --prune per se.
-//! * [ ] Replace `since` and `gitup` with a single `grit` command:
-//!   - `si|since` to replace `since`
-//!   - `up|update` to replace `gitup`
-//!   - `tr|trunk` to print trunk name
-//!   - `co|checkout`; support aliases, such as `-t` for trunk
+//! Add subcommands:
+//!
+//! * [ ] `tr|trunk` to print trunk name
+//! * [ ] `co|checkout`; support aliases, such as `-t` for trunk
 
 use std::collections::HashSet;
-use std::io::Write;
+use std::ffi::{OsStr, OsString};
 use std::path::Path;
 use std::process::exit;
-use std::{env, fmt, io};
+use std::{env, fmt};
 
-use gitup::{git, local_trunk, trunk_names};
+use grit::{git, local_trunk, trunk_names};
 
 #[derive(Debug)]
 enum Error {
     /// An unrecognized command line argument was supplied.
-    Arg(String),
+    Arg(OsString),
+
+    /// The supplied error was returned by the [`grit`] library crate.
+    Lib(grit::Error),
 
     /// The Git working copy has uncommitted changes.
     Unclean,
 
-    Lib(gitup::Error),
+    /// The user might benefit from a summary of intended usage.
+    Usage,
 }
 
-impl From<gitup::Error> for Error {
-    fn from(value: gitup::Error) -> Self {
+impl From<grit::Error> for Error {
+    fn from(value: grit::Error) -> Self {
         Error::Lib(value)
     }
 }
@@ -42,9 +39,10 @@ impl From<gitup::Error> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Arg(arg) => write!(f, "{arg:?}: unexpected argument"),
+            Error::Arg(arg) => write!(f, "{}: unexpected argument", arg.display()),
             Error::Lib(err) => err.fmt(f),
             Error::Unclean => "working copy is unclean".fmt(f),
+            Error::Usage => "usage: grit {{si|since|up|update}} [ARGS...]".fmt(f),
         }
     }
 }
@@ -52,8 +50,7 @@ impl fmt::Display for Error {
 type Result<T> = std::result::Result<T, Error>;
 
 /// Policy for which branches to delete.
-#[allow(dead_code)]
-struct Args {
+struct UpdateArgs {
     /// Specifies removal of local branches merged to local trunk.  Note that this does not include
     /// GitHub "squash merges," which do not actually merge the original branch.
     merged: bool,
@@ -64,17 +61,15 @@ struct Args {
     gone: bool,
 }
 
-impl Args {
+impl UpdateArgs {
     /// Returns the name of this program for use in error logs, and the branch removal policy.
-    fn from_env() -> Result<Args> {
-        let mut args = env::args().skip(1);
-
-        if let Some(arg) = args.next() {
+    fn new(args: impl IntoIterator<Item = OsString>) -> Result<Self> {
+        if let Some(arg) = args.into_iter().next() {
             return Err(Error::Arg(arg));
         }
 
         // TODO: Set branch removal policy from CLI.
-        let args = Args {
+        let args = UpdateArgs {
             merged: true,
             gone: true,
         };
@@ -109,8 +104,20 @@ async fn is_working_copy_clean() -> Result<bool> {
     Ok(git(["status", "--porcelain"]).await?.is_empty())
 }
 
-async fn main_imp() -> Result<()> {
-    let rm = Args::from_env()?; // Branch removal policy.
+/// Pulls the main branch of the repo from which it's called, then deletes any
+/// local branches that are not ahead of main, and finally checks back out the
+/// original branch.  The main branch defaults to `main`, but `master` is used
+/// as a fallback if no `main` branch is found.
+///
+/// # TODO
+///
+/// * [ ] Delete remote branches behind trunk.
+/// * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_
+///   checking out main, but after fetch --prune, the user still sees a list
+///   of obsolete branches the next time they pull --prune; so now this program
+///   checks out main just so it can run pull --prune per se.
+async fn update(args: env::ArgsOs) -> Result<()> {
+    let rm = UpdateArgs::new(args)?; // Branch removal policy.
 
     if !is_working_copy_clean().await? {
         return Err(Error::Unclean);
@@ -174,6 +181,34 @@ async fn main_imp() -> Result<()> {
     Ok(())
 }
 
+/// Lists commmits reachable from HEAD, but not from a specified base branch
+/// (which defaults to the local trunk).
+async fn since(our_args: env::ArgsOs) -> Result<()> {
+    let mut base: Option<OsString> = None;
+    let mut git_args = ["log", "--first-parent", "--oneline"]
+        .map(OsString::from)
+        .to_vec();
+    for os in our_args {
+        let Some(s) = os.to_str() else {
+            return Err(Error::Arg(os));
+        };
+        if s.starts_with('-') {
+            git_args.push(os);
+        } else if base.is_none() {
+            base = Some(os);
+        } else {
+            return Err(Error::Arg(os));
+        }
+    }
+    let range = match base {
+        Some(some) => format!("{}..", some.display()),
+        None => format!("{}..", local_trunk().await?),
+    };
+    git_args.push(range.into());
+    git(git_args).await?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     let mut args = env::args_os();
@@ -186,13 +221,21 @@ async fn main() {
         .file_stem()
         .expect("executable path should terminate in file name");
 
-    if let Err(err) = main_imp().await {
-        // [`OsStr::display`] is not yet stable:
-        // <https://doc.rust-lang.org/std/ffi/struct.OsStr.html#method.display>
-        io::stderr()
-            .write_all(name.as_encoded_bytes())
-            .expect("stderr should be writable");
-        eprintln!(": error: {err}");
+    let result = match args.next().as_deref().and_then(OsStr::to_str) {
+        Some("si" | "since") => since(args).await,
+        Some("up" | "update") => update(args).await,
+        _ => Err(Error::Usage),
+    };
+
+    let Err(err) = result else {
+        return;
+    };
+
+    let Error::Usage = err else {
+        eprintln!("{}: error: {err}", name.display());
         exit(1);
-    }
+    };
+
+    eprintln!("{}: {err}", name.display());
+    exit(2);
 }

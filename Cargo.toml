@@ -9,7 +9,7 @@ members = [
   "days",
   "delay",
   "fix-quotes",
-  "gitup",
+  "grit",
   "head1",
   "hexify",
   "hexwords",
