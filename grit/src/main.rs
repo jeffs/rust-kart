@@ -1,15 +1,7 @@
 //! Provides command-line access to the [`since`] and [`update`] functions.
-//!
-//! # TODO
-//!
-//! Add subcommands:
-//!
-//! * [ ] `tr|trunk` to print trunk name
-//! * [ ] `co|checkout`; support aliases, such as `-t` for trunk
 
 use std::collections::HashSet;
 use std::ffi::{OsStr, OsString};
-use std::path::Path;
 use std::process::exit;
 use std::{env, fmt};
 
@@ -42,7 +34,12 @@ impl fmt::Display for Error {
             Error::Arg(arg) => write!(f, "{}: unexpected argument", arg.display()),
             Error::Lib(err) => err.fmt(f),
             Error::Unclean => "working copy is unclean".fmt(f),
-            Error::Usage => "usage: grit {{si|since|up|update}} [ARGS...]".fmt(f),
+            Error::Usage => "Usage:\
+                \n    grit {si|since} [GIT_FLAGS...] [BASE]\
+                \n    grit {tr|trunk}\
+                \n    grit {up|update}}\
+            "
+            .fmt(f),
         }
     }
 }
@@ -215,20 +212,24 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
     Ok(())
 }
 
+/// Prints the name of the local trunk branch, if any is identified.
+#[allow(clippy::unused_async)]
+async fn trunk(mut args: env::ArgsOs) -> Result<()> {
+    if let Some(arg) = args.next() {
+        return Err(Error::Arg(arg));
+    }
+    println!("{}", local_trunk().await?);
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     let mut args = env::args_os();
-
-    let name = args
-        .next()
-        .expect("argv[0] should hold the path to this executable");
-    let name: &Path = name.as_ref();
-    let name = name
-        .file_stem()
-        .expect("executable path should terminate in file name");
+    args.next(); // Skip program name.
 
     let result = match args.next().as_deref().and_then(OsStr::to_str) {
         Some("si" | "since") => since(args).await,
+        Some("tr" | "trunk") => trunk(args).await,
         Some("up" | "update") => update(args).await,
         _ => Err(Error::Usage),
     };
@@ -238,10 +239,10 @@ async fn main() {
     };
 
     let Error::Usage = err else {
-        eprintln!("{}: error: {err}", name.display());
+        eprintln!("Error: {err}");
         exit(1);
     };
 
-    eprintln!("{}: {err}", name.display());
+    eprintln!("{err}");
     exit(2);
 }

@@ -23,7 +23,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Git(stderr) => stderr.fmt(f),
-            Error::Trunk(names) => write!(f, "can't find any of {names:?}"),
+            Error::Trunk(names) => write!(f, "trunk not found: {}", names.join(", ")),
         }
     }
 }
