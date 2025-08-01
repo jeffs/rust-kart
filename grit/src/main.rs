@@ -185,9 +185,15 @@ async fn update(args: env::ArgsOs) -> Result<()> {
 /// (which defaults to the local trunk).
 async fn since(our_args: env::ArgsOs) -> Result<()> {
     let mut base: Option<OsString> = None;
-    let mut git_args = ["log", "--first-parent", "--oneline"]
-        .map(OsString::from)
-        .to_vec();
+    let mut git_args = [
+        "log",
+        "--color=always",
+        "--first-parent",
+        "--graph",
+        "--oneline",
+    ]
+    .map(OsString::from)
+    .to_vec();
     for os in our_args {
         let Some(s) = os.to_str() else {
             return Err(Error::Arg(os));
@@ -205,7 +211,7 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
         None => format!("{}..", local_trunk().await?),
     };
     git_args.push(range.into());
-    git(git_args).await?;
+    print!("{}", git(git_args).await?);
     Ok(())
 }
 
