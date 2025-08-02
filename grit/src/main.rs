@@ -1,25 +1,19 @@
 //! Provides command-line access to the [`since`] and [`update`] functions.
 
-use std::collections::HashSet;
-use std::ffi::{OsStr, OsString};
-use std::process::exit;
-use std::{env, fmt};
+use std::{collections::HashSet, env, ffi, fmt, process::exit};
 
 use grit::{git, local_trunk, trunk_names};
 
 #[derive(Debug)]
 enum Error {
     /// An unrecognized command line argument was supplied.
-    Arg(OsString),
+    Arg(ffi::OsString),
 
     /// The supplied error was returned by the [`grit`] library crate.
     Lib(grit::Error),
 
     /// The Git working copy has uncommitted changes.
     Unclean,
-
-    /// The user might benefit from a summary of intended usage.
-    Usage,
 }
 
 impl From<grit::Error> for Error {
@@ -34,12 +28,6 @@ impl fmt::Display for Error {
             Error::Arg(arg) => write!(f, "{}: unexpected argument", arg.display()),
             Error::Lib(err) => err.fmt(f),
             Error::Unclean => "working copy is unclean".fmt(f),
-            Error::Usage => "Usage:\
-                \n    grit {si|since} [GIT_FLAGS...] [BASE]\
-                \n    grit {tr|trunk}\
-                \n    grit {up|update}}\
-            "
-            .fmt(f),
         }
     }
 }
@@ -60,7 +48,7 @@ struct UpdateArgs {
 
 impl UpdateArgs {
     /// Returns the name of this program for use in error logs, and the branch removal policy.
-    fn new(args: impl IntoIterator<Item = OsString>) -> Result<Self> {
+    fn new(args: impl IntoIterator<Item = ffi::OsString>) -> Result<Self> {
         if let Some(arg) = args.into_iter().next() {
             return Err(Error::Arg(arg));
         }
@@ -178,18 +166,18 @@ async fn update(args: env::ArgsOs) -> Result<()> {
     Ok(())
 }
 
-/// Lists commmits reachable from HEAD, but not from a specified base branch
-/// (which defaults to the local trunk).
-async fn since(our_args: env::ArgsOs) -> Result<()> {
-    let mut base: Option<OsString> = None;
+/// Returns Git args and, if specified, base branch name.
+fn since_args(our_args: env::ArgsOs) -> Result<(Vec<ffi::OsString>, Option<ffi::OsString>)> {
+    let mut base: Option<ffi::OsString> = None;
     let mut git_args = [
         "log",
         "--color=always",
+        "--decorate",
         "--first-parent",
         "--graph",
         "--oneline",
     ]
-    .map(OsString::from)
+    .map(ffi::OsString::from)
     .to_vec();
     for os in our_args {
         let Some(s) = os.to_str() else {
@@ -203,6 +191,13 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
             return Err(Error::Arg(os));
         }
     }
+    Ok((git_args, base))
+}
+
+/// Lists commmits reachable from HEAD, but not from a specified base branch
+/// (which defaults to the local trunk).
+async fn since(our_args: env::ArgsOs) -> Result<()> {
+    let (mut git_args, base) = since_args(our_args)?;
     let range = match base {
         Some(some) => format!("{}..", some.display()),
         None => format!("{}..", local_trunk().await?),
@@ -212,8 +207,21 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
     Ok(())
 }
 
+/// Summarizes changes to the working copy (relative to HEAD), then lists
+/// commmits from trunk (or a specified base) to HEAD, inclusive.
+async fn since_long(our_args: env::ArgsOs) -> Result<()> {
+    let (mut git_args, base) = since_args(our_args)?;
+    print!("{}", git(["diff", "--stat"]).await?);
+    let range = match base {
+        Some(some) => format!("{}^...", some.display()),
+        None => format!("{}^...", local_trunk().await?),
+    };
+    git_args.push(range.into());
+    print!("{}", git(git_args).await?);
+    Ok(())
+}
+
 /// Prints the name of the local trunk branch, if any is identified.
-#[allow(clippy::unused_async)]
 async fn trunk(mut args: env::ArgsOs) -> Result<()> {
     if let Some(arg) = args.next() {
         return Err(Error::Arg(arg));
@@ -222,27 +230,34 @@ async fn trunk(mut args: env::ArgsOs) -> Result<()> {
     Ok(())
 }
 
+#[expect(clippy::ref_option)]
+fn to_str(arg: &Option<ffi::OsString>) -> Option<&str> {
+    arg.as_deref().and_then(ffi::OsStr::to_str)
+}
+
 #[tokio::main]
 async fn main() {
     let mut args = env::args_os();
     args.next(); // Skip program name.
-
-    let result = match args.next().as_deref().and_then(OsStr::to_str) {
+    let arg = args.next();
+    let is_verbose = matches!(to_str(&arg), Some("-v" | "--verbose"));
+    let command = if is_verbose { args.next() } else { arg };
+    let result = match to_str(&command) {
+        Some("si" | "since") if is_verbose => since_long(args).await,
         Some("si" | "since") => since(args).await,
         Some("tr" | "trunk") => trunk(args).await,
         Some("up" | "update") => update(args).await,
-        _ => Err(Error::Usage),
+        _ => {
+            let usage = "Usage:\
+                \n    grit [-v|--verbose] {si|since} [GIT_FLAGS...] [BASE]\
+                \n    grit {tr|trunk}\
+                \n    grit {up|update}";
+            eprintln!("{usage}");
+            exit(2);
+        }
     };
-
-    let Err(err) = result else {
-        return;
-    };
-
-    let Error::Usage = err else {
+    if let Err(err) = result {
         eprintln!("Error: {err}");
         exit(1);
-    };
-
-    eprintln!("{err}");
-    exit(2);
+    }
 }

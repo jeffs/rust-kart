@@ -58,32 +58,25 @@ where
     )
 }
 
-#[allow(dead_code)]
-async fn git_loud<S, I>(args: I) -> Result<String>
+/// Runs Git, printing the command and its stdout. Primarily useful for
+/// debugging.
+///
+/// # Errors
+///
+/// Returns [`Error::Git`] if the `git` command fails.
+pub async fn git_loud<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
     let args: Vec<_> = args.into_iter().collect();
-    print!("{}", format_git_command(&args));
-
+    println!("> {}", format_git_command(&args));
     let (status, stdout, stderr) = run_git(args).await;
     if !status.success() {
         return Err(Error::Git(stderr));
     }
-
-    let lines: Vec<_> = stdout.lines().collect();
-    match lines.len() {
-        0 => println!(),
-        1 => println!(": {}", lines[0].trim()),
-        _ => {
-            println!(":");
-            for line in lines {
-                println!("  {line}");
-            }
-        }
-    }
-
+    stderr.lines().for_each(|s| println!("! {s}"));
+    stdout.lines().for_each(|s| println!("< {s}"));
     Ok(stderr + &stdout)
 }
 
