@@ -17,7 +17,11 @@ fn main() {
     let files = std::str::from_utf8(&output.stdout)
         .unwrap()
         .lines()
-        .filter_map(|line| line.strip_prefix("\tmodified:").map(str::trim_ascii))
+        .filter_map(|line| {
+            line.strip_prefix("\tmodified:")
+                .or_else(|| line.strip_prefix("\tboth modified:"))
+                .map(str::trim_ascii)
+        })
         .collect::<Vec<_>>();
 
     if files.is_empty() {
