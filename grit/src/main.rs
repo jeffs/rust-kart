@@ -2,23 +2,34 @@
 
 use std::{collections::HashSet, env, ffi, fmt, process::exit};
 
-use grit::{git, local_trunk, trunk_names};
+use grit::{git::git, trunk};
 
 #[derive(Debug)]
 enum Error {
     /// An unrecognized command line argument was supplied.
     Arg(ffi::OsString),
 
-    /// The supplied error was returned by the [`grit`] library crate.
-    Lib(grit::Error),
+    /// Git produced unexpected output. (If Git itself is not found, we panic.)
+    Git(grit::git::Error),
+
+    /// No local trunk branch could be identified. This can happen if a command
+    /// is run outside of any git repo, or if the repo has no local branch
+    /// matching any recognized trunk name.
+    Trunk(grit::trunk::Error),
 
     /// The Git working copy has uncommitted changes.
     Unclean,
 }
 
-impl From<grit::Error> for Error {
-    fn from(value: grit::Error) -> Self {
-        Error::Lib(value)
+impl From<grit::git::Error> for Error {
+    fn from(value: grit::git::Error) -> Self {
+        Error::Git(value)
+    }
+}
+
+impl From<grit::trunk::Error> for Error {
+    fn from(value: grit::trunk::Error) -> Self {
+        Error::Trunk(value)
     }
 }
 
@@ -26,7 +37,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Arg(arg) => write!(f, "{}: unexpected argument", arg.display()),
-            Error::Lib(err) => err.fmt(f),
+            Error::Git(err) => err.fmt(f),
+            Error::Trunk(err) => err.fmt(f),
             Error::Unclean => "working copy is unclean".fmt(f),
         }
     }
@@ -110,9 +122,7 @@ async fn update(args: env::ArgsOs) -> Result<()> {
 
     let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
     let orig = orig.as_str().trim();
-
-    let trunk = local_trunk().await?;
-
+    let trunk = trunk::local().await?;
     if trunk != orig {
         git(["checkout", &trunk]).await?;
     }
@@ -142,7 +152,7 @@ async fn update(args: env::ArgsOs) -> Result<()> {
     // Don't delete potential trunks, even if they're behind the actual trunk.  When you have an
     // integration branch (dev or staging or whatever) that's ahead of main, you want to be able to
     // use that branch as trunk, without deleting main simply because it's behind staging.
-    for trunk in trunk_names() {
+    for trunk in trunk::names() {
         dead_branches.remove(&trunk);
     }
 
@@ -166,41 +176,49 @@ async fn update(args: env::ArgsOs) -> Result<()> {
     Ok(())
 }
 
-/// Returns Git args and, if specified, base branch name.
-fn since_args(our_args: env::ArgsOs) -> Result<(Vec<ffi::OsString>, Option<ffi::OsString>)> {
-    let mut base: Option<ffi::OsString> = None;
-    let mut git_args = [
-        "log",
-        "--color=always",
-        "--decorate",
-        "--first-parent",
-        "--graph",
-        "--oneline",
-    ]
-    .map(ffi::OsString::from)
-    .to_vec();
-    for os in our_args {
-        let Some(s) = os.to_str() else {
-            return Err(Error::Arg(os));
-        };
-        if s.starts_with('-') {
-            git_args.push(os);
-        } else if base.is_none() {
-            base = Some(os);
-        } else {
-            return Err(Error::Arg(os));
+struct SinceArgs {
+    /// Arguments to be forwarded to git.
+    git_args: Vec<ffi::OsString>,
+    /// The base branch name, if specified.
+    base: Option<ffi::OsString>,
+}
+
+impl SinceArgs {
+    fn new(our_args: env::ArgsOs) -> Result<SinceArgs> {
+        let mut base: Option<ffi::OsString> = None;
+        let mut git_args = [
+            "log",
+            "--color=always",
+            "--decorate",
+            "--first-parent",
+            "--graph",
+            "--oneline",
+        ]
+        .map(ffi::OsString::from)
+        .to_vec();
+        for os in our_args {
+            let Some(s) = os.to_str() else {
+                return Err(Error::Arg(os));
+            };
+            if s.starts_with('-') {
+                git_args.push(os);
+            } else if base.is_none() {
+                base = Some(os);
+            } else {
+                return Err(Error::Arg(os));
+            }
         }
+        Ok(SinceArgs { git_args, base })
     }
-    Ok((git_args, base))
 }
 
 /// Lists commmits reachable from HEAD, but not from a specified base branch
 /// (which defaults to the local trunk).
 async fn since(our_args: env::ArgsOs) -> Result<()> {
-    let (mut git_args, base) = since_args(our_args)?;
+    let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
     let range = match base {
         Some(some) => format!("{}..", some.display()),
-        None => format!("{}..", local_trunk().await?),
+        None => format!("{}..", trunk::local().await?),
     };
     git_args.push(range.into());
     print!("{}", git(git_args).await?);
@@ -210,11 +228,11 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
 /// Summarizes changes to the working copy (relative to HEAD), then lists
 /// commmits from trunk (or a specified base) to HEAD, inclusive.
 async fn since_long(our_args: env::ArgsOs) -> Result<()> {
-    let (mut git_args, base) = since_args(our_args)?;
+    let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
     print!("{}", git(["diff", "--stat"]).await?);
     let range = match base {
         Some(some) => format!("{}^...", some.display()),
-        None => format!("{}^...", local_trunk().await?),
+        None => format!("{}^...", trunk::local().await?),
     };
     git_args.push(range.into());
     print!("{}", git(git_args).await?);
@@ -226,7 +244,7 @@ async fn trunk(mut args: env::ArgsOs) -> Result<()> {
     if let Some(arg) = args.next() {
         return Err(Error::Arg(arg));
     }
-    println!("{}", local_trunk().await?);
+    println!("{}", trunk::local().await?);
     Ok(())
 }
 
