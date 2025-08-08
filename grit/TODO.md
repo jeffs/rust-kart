@@ -1,8 +1,5 @@
 # To Do
 
-* Consolidate `gitup` and `since` into a single `grit` project
-  - Avoid confusion with the unrelated [GitUp](https://github.com/git-up/GitUp)
-  - Replace crate-specific features like `GRIT_TRUNKS` with shared `GRIT_TRUNKS`
 * Save rev-parse results in case user wants to restore deleted branches.
   - Support `restore` subcommand that accepts rev-parse output.
 * Support custom remote names rather than hard-coding origin.
