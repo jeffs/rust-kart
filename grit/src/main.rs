@@ -2,7 +2,10 @@
 
 use std::{collections::HashSet, env, ffi, fmt, process::exit};
 
-use grit::{git::git, trunk};
+use grit::{
+    git::{HEAD, git},
+    trunk,
+};
 
 #[derive(Debug)]
 enum Error {
@@ -120,7 +123,7 @@ async fn update(args: env::ArgsOs) -> Result<()> {
         return Err(Error::Unclean);
     }
 
-    let orig = git(["rev-parse", "--abbrev-ref", "HEAD"]).await?;
+    let orig = git(["rev-parse", "--abbrev-ref", HEAD]).await?;
     let orig = orig.as_str().trim();
     let trunk = trunk::local().await?;
     if trunk != orig {
@@ -190,7 +193,6 @@ impl SinceArgs {
             "log",
             "--color=always",
             "--decorate",
-            "--first-parent",
             "--graph",
             "--oneline",
         ]
@@ -214,12 +216,18 @@ impl SinceArgs {
 
 /// Lists commmits reachable from HEAD, but not from a specified base branch
 /// (which defaults to the local trunk).
+///
+/// TODO: Command-line arguments are fundamentally [`ffi::OsString`], not
+///  [`String`]. Converting the former to the latter and back, to build `git(1)`
+///  range arguments, is potentially lossy. Avoid it by concatenating byte
+///  encoded vectors rather than formatting strings.
 async fn since(our_args: env::ArgsOs) -> Result<()> {
     let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
     let range = match base {
         Some(some) => format!("{}..", some.display()),
         None => format!("{}..", trunk::local().await?),
     };
+    git_args.push("--first-parent".into());
     git_args.push(range.into());
     print!("{}", git(git_args).await?);
     Ok(())
@@ -231,8 +239,8 @@ async fn since_long(our_args: env::ArgsOs) -> Result<()> {
     let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
     print!("{}", git(["diff", "--stat"]).await?);
     let range = match base {
-        Some(some) => format!("{}^...", some.display()),
-        None => format!("{}^...", trunk::local().await?),
+        Some(some) => format!("{}^..", some.display()),
+        None => format!("{}^..", trunk::local().await?),
     };
     git_args.push(range.into());
     print!("{}", git(git_args).await?);

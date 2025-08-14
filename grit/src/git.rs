@@ -6,6 +6,10 @@ use tokio::process::Command;
 #[derive(Debug)]
 pub struct Error(String);
 
+pub type Result<T> = std::result::Result<T, Error>;
+
+pub const HEAD: &str = "HEAD";
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.0.fmt(f)
@@ -23,6 +27,9 @@ where
 }
 
 /// Returns (success, stdout, stderr).
+///
+/// TODO: Should this return [`std::ffi::OsString`] or [`Vec<u8>`] rather than
+///  [`String`]? What is the narrowest type of plausible `git(1)` output?
 async fn run_git<S, I>(args: I) -> (ExitStatus, String, String)
 where
     I: IntoIterator<Item = S>,
@@ -46,7 +53,7 @@ where
 /// # Errors
 ///
 /// Returns [`Error::Git`] if the `git` command fails.
-pub async fn git_loud<S, I>(args: I) -> Result<String, Error>
+pub async fn git_loud<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -65,7 +72,7 @@ where
 /// # Errors
 ///
 /// Returns [`Error::Git`] if the `git` command fails.
-pub async fn git<S, I>(args: I) -> Result<String, Error>
+pub async fn git<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -75,4 +82,20 @@ where
         return Err(Error(stderr));
     }
     Ok(stderr + &stdout)
+}
+
+/// # Errors
+///
+/// Returns [`Error::Git`] if `git merge-base` fails.
+pub async fn merge_base(ref1: impl AsRef<OsStr>, ref2: impl AsRef<OsStr>) -> Result<String> {
+    let mut base = git(["merge-base".as_ref(), ref1.as_ref(), ref2.as_ref()]).await?;
+    base.truncate(base.trim_end().len());
+    Ok(base)
+}
+
+/// # Errors
+///
+/// Returns [`Error::Git`] if `git merge-base` fails.
+pub async fn merge_base_head(base: impl AsRef<OsStr>) -> Result<String> {
+    merge_base(base, HEAD).await
 }
