@@ -29,8 +29,6 @@ enum Error {
     Arg1(String),
     /// The command was called incorrectly.
     Usage,
-    /// The user passed a flag requesting help, so any other args are moot.
-    Help,
 }
 
 impl fmt::Display for Error {
@@ -39,7 +37,7 @@ impl fmt::Display for Error {
             Error::Food(e) => e.fmt(f),
             Error::Portion(e) => e.fmt(f),
             Error::Arg1(arg) => write!(f, "{arg}: expected food or portion size"),
-            Error::Help | Error::Usage => f.write_str(USAGE),
+            Error::Usage => f.write_str(USAGE),
         }
     }
 }
@@ -58,16 +56,24 @@ impl From<BadPortion> for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-fn args() -> Result<(String, Option<String>)> {
+enum RawArgs {
+    /// The user asked for help.
+    Help,
+    /// The user passed exactly one or two arguments.
+    Args(String, Option<String>),
+}
+
+fn args() -> Result<RawArgs> {
     match &mut env::args().skip(1).collect::<Vec<_>>()[..] {
-        [first, ..] if matches!(first.as_str(), "-h" | "--help") => Err(Error::Help),
-        [first] => Ok((take(first), None)),
-        [first, second] => Ok((take(first), Some(take(second)))),
+        [first, ..] if matches!(first.as_str(), "-h" | "--help") => Ok(RawArgs::Help),
+        [first] => Ok(RawArgs::Args(take(first), None)),
+        [first, second] => Ok(RawArgs::Args(take(first), Some(take(second)))),
         _ => Err(Error::Usage),
     }
 }
 
 enum Args {
+    Help,
     Size(Portion),
     Food(Food),
     Both(Portion, Food),
@@ -75,20 +81,21 @@ enum Args {
 
 impl Args {
     fn from_env() -> Result<Args> {
-        let (arg1, arg2) = args()?;
+        let RawArgs::Args(arg1, arg2) = args()? else {
+            return Ok(Args::Help);
+        };
         if let Ok(size) = arg1.parse::<Portion>() {
-            if let Some(food) = arg2 {
-                Ok(Args::Both(size, food.parse()?))
+            Ok(if let Some(food) = arg2 {
+                Args::Both(size, food.parse()?)
             } else {
-                Ok(Args::Size(size))
-            }
+                Args::Size(size)
+            })
         } else if let Ok(food) = arg1.parse::<Food>() {
-            if let Some(size) = arg2 {
-                let size = size.parse()?;
-                Ok(Args::Both(size, food))
+            Ok(if let Some(size) = arg2 {
+                Args::Both(size.parse()?, food)
             } else {
-                Ok(Args::Food(food))
-            }
+                Args::Food(food)
+            })
         } else {
             Err(Error::Arg1(arg1))
         }
@@ -103,6 +110,9 @@ fn scale(size: Portion, food: &Food) -> (f64, f64) {
 
 fn main_imp() -> Result<()> {
     match Args::from_env()? {
+        Args::Help => {
+            println!("{USAGE}");
+        }
         Args::Size(size) => {
             // Convert to the most common other unit in the same dimension.
             println!("{size} = {}", size.convert());
@@ -121,12 +131,8 @@ fn main_imp() -> Result<()> {
 
 fn main() {
     if let Err(err) = main_imp() {
-        if let Error::Help = err {
-            println!("{err}");
-            exit(0);
-        }
         if !matches!(err, Error::Usage) {
-            eprint!("error: ");
+            eprint!("Error: ");
         }
         eprintln!("{err}");
         exit(2);
