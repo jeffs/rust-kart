@@ -67,9 +67,10 @@ fn args() -> Result<(String, Option<String>)> {
     }
 }
 
-struct Args {
-    size: Option<Portion>,
-    food: Option<Food>,
+enum Args {
+    Size(Portion),
+    Food(Food),
+    Both(Portion, Food),
 }
 
 impl Args {
@@ -77,29 +78,16 @@ impl Args {
         let (arg1, arg2) = args()?;
         if let Ok(size) = arg1.parse::<Portion>() {
             if let Some(food) = arg2 {
-                let food = food.parse()?;
-                Ok(Args {
-                    size: Some(size),
-                    food: Some(food),
-                })
+                Ok(Args::Both(size, food.parse()?))
             } else {
-                Ok(Args {
-                    size: Some(size),
-                    food: None,
-                })
+                Ok(Args::Size(size))
             }
         } else if let Ok(food) = arg1.parse::<Food>() {
             if let Some(size) = arg2 {
                 let size = size.parse()?;
-                Ok(Args {
-                    size: Some(size),
-                    food: Some(food),
-                })
+                Ok(Args::Both(size, food))
             } else {
-                Ok(Args {
-                    size: None,
-                    food: Some(food),
-                })
+                Ok(Args::Food(food))
             }
         } else {
             Err(Error::Arg1(arg1))
@@ -114,23 +102,18 @@ fn scale(size: Portion, food: &Food) -> (f64, f64) {
 }
 
 fn main_imp() -> Result<()> {
-    let args = Args::from_env()?;
-    match (args.size, args.food) {
-        (Some(size), Some(food)) => {
-            let (kcal, protein) = scale(size, &food);
-            println!("{kcal} {protein}");
+    match Args::from_env()? {
+        Args::Size(size) => {
+            // Convert to the most common other unit in the same dimension.
+            println!("{size} = {}", size.convert());
         }
-        (Some(size), None) => {
-            let converted = size.convert();
-            println!("{size} = {converted}",);
-        }
-        (None, Some(food)) => {
+        Args::Food(food) => {
             // Print kcal and protein per 100g of the specified food.
             println!("{} {}", food.kcal.round(), food.protein.round());
         }
-        (None, None) => {
-            // Args::from_env returns an error if no args were supplied.
-            unreachable!();
+        Args::Both(size, food) => {
+            let (kcal, protein) = scale(size, &food);
+            println!("{kcal} {protein}");
         }
     }
     Ok(())
