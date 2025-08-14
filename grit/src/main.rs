@@ -193,6 +193,7 @@ impl SinceArgs {
             "log",
             "--color=always",
             "--decorate",
+            "--first-parent",
             "--graph",
             "--oneline",
         ]
@@ -227,7 +228,6 @@ async fn since(our_args: env::ArgsOs) -> Result<()> {
         Some(some) => format!("{}..", some.display()),
         None => format!("{}..", trunk::local().await?),
     };
-    git_args.push("--first-parent".into());
     git_args.push(range.into());
     print!("{}", git(git_args).await?);
     Ok(())
