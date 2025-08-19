@@ -37,6 +37,8 @@ macro_rules! food {
 
 #[rustfmt::skip]
 const FOODS: &[(&str, Food)] = &[
+    food!(almond,         164,  6.0,  28),
+    food!(apple,           59,  0.3, 100),
     food!(asparagus,       20,  2.2, 100),
     food!(avocado,         80,  1.0,  50),
     food!(bacon,           80,  6.0,  16), // each

@@ -1,11 +1,13 @@
 food,description,source
+almond,"Almonds",https://www.verywellfit.com/almond-nutrition-facts-calories-and-health-benefits-4108974
+apple,"Red Delicious Apples",https://tools.myfooddata.com/nutrition-facts/168201/wt3
 asparagus,"Asparagus, raw",https://fdc.nal.usda.gov/food-details/168389/nutrients
 avocado,"Avocado",https://avocadosfrommexico.com/shopper/wp-content/uploads/2017/12/Avocado-Nutrition-Facts-Brochure.pdf
 bacon,"Thick cut bacon","label (Oscar Mayer)"
 banana,"Banana",https://www.google.com/search?q=banana+nutrition
 broccoli,"Broccoli, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/170379/nutrients
 brussels,"Brussels sprouts, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/170383/nutrients
-brussels,"Butter, without salt",https://fdc.nal.usda.gov/food-details/173430/nutrients
+butter,"Butter, without salt",https://fdc.nal.usda.gov/food-details/173430/nutrients
 cabbage,"Cabbage, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/169975/nutrients
 carrot,"Carrots, baby, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/2258587/nutrients
 cauliflower,"Cauliflower, raw",https://fdc.nal.usda.gov/fdc-app.html#/food-details/169986/nutrients
