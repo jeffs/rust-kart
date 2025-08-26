@@ -43,6 +43,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(avocado,         80,  1.0,  50),
     food!(bacon,           80,  6.0,  16), // each
     food!(banana,          89,  1.1, 100),
+    food!(blueberry,       39,  0.5,  68),
     food!(broccoli,        34,  2.8, 100),
     food!(brussels,        43,  3.4, 100),
     food!(butter,         717,  0.9, 100),
