@@ -22,4 +22,8 @@ base branch (which defaults to the local trunk).
 * Optionally format output as table or JSON
 * List commits from a given merge `M`; i.e., `M^..M^2`
 * Support `rebase` to fetch and then rebase onto autommatically detected trunk.
-  - `git rebase` defaults to the remote tracking branch, if any.
+  - `git rebase` defaults to the remote tracking branch, if any
+* Automatically swap `https://` with `git@` URLs for submodules
+  - The URLs live in `.git/modules/*/config`
+  - Git doesn't recognize modifications as a diff
+  - Each working copy needs to use whichever style fits locally configured auth
