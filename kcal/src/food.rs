@@ -102,12 +102,25 @@ fn parse_custom(s: &str) -> Option<Food> {
     })
 }
 
+fn pluralize(s: &str) -> String {
+    if let Some(base) = s.strip_suffix('y') {
+        base.to_owned() + "ies"
+    } else {
+        s.to_owned() + "s"
+    }
+}
+
 impl FromStr for Food {
     type Err = BadFood;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if let Some(food) = FOODS
             .iter()
             .find_map(|(slug, food)| (*slug == s).then_some(food))
+        {
+            Ok(food.clone())
+        } else if let Some(food) = FOODS
+            .iter()
+            .find_map(|(slug, food)| (pluralize(slug) == s).then_some(food))
         {
             Ok(food.clone())
         } else if let Some(food) = parse_custom(s) {
