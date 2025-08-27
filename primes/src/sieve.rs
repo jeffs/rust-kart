@@ -167,14 +167,14 @@ impl Sieve {
         self.is_known_prime(value)
     }
 
-    pub fn primes(&mut self) -> Primes {
+    pub fn primes(&mut self) -> Primes<'_> {
         Primes {
             sieve: self,
             known: 0,
         }
     }
 
-    pub fn factors(&mut self, value: u32) -> Factors {
+    pub fn factors(&mut self, value: u32) -> Factors<'_> {
         Factors {
             primes: self.primes(),
             value,

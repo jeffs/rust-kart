@@ -65,7 +65,7 @@ impl Cache {
         }
     }
 
-    pub fn primes(&self) -> Primes {
+    pub fn primes(&self) -> Primes<'_> {
         Primes {
             cache: self,
             next: 2,

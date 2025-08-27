@@ -99,11 +99,11 @@ impl Binding<'_> {
 }
 
 pub trait Bind {
-    fn bind(&mut self) -> Binding;
+    fn bind(&mut self) -> Binding<'_>;
 }
 
 impl Bind for i32 {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::I32(self),
             appetite: Appetite::Hungry,
@@ -112,7 +112,7 @@ impl Bind for i32 {
 }
 
 impl Bind for Option<i32> {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::OptI32(self),
             appetite: Appetite::Peckish,
@@ -121,7 +121,7 @@ impl Bind for Option<i32> {
 }
 
 impl Bind for String {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::Str(self),
             appetite: Appetite::Hungry,
@@ -130,7 +130,7 @@ impl Bind for String {
 }
 
 impl Bind for Option<String> {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::OptStr(self),
             appetite: Appetite::Peckish,
@@ -139,7 +139,7 @@ impl Bind for Option<String> {
 }
 
 impl Bind for u32 {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::U32(self),
             appetite: Appetite::Hungry,
@@ -148,7 +148,7 @@ impl Bind for u32 {
 }
 
 impl Bind for Option<u32> {
-    fn bind(&mut self) -> Binding {
+    fn bind(&mut self) -> Binding<'_> {
         Binding {
             store: Store::OptU32(self),
             appetite: Appetite::Peckish,
