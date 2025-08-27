@@ -23,6 +23,7 @@ pub struct Food {
 ///
 /// * Load data dynamically, rather than using a macro.
 /// * Support non-identifier names, such as "matcha-cake".
+/// * Support singular and plural (e.g., egg and eggs) in a single row.
 macro_rules! food {
     ($name: ident, $kcal: expr_2021, $protein: expr_2021, $per: expr_2021) => {
         (
@@ -58,6 +59,7 @@ const FOODS: &[(&str, Food)] = &[
     food!(eggwhite,        25,  5.0,  46),
     food!(endive,          17,  1.3, 100),
     food!(enoki,           44,  2.4, 100),
+    food!(grape,           34,  0.4,  49),
     food!(greenbean,       44,  2.4, 125),
     food!(ham,             61,  9.1,  57),
     food!(lettuce,         17,  1.0, 100),
