@@ -103,9 +103,12 @@ fn parse_custom(s: &str) -> Option<Food> {
     })
 }
 
+/// TODO: Support multiple plurals per singular.
 fn pluralize(s: &str) -> String {
     if let Some(base) = s.strip_suffix('y') {
         base.to_owned() + "ies"
+    } else if s.ends_with('o') {
+        s.to_owned() + "es"
     } else {
         s.to_owned() + "s"
     }
@@ -128,6 +131,22 @@ impl FromStr for Food {
             Ok(food)
         } else {
             Err(BadFood(s.to_string()))
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pluralize_works() {
+        for (singular, want) in [
+            ("blueberry", "blueberries"),
+            ("tomato", "tomatoes"),
+            ("fig", "figs"),
+        ] {
+            assert_eq!(pluralize(singular), want);
         }
     }
 }
