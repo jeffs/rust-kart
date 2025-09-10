@@ -15,6 +15,7 @@ members = [
   "hexwords",
   "kcal",
   "leap",
+  "lev",
   "module-from-path",
   "netmask",
   "pangram",
