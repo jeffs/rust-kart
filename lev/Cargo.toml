@@ -1,5 +1,5 @@
 [package]
-name = "rk-lev"
+name = "lev"
 version = "0.1.0"
 edition = "2024"
 
