@@ -1,4 +1,4 @@
-use lev::lev;
+use rk_lev::lev;
 
 fn print_lev(a: &str, b: &str) {
     println!("{:4} {b}", lev(a.chars(), b.chars()));
