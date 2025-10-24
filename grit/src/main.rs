@@ -281,6 +281,7 @@ async fn main() {
         _ => {
             let usage = "Usage:\
                 \n    grit [-v|--verbose] {si|since} [GIT_FLAGS...] [BASE]\
+                \n    grit {ar|archive} BRANCH\
                 \n    grit {tr|trunk}\
                 \n    grit {up|update}";
             eprintln!("{usage}");
