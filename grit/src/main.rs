@@ -4,9 +4,14 @@ use std::{env, ffi, process::exit};
 
 use grit::command;
 
-#[expect(clippy::ref_option)]
-fn to_str(arg: &Option<ffi::OsString>) -> Option<&str> {
-    arg.as_deref().and_then(ffi::OsStr::to_str)
+trait ToStr {
+    fn to_str(&self) -> Option<&str>;
+}
+
+impl ToStr for Option<ffi::OsString> {
+    fn to_str(&self) -> Option<&str> {
+        self.as_deref().and_then(ffi::OsStr::to_str)
+    }
 }
 
 #[tokio::main]
@@ -14,11 +19,11 @@ async fn main() {
     let mut args = env::args_os();
     args.next(); // Skip program name.
     let arg = args.next();
-    let is_verbose = matches!(to_str(&arg), Some("-v" | "--verbose"));
+    let is_verbose = matches!(arg.to_str(), Some("-v" | "--verbose"));
     let command = if is_verbose { args.next() } else { arg };
-    let result = match to_str(&command) {
-        Some("si" | "since") if is_verbose => command::since::since_long(args).await,
-        Some("si" | "since") => command::since::since(args).await,
+    let result = match command.to_str() {
+        Some("si" | "since") if is_verbose => command::since::long(args).await,
+        Some("si" | "since") => command::since::short(args).await,
         Some("tr" | "trunk") => command::trunk::trunk(args).await,
         Some("up" | "update") => command::update::update(args).await,
         _ => {

@@ -7,7 +7,7 @@ use crate::{
 };
 
 /// Policy for which branches to delete.
-struct UpdateArgs {
+struct Args {
     /// Specifies removal of local branches merged to local trunk.  Note that
     /// this does not include GitHub "squash merges," which do not actually
     /// merge the original branch.
@@ -20,7 +20,7 @@ struct UpdateArgs {
     gone: bool,
 }
 
-impl UpdateArgs {
+impl Args {
     /// Returns the name of this program for use in error logs, and the branch
     /// removal policy.
     fn new(args: impl IntoIterator<Item = ffi::OsString>) -> Result<Self> {
@@ -29,7 +29,7 @@ impl UpdateArgs {
         }
 
         // TODO: Set branch removal policy from CLI.
-        let args = UpdateArgs {
+        let args = Args {
             merged: true,
             gone: true,
         };
@@ -70,7 +70,7 @@ fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
 ///   of obsolete branches the next time they pull --prune; so now this program
 ///   checks out main just so it can run pull --prune per se.
 pub async fn update(args: env::ArgsOs) -> Result<()> {
-    let rm = UpdateArgs::new(args)?; // Branch removal policy.
+    let rm = Args::new(args)?; // Branch removal policy.
 
     if !is_working_copy_clean().await? {
         return Err(Error::Unclean);

@@ -6,15 +6,15 @@ use crate::{
     trunk,
 };
 
-struct SinceArgs {
+struct Args {
     /// Arguments to be forwarded to git.
     git_args: Vec<ffi::OsString>,
     /// The base branch name, if specified.
     base: Option<ffi::OsString>,
 }
 
-impl SinceArgs {
-    fn new(our_args: env::ArgsOs) -> Result<SinceArgs> {
+impl Args {
+    fn new(our_args: env::ArgsOs) -> Result<Args> {
         let mut base: Option<ffi::OsString> = None;
         let mut git_args = [
             "log",
@@ -38,7 +38,7 @@ impl SinceArgs {
                 return Err(Error::Arg(os));
             }
         }
-        Ok(SinceArgs { git_args, base })
+        Ok(Args { git_args, base })
     }
 }
 
@@ -54,8 +54,8 @@ impl SinceArgs {
 ///
 /// Returns an error if the base branch is unspecified, and a trunk cannot be
 /// identified; or, if `git` returns bad status.
-pub async fn since(our_args: env::ArgsOs) -> Result<()> {
-    let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
+pub async fn short(our_args: env::ArgsOs) -> Result<()> {
+    let Args { mut git_args, base } = Args::new(our_args)?;
     let range = match base {
         Some(some) => format!("{}..", some.display()),
         None => format!("{}..", trunk::local().await?),
@@ -71,8 +71,8 @@ pub async fn since(our_args: env::ArgsOs) -> Result<()> {
 /// # Errors
 ///
 /// Returns an error if the base branch cannot be identified, or `git` fails.
-pub async fn since_long(our_args: env::ArgsOs) -> Result<()> {
-    let SinceArgs { mut git_args, base } = SinceArgs::new(our_args)?;
+pub async fn long(our_args: env::ArgsOs) -> Result<()> {
+    let Args { mut git_args, base } = Args::new(our_args)?;
     print!("{}", git(["diff", "--stat"]).await?);
     let range = match base {
         Some(some) => format!("{}^..", some.display()),
