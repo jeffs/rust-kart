@@ -99,3 +99,26 @@ pub async fn merge_base(ref1: impl AsRef<OsStr>, ref2: impl AsRef<OsStr>) -> Res
 pub async fn merge_base_head(base: impl AsRef<OsStr>) -> Result<String> {
     merge_base(base, HEAD).await
 }
+
+/// Returns the qualified name of the remote branch being tracked by the
+/// specified tracking branch, or [`None`] if the `branch` is not a tracking
+/// branch.
+///
+/// # Examples
+///
+/// Assuming the local `main` branch is tracking `origin/main`:
+///
+/// ```no_run
+/// assert_eq!(upstream("main"), Some("origin/main"));
+/// ```
+pub async fn upstream(branch: &str) -> Option<String> {
+    git([
+        "rev-parse",
+        "--abbrev-ref",
+        "--symbolic-full-name",
+        &format!("{branch}@{{u}}"),
+    ])
+    .await
+    .ok()
+    .map(|s| s.trim().to_owned())
+}
