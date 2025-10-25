@@ -76,7 +76,7 @@ impl Iterator for Factors<'_> {
             }
 
             // Skip any prime that isn't a factor of our value.
-            if value % prime != 0 {
+            if !value.is_multiple_of(prime) {
                 continue;
             }
 
@@ -84,7 +84,7 @@ impl Iterator for Factors<'_> {
             let mut power = 1;
             while {
                 value /= prime;
-                value % prime == 0
+                value.is_multiple_of(prime)
             } {
                 power += 1;
             }
@@ -106,7 +106,7 @@ impl Sieve {
     }
 
     fn mark_nonprime(&mut self, value: u32) {
-        if value % 2 == 0 {
+        if value.is_multiple_of(2) {
             return; // We don't store bits for even numbers, anyway.
         }
         let index = value as usize / 2;
@@ -116,7 +116,7 @@ impl Sieve {
     fn is_known_prime(&self, value: u32) -> bool {
         // We get twice as many bits per word by skipping even-indexed bits,
         // since no even numbers past 2 are prime.  We special-case 2.
-        if value % 2 == 0 {
+        if value.is_multiple_of(2) {
             return value == 2;
         }
         let index = (value / 2) as usize;

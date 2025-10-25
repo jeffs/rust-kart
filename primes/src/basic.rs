@@ -7,10 +7,10 @@ pub fn is_prime(n: u32) -> bool {
         || UNDER_100000
             .into_iter()
             .take_while(|&p| p < n)
-            .any(|p| n % p == 0 && n != p)
+            .any(|p| n.is_multiple_of(p) && n != p)
         || ((UNDER_100000[UNDER_100000.len() - 1] + 2)..n)
             .step_by(2)
-            .any(|d| n % d == 0))
+            .any(|d| n.is_multiple_of(d)))
 }
 
 pub struct Primes(u32);

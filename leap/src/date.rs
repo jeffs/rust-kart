@@ -12,7 +12,7 @@ const DAYS_PER_WEEK: u8 = DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     let month = usize::from(month);
-    let is_leap_year = year % 4 == 0 && year % 100 != 0 || year % 400 == 0;
+    let is_leap_year = year.is_multiple_of(4) && !year.is_multiple_of(100) || year.is_multiple_of(400);
     1..=[
         31,                                 // January
         if is_leap_year { 29 } else { 28 }, // February

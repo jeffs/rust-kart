@@ -10,7 +10,7 @@ fn factor(mut n: u32) -> Vec<(u32, u32)> {
 
     for p in rk_primes::Sieve::default().primes() {
         let mut e = 0;
-        while n % p == 0 {
+        while n.is_multiple_of(p) {
             n /= p;
             e += 1;
         }
