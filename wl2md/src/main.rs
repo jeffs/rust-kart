@@ -22,16 +22,19 @@ impl Error {
         Error(format!("{}: {err}", path.display()))
     }
 
-    /// Callback for `std::io::Result::map_err`. `io::Error` messages often omit the path.
+    /// Callback for `std::io::Result::map_err`. `io::Error` messages often omit
+    /// the path.
     fn add_path(path: &Path) -> impl Fn(io::Error) -> Error + Copy + '_ {
         |err| Error::for_path(path, err)
     }
 
-    /// Prints an error message to `stderr`, and exits the current process with non-zero status. The
-    /// return type is generic so that this function can be used in contexts where any specific
-    /// return type `T` is required.  Semantically, this function returns [the never type][1]
-    /// `!`--meaning it never actually returns at all--but in practice, returning `!` would often
-    /// require callers to coerce the result to some specific type.
+    /// Prints an error message to `stderr`, and exits the current process with
+    /// non-zero status. The return type is generic so that this function
+    /// can be used in contexts where any specific return type `T` is
+    /// required.  Semantically, this function returns [the never type][1]
+    /// `!`--meaning it never actually returns at all--but in practice,
+    /// returning `!` would often require callers to coerce the result to
+    /// some specific type.
     ///
     /// [1]: https://doc.rust-lang.org/reference/types/never.html
     fn die<T>(self) -> T {
@@ -46,7 +49,8 @@ impl fmt::Display for Error {
     }
 }
 
-/// `walkdir::Error`, unlike `io::Error`, always includes the path where the error occurred.
+/// `walkdir::Error`, unlike `io::Error`, always includes the path where the
+/// error occurred.
 impl From<walkdir::Error> for Error {
     fn from(value: walkdir::Error) -> Self {
         Error(format!("{value}"))
@@ -72,7 +76,8 @@ struct LinkPattern(Regex);
 
 impl LinkPattern {
     pub fn compile() -> LinkPattern {
-        // I'd love to offer you a link to the webloc format docs, but there don't seem to be any.
+        // I'd love to offer you a link to the webloc format docs, but there don't seem
+        // to be any.
         LinkPattern(Regex::new(r"^\t<string>(.*)</string>$").expect("hard-coded regex"))
     }
 

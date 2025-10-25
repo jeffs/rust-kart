@@ -1,7 +1,9 @@
-//! Provides a trait similar to the standard [`Iterator`], but for sequences that never terminate.
-//! In particular, [`Perpetuity::next_item`] returns `Self::Item`, not `Option<Self::Item>`.  The
-//! interface to functions like `successors` can also be much simpler, as neither the initial value
-//! nor the callback need deal with options.  For example, compare the following two expressions:
+//! Provides a trait similar to the standard [`Iterator`], but for sequences
+//! that never terminate. In particular, [`Perpetuity::next_item`] returns
+//! `Self::Item`, not `Option<Self::Item>`.  The interface to functions like
+//! `successors` can also be much simpler, as neither the initial value
+//! nor the callback need deal with options.  For example, compare the following
+//! two expressions:
 //!
 //! ```ignore
 //! use std::iter;
@@ -112,10 +114,10 @@ impl<T, F: FnMut(&T) -> T> Perpetuity for Successors<T, F> {
 ///
 /// # Implementation
 ///
-/// We can't implement traits for [`RangeFrom<A>`] as [`Iterator<Item=A>`] without declaring `A:`
-/// [`Step`], but [`Step`] is unstable (even though it's used in the implementation of
-/// [`RangeFrom`], which is stable).  So, we can't impl traits for [`RangeFrom`] as [`Iterator`] in
-/// stable Rust. See also: <https://stackoverflow.com/a/56986698/3116635>
+/// We can't implement traits for [`RangeFrom<A>`] as [`Iterator<Item=A>`]
+/// without declaring `A:` [`Step`], but [`Step`] is unstable (even though it's
+/// used in the implementation of [`RangeFrom`], which is stable).  So, we can't
+/// impl traits for [`RangeFrom`] as [`Iterator`] in stable Rust. See also: <https://stackoverflow.com/a/56986698/3116635>
 ///
 /// If we could use [`Step`] in stable Rust, the impl might look like this:
 ///
@@ -128,11 +130,13 @@ impl<T, F: FnMut(&T) -> T> Perpetuity for Successors<T, F> {
 /// }
 /// ```
 ///
-/// So instead, we crank out implementations for specific types of [`RangeFrom`].
+/// So instead, we crank out implementations for specific types of
+/// [`RangeFrom`].
 ///
 /// # TODO
 ///
-/// * [ ] Define a `perpetuity::RangeFrom` tpye that doesn't require `unwrap` in `next_item`.
+/// * [ ] Define a `perpetuity::RangeFrom` tpye that doesn't require `unwrap` in
+///   `next_item`.
 ///
 /// [`Step`]: std::iter::Step
 macro_rules! range_from {

@@ -12,12 +12,13 @@ impl fmt::Display for Error {
     }
 }
 
-/// Default names to consider when searching for local trunk branch, in order of preference.
-/// Overridden by the value of the [`GRIT_TRUNKS`] environment variable.
+/// Default names to consider when searching for local trunk branch, in order of
+/// preference. Overridden by the value of the [`GRIT_TRUNKS`] environment
+/// variable.
 pub const DEFAULT_TRUNKS: [&str; 2] = ["main", "master"];
 
-/// Environment variable to check for comma-separated list of local trunk branch names.  If the
-/// variable is unset, the value defaults to [`DEFAULT_TRUNKS`].
+/// Environment variable to check for comma-separated list of local trunk branch
+/// names.  If the variable is unset, the value defaults to [`DEFAULT_TRUNKS`].
 pub const GRIT_TRUNKS: &str = "GRIT_TRUNKS";
 
 /// Returns the names of potential trunk branches, per [`GRIT_TRUNKS`] (if set)

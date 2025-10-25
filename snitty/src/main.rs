@@ -1,4 +1,5 @@
-//! For each specified Rust file, prints the line number of each redundant blank comment line.
+//! For each specified Rust file, prints the line number of each redundant blank
+//! comment line.
 
 use std::fs::File;
 use std::process::exit;

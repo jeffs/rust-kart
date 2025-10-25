@@ -217,8 +217,8 @@ impl<'a> Parser<'a> {
 
     /// # Errors
     ///
-    /// Will return `Err` if any mandatory argument is not provided, or if any supplied argument
-    /// cannot be parsed.
+    /// Will return `Err` if any mandatory argument is not provided, or if any
+    /// supplied argument cannot be parsed.
     ///
     /// # Panics
     ///

@@ -51,18 +51,21 @@ type Result<T> = std::result::Result<T, Error>;
 
 /// Policy for which branches to delete.
 struct UpdateArgs {
-    /// Specifies removal of local branches merged to local trunk.  Note that this does not include
-    /// GitHub "squash merges," which do not actually merge the original branch.
+    /// Specifies removal of local branches merged to local trunk.  Note that
+    /// this does not include GitHub "squash merges," which do not actually
+    /// merge the original branch.
     merged: bool,
 
-    /// Specifies removal of local branches whose upstreams are gone.  Upstream branches are often
-    /// deleted after being merged to trunk, even if they were "squash merged," so this is a useful
-    /// way to detect such "merges."
+    /// Specifies removal of local branches whose upstreams are gone.  Upstream
+    /// branches are often deleted after being merged to trunk, even if they
+    /// were "squash merged," so this is a useful way to detect such
+    /// "merges."
     gone: bool,
 }
 
 impl UpdateArgs {
-    /// Returns the name of this program for use in error logs, and the branch removal policy.
+    /// Returns the name of this program for use in error logs, and the branch
+    /// removal policy.
     fn new(args: impl IntoIterator<Item = ffi::OsString>) -> Result<Self> {
         if let Some(arg) = args.into_iter().next() {
             return Err(Error::Arg(arg));
@@ -78,9 +81,10 @@ impl UpdateArgs {
     }
 }
 
-/// Splits the specified Git output into lines, excludes any line beginning with "*", and trims
-/// leading whitespace from each line.  Note that the output is not necessarily a list of simple
-/// branch names; e.g., if the output is from `git branch --verbose`.
+/// Splits the specified Git output into lines, excludes any line beginning with
+/// "*", and trims leading whitespace from each line.  Note that the output is
+/// not necessarily a list of simple branch names; e.g., if the output is from
+/// `git branch --verbose`.
 fn trim_branches(stdout: &str) -> impl Iterator<Item = &str> {
     stdout
         .lines()
@@ -113,8 +117,8 @@ async fn is_working_copy_clean() -> Result<bool> {
 ///
 /// * [ ] Delete remote branches behind trunk.
 /// * [ ] Don't mess up "checkout -" by checking out main.  I tried _not_
-///   checking out main, but after fetch --prune, the user still sees a list
-///   of obsolete branches the next time they pull --prune; so now this program
+///   checking out main, but after fetch --prune, the user still sees a list of
+///   obsolete branches the next time they pull --prune; so now this program
 ///   checks out main just so it can run pull --prune per se.
 async fn update(args: env::ArgsOs) -> Result<()> {
     let rm = UpdateArgs::new(args)?; // Branch removal policy.
@@ -152,9 +156,10 @@ async fn update(args: env::ArgsOs) -> Result<()> {
         );
     }
 
-    // Don't delete potential trunks, even if they're behind the actual trunk.  When you have an
-    // integration branch (dev or staging or whatever) that's ahead of main, you want to be able to
-    // use that branch as trunk, without deleting main simply because it's behind staging.
+    // Don't delete potential trunks, even if they're behind the actual trunk.  When
+    // you have an integration branch (dev or staging or whatever) that's ahead
+    // of main, you want to be able to use that branch as trunk, without
+    // deleting main simply because it's behind staging.
     for trunk in trunk::names() {
         dead_branches.remove(&trunk);
     }

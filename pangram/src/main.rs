@@ -5,8 +5,8 @@
 //! pangram LETTERS [WORDS_FILE]
 //! ```
 //!
-//! Any uppercase `LETTERS` are considered mandatory.  Each solution is printed on
-//! a separate line, and pangrams (that is, words that use all available
+//! Any uppercase `LETTERS` are considered mandatory.  Each solution is printed
+//! on a separate line, and pangrams (that is, words that use all available
 //! `LETTERS`) are prefixed with asterisks.
 //!
 //! The default `WORDS_FILE` is /usr/share/dict/words.  Note that this file may

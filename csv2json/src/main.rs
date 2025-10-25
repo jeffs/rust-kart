@@ -3,9 +3,10 @@ use std::{io, process::exit};
 type Error = Box<dyn std::error::Error>;
 type Result<T> = std::result::Result<T, Error>;
 
-/// Returns a list of (key, value) pairs for each row of the CSV supplied to standard input.  Keys
-/// are taken from the CSV header (i.e., the first input line), and values from each subsequent
-/// line.  If fewer than two lines are provided, the result is an empty list.
+/// Returns a list of (key, value) pairs for each row of the CSV supplied to
+/// standard input.  Keys are taken from the CSV header (i.e., the first input
+/// line), and values from each subsequent line.  If fewer than two lines are
+/// provided, the result is an empty list.
 fn load_csv() -> Result<Vec<Vec<(String, String)>>> {
     let mut rows = Vec::new();
     let mut reader = csv::Reader::from_reader(io::stdin());

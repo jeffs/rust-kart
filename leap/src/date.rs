@@ -12,7 +12,8 @@ const DAYS_PER_WEEK: u8 = DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     let month = usize::from(month);
-    let is_leap_year = year.is_multiple_of(4) && !year.is_multiple_of(100) || year.is_multiple_of(400);
+    let is_leap_year =
+        year.is_multiple_of(4) && !year.is_multiple_of(100) || year.is_multiple_of(400);
     1..=[
         31,                                 // January
         if is_leap_year { 29 } else { 28 }, // February
@@ -29,7 +30,8 @@ fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {
     ][month - 1]
 }
 
-/// Returns the number of days between the first days of the year 1 and the specified year.
+/// Returns the number of days between the first days of the year 1 and the
+/// specified year.
 fn days_before_year(year: u16) -> usize {
     debug_assert!(YEARS.contains(&year));
     let years = usize::from(year - 1);
@@ -54,14 +56,16 @@ pub struct Date {
 }
 
 impl Date {
-    /// December 31st, tens of thousands of years from the day you're reading this.
+    /// December 31st, tens of thousands of years from the day you're reading
+    /// this.
     pub const MAX: Date = Date {
         year: u16::MAX,
         month: 12,
         day: 31,
     };
 
-    /// Returns the number of days between the first day of the year 1 and this date.
+    /// Returns the number of days between the first day of the year 1 and this
+    /// date.
     fn count_days(self) -> usize {
         let days = usize::from(self.day - 1);
         days_before_year(self.year) + days_before_month(self.year, self.month) + days
@@ -87,7 +91,8 @@ impl Date {
     ///
     /// # Panics
     ///
-    /// Will panic in debug mode only if the resulting date would exceed [`Date::MAX`].
+    /// Will panic in debug mode only if the resulting date would exceed
+    /// [`Date::MAX`].
     #[must_use]
     pub fn plus_one_day(self) -> Date {
         let day = self.day + 1;
@@ -102,7 +107,8 @@ impl Date {
     ///
     /// # Panics
     ///
-    /// Will panic in debug mode only if the resulting date would exceed [`Date::MAX`].
+    /// Will panic in debug mode only if the resulting date would exceed
+    /// [`Date::MAX`].
     #[must_use]
     pub fn plus_one_week(self) -> Date {
         let month_days = month_days(self.year, self.month);
@@ -114,12 +120,13 @@ impl Date {
         }
     }
 
-    /// Constructs a date in the specified year, month, and day.  All three fields are 1-based.
+    /// Constructs a date in the specified year, month, and day.  All three
+    /// fields are 1-based.
     ///
     /// # Errors
     ///
-    /// Returns [`Err`] if the date is invalid.  For example, you can't construct a nonsensical date
-    /// like February 40th.
+    /// Returns [`Err`] if the date is invalid.  For example, you can't
+    /// construct a nonsensical date like February 40th.
     ///
     /// # Examples
     ///

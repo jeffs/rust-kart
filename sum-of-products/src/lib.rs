@@ -22,7 +22,8 @@ pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
 
 /// # Errors
 ///
-/// Will return any `Err` from `lines`, or an `Err` if any word cannot be parsed as an f64.
+/// Will return any `Err` from `lines`, or an `Err` if any word cannot be parsed
+/// as an f64.
 pub fn parse<I: Iterator<Item = io::Result<String>>>(
     lines: I,
 ) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {

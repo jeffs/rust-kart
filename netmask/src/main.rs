@@ -1,5 +1,6 @@
-//! Prints the narrowest netmask that's inclusive of all specified netmasks.  Netmasks may be in
-//! CIDR notation, or may be literal IP addresses (implicitly requiring all 32 bits).
+//! Prints the narrowest netmask that's inclusive of all specified netmasks.
+//! Netmasks may be in CIDR notation, or may be literal IP addresses (implicitly
+//! requiring all 32 bits).
 //!
 //! # TODO
 //!
@@ -31,7 +32,8 @@ fn keep_left(ip: Ipv4Addr, len: u8) -> Ipv4Addr {
     Ipv4Addr::from_bits(ip.to_bits() & mask_left(len))
 }
 
-/// Returns a value in which the leftmost len bits are 1s, and the remaining 32 - len bits are 0s.
+/// Returns a value in which the leftmost len bits are 1s, and the remaining 32
+/// - len bits are 0s.
 fn mask_left(len: u8) -> u32 {
     let len = u32::from(len);
     assert!(len <= u32::BITS);
@@ -126,7 +128,8 @@ mod tests {
 
     #[test]
     fn test_ancestor_max_len() {
-        // Even if two masks are identical, their ancestor is limited to the shorter mask's length.
+        // Even if two masks are identical, their ancestor is limited to the shorter
+        // mask's length.
         let lhs: Netmask = "12.34.56.78/16".parse().expect("hard-coded netmask");
         let rhs: Netmask = "12.34.56.78".parse().expect("hard-coded netmask");
         assert_eq!(lhs.ancestor(&rhs), lhs);
@@ -134,7 +137,8 @@ mod tests {
 
     #[test]
     fn test_ancestor_exclude_first_difference() {
-        // The ancestor length should be one _less_ than the index of the first differing bit.
+        // The ancestor length should be one _less_ than the index of the first
+        // differing bit.
         let lhs = Netmask {
             ip: Ipv4Addr::from_bits(0xff00_0000),
             len: 8,

@@ -1,6 +1,7 @@
-//! Prints lines from standard input that contain only hexadecimal digits, where 'a' through 'f' are
-//! hexadecimal digits, as well as 'o' and 'i' (rendered as '0' and '1').  For example, here are
-//! forty [frequent English words][2] of at least length 4 that may be thus represented:
+//! Prints lines from standard input that contain only hexadecimal digits, where
+//! 'a' through 'f' are hexadecimal digits, as well as 'o' and 'i' (rendered as
+//! '0' and '1').  For example, here are forty [frequent English words][2] of at
+//! least length 4 that may be thus represented:
 //!
 //! ```sh
 //! $ sed 's/,.*//' var/unigram_freq.csv | cargo -q run | rg '^.{4}' | head -40 | column
@@ -10,7 +11,8 @@
 //! added   dead    ac1d    dec1de  decade  edd1e   fe0f    deed    c0c0a   a1ded
 //! ```
 //!
-//! Inspired by [The Complete List of Hex Words][1], though I haven't seen its source code.
+//! Inspired by [The Complete List of Hex Words][1], though I haven't seen its
+//! source code.
 //!
 //! [1]: https://stoney.sb.org/wordpress/the-complete-list-of-hex-words/
 //! [2]: https://www.kaggle.com/datasets/rtatman/english-word-frequency
