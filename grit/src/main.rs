@@ -1,8 +1,14 @@
 //! Provides command-line access to the [`since`] and [`update`] functions.
 
-use std::{env, ffi, process::exit};
+use std::{env, ffi, fmt, process::exit};
 
 use grit::command;
+
+const USAGE: &str = "
+    grit [-v|--verbose] {si|since} [GIT_FLAGS...] [BASE]
+    grit {ar|archive} BRANCH
+    grit {tr|trunk}
+    grit {up|update}";
 
 trait ToStr {
     fn to_str(&self) -> Option<&str>;
@@ -12,6 +18,11 @@ impl ToStr for Option<ffi::OsString> {
     fn to_str(&self) -> Option<&str> {
         self.as_deref().and_then(ffi::OsStr::to_str)
     }
+}
+
+fn die(prefix: &str, message: impl fmt::Display, status: i32) -> ! {
+    eprintln!("{prefix}{message}");
+    exit(status)
 }
 
 #[tokio::main]
@@ -26,18 +37,9 @@ async fn main() {
         Some("si" | "since") => command::since::short(args).await,
         Some("tr" | "trunk") => command::trunk::trunk(args).await,
         Some("up" | "update") => command::update::update(args).await,
-        _ => {
-            let usage = "Usage:\
-                \n    grit [-v|--verbose] {si|since} [GIT_FLAGS...] [BASE]\
-                \n    grit {ar|archive} BRANCH\
-                \n    grit {tr|trunk}\
-                \n    grit {up|update}";
-            eprintln!("{usage}");
-            exit(2);
-        }
+        _ => die("Usage:", USAGE, 2),
     };
     if let Err(err) = result {
-        eprintln!("Error: {err}");
-        exit(1);
+        die("Error: ", err, 1);
     }
 }
