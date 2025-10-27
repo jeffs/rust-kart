@@ -24,6 +24,7 @@ members = [
   "snitty",
   "stop-once",
   "sum-of-products",
+  "trim-end",
   "tmux-send",
   "utf",
   "uuid",
