@@ -4,6 +4,9 @@ use crate::{git, trunk};
 
 #[derive(Debug)]
 pub enum Error {
+    /// Archive
+    Archive,
+
     /// An unrecognized command line argument was supplied.
     Arg(ffi::OsString),
 
