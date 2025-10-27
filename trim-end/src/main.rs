@@ -62,10 +62,29 @@ async fn process_file(path: &Path) -> io::Result<()> {
     Ok(())
 }
 
+async fn process_file_verbose(path: &Path) -> io::Result<()> {
+    let display = path.display();
+    println!("Loading: {display}");
+    let result = process_file(path).await;
+    if result.is_ok() {
+        println!("Success: {display}");
+    } else {
+        println!("Failure: {display}");
+    }
+    result
+}
+
 async fn main_imp() -> Vec<Error> {
+    let mut is_verbose = false;
     let args = env::args_os()
         .skip(1)
-        .map(PathBuf::from)
+        .filter_map(|arg| match arg.to_str() {
+            Some("-v" | "--verbose") => {
+                is_verbose = true;
+                None
+            }
+            _ => Some(Path::new(&arg).to_owned()),
+        })
         .collect::<Vec<_>>();
 
     if args.is_empty() {
@@ -76,8 +95,18 @@ async fn main_imp() -> Vec<Error> {
     }
 
     let mut set = tokio::task::JoinSet::new();
-    for path in args {
-        set.spawn(async { process_file(&path).await.map_err(|e| Error::File(path, e)) });
+    if is_verbose {
+        for path in args {
+            set.spawn(async {
+                process_file_verbose(&path)
+                    .await
+                    .map_err(|e| Error::File(path, e))
+            });
+        }
+    } else {
+        for path in args {
+            set.spawn(async { process_file(&path).await.map_err(|e| Error::File(path, e)) });
+        }
     }
 
     set.join_all()
@@ -92,7 +121,7 @@ async fn main() {
     let errors = main_imp().await;
     if !errors.is_empty() {
         for error in errors {
-            eprintln!("error: {error}");
+            eprintln!("Error: {error}");
         }
         std::process::exit(1);
     }
