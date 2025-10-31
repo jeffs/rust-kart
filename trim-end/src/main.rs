@@ -2,7 +2,7 @@
 //! or from stdin if no files are specified, writing the results to stdout.
 
 use std::{
-    env, fmt,
+    env, fmt, mem,
     path::{Path, PathBuf},
 };
 
@@ -24,6 +24,16 @@ impl fmt::Display for Error {
             Self::File(p, e) => write!(f, "{}: {e}", p.display()),
         }
     }
+}
+
+/// TODO: There should be an option to compress redundant intraline whitespace,
+///  while preserving horizontally aligned comments.
+#[derive(Clone, Copy)]
+enum Collapse {
+    /// Don't collapse consecutive whitespace.
+    None,
+    /// Consolidate consecutive blank lines.
+    Lines,
 }
 
 /// Copies text from stdin to stdout, one line at a time, removing trailing
@@ -48,12 +58,23 @@ fn process_stdin() -> std::io::Result<()> {
 /// This function buffers the entire file in RAM. It's probably not worth
 /// reading one line at a time, because local, sequential file I/O is so fast
 /// these days that string processing might actually be the bottleneck.
-async fn process_file(path: &Path) -> io::Result<()> {
+async fn process_file(path: &Path, collapse: Collapse) -> io::Result<()> {
     let text = fs::read_to_string(&path).await?;
+
+    // Remove trailing whitespace from each line.
     let mut lines = text.lines().map(str::trim_end).collect::<Vec<_>>();
+
+    // Remove trailing blank lines.
     while lines.last().is_some_and(|s| s.is_empty()) {
         lines.pop();
     }
+
+    if matches!(collapse, Collapse::Lines) {
+        // Collape consecutive blank lines.
+        let mut is_blank = false;
+        lines.retain(|line| !mem::replace(&mut is_blank, line.is_empty()) || !is_blank);
+    }
+
     let mut output = fs::File::create(&path).await?;
     for line in &lines {
         output.write_all(line.as_bytes()).await?;
@@ -62,10 +83,10 @@ async fn process_file(path: &Path) -> io::Result<()> {
     Ok(())
 }
 
-async fn process_file_verbose(path: &Path) -> io::Result<()> {
+async fn process_file_verbose(path: &Path, collapse: Collapse) -> io::Result<()> {
     let display = path.display();
     println!("Loading: {display}");
-    let result = process_file(path).await;
+    let result = process_file(path, collapse).await;
     if result.is_ok() {
         println!("Success: {display}");
     } else {
@@ -75,12 +96,19 @@ async fn process_file_verbose(path: &Path) -> io::Result<()> {
 }
 
 async fn main_imp() -> Vec<Error> {
+    // Whether to print messages before and after each file is processed.
     let mut is_verbose = false;
+    // Whether to consolidate consecutive blank lines.
+    let mut collapse = Collapse::None;
     let args = env::args_os()
         .skip(1)
         .filter_map(|arg| match arg.to_str() {
             Some("-v" | "--verbose") => {
                 is_verbose = true;
+                None
+            }
+            Some("-l" | "--collapse-lines") => {
+                collapse = Collapse::Lines;
                 None
             }
             _ => Some(Path::new(&arg).to_owned()),
@@ -97,15 +125,19 @@ async fn main_imp() -> Vec<Error> {
     let mut set = tokio::task::JoinSet::new();
     if is_verbose {
         for path in args {
-            set.spawn(async {
-                process_file_verbose(&path)
+            set.spawn(async move {
+                process_file_verbose(&path, collapse)
                     .await
                     .map_err(|e| Error::File(path, e))
             });
         }
     } else {
         for path in args {
-            set.spawn(async { process_file(&path).await.map_err(|e| Error::File(path, e)) });
+            set.spawn(async move {
+                process_file(&path, collapse)
+                    .await
+                    .map_err(|e| Error::File(path, e))
+            });
         }
     }
 
