@@ -6,7 +6,7 @@ use grit::command;
 
 const USAGE: &str = "
     grit [-v|--verbose] {si|since} [GIT_FLAGS...] [BASE]
-    grit {ar|archive} BRANCH
+    grit {ar|archive} [-dD] BRANCH
     grit {tr|trunk}
     grit {up|update}";
 
@@ -33,6 +33,7 @@ async fn main() {
     let is_verbose = matches!(arg.to_str(), Some("-v" | "--verbose"));
     let command = if is_verbose { args.next() } else { arg };
     let result = match command.to_str() {
+        Some("ar" | "archive") => command::archive::archive(args).await,
         Some("si" | "since") if is_verbose => command::since::long(args).await,
         Some("si" | "since") => command::since::short(args).await,
         Some("tr" | "trunk") => command::trunk::trunk(args).await,

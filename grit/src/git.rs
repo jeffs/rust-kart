@@ -111,12 +111,12 @@ pub async fn merge_base_head(base: impl AsRef<OsStr>) -> Result<String> {
 /// ```no_run
 /// assert_eq!(upstream("main"), Some("origin/main"));
 /// ```
-pub async fn upstream(branch: &str) -> Option<String> {
+pub async fn upstream(branch: impl AsRef<OsStr>) -> Option<String> {
     git([
         "rev-parse",
         "--abbrev-ref",
         "--symbolic-full-name",
-        &format!("{branch}@{{u}}"),
+        &format!("{}@{{u}}", branch.as_ref().display()),
     ])
     .await
     .ok()
