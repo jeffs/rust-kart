@@ -29,7 +29,7 @@ members = [
   "utf",
   "uuid",
   "vimod",
-  "wl2md", "edit",
+  "wl2md",
 ]
 
 [workspace.lints.clippy]

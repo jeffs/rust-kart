@@ -236,10 +236,6 @@ name = "delay"
 version = "0.1.0"
 
 [[package]]
-name = "edit"
-version = "0.1.0"
-
-[[package]]
 name = "fix-quotes"
 version = "0.1.0"
 
