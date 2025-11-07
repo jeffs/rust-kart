@@ -12,7 +12,8 @@ pub const HEAD: &str = "HEAD";
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        // If the Git error already ends with a newline, remove it.
+        self.0.strip_suffix('\n').unwrap_or(&self.0).fmt(f)
     }
 }
 
