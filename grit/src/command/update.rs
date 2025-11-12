@@ -1,4 +1,4 @@
-use std::{collections::HashSet, env, ffi};
+use std::{collections::BTreeSet, env, ffi};
 
 use crate::{
     error::{Error, Result},
@@ -15,7 +15,7 @@ struct Args {
 
     /// Specifies removal of local branches whose upstreams are gone.  Upstream
     /// branches are often deleted after being merged to trunk, even if they
-    /// were "squash merged," so this is a useful way to detect such
+    /// were "squash merged" on GitHub, so this is a useful way to detect such
     /// "merges."
     gone: bool,
 }
@@ -91,7 +91,7 @@ pub async fn update(args: env::ArgsOs) -> Result<()> {
         }
     }
 
-    let mut dead_branches = HashSet::<String>::new();
+    let mut dead_branches = BTreeSet::<String>::new();
     if rm.merged {
         dead_branches.extend(trim_branches(&git(["branch", "--merged"]).await?).map(str::to_owned));
     }
