@@ -16,6 +16,7 @@ members = [
   "kcal",
   "leap",
   "lev",
+  "md-front",
   "module-from-path",
   "netmask",
   "pangram",
