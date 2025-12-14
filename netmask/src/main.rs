@@ -17,7 +17,7 @@ use std::{
 
 use thiserror::Error;
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 const IPV4_ADDR_BITS: u8 = Ipv4Addr::BITS as u8;
 
 #[derive(Debug, Error)]

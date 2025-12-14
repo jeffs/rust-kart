@@ -7,7 +7,7 @@ use crate::{Error, Result};
 const MONTHS: RangeInclusive<u8> = 1..=12;
 const YEARS: RangeFrom<u16> = 1..;
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 const DAYS_PER_WEEK: u8 = DAYS.len() as u8;
 
 fn month_days(year: u16, month: u8) -> RangeInclusive<u8> {

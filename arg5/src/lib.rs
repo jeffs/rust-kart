@@ -19,7 +19,7 @@ enum Appetite {
     Full,    // Cannot accept any more arguments.
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 enum Capacity {
     Mandatory, // exactly one
     Optional,  // zero or one
@@ -37,7 +37,6 @@ pub enum Store<'a> {
 }
 
 impl Store<'_> {
-    #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         match self {
             Store::I32(_) | Store::Str(_) | Store::U32(_) => Capacity::Mandatory,
@@ -53,7 +52,6 @@ pub struct Binding<'a> {
 }
 
 impl Binding<'_> {
-    #[allow(dead_code)]
     fn capacity(&self) -> Capacity {
         self.store.capacity()
     }
@@ -159,7 +157,7 @@ impl Bind for Option<u32> {
 #[derive(Debug)]
 struct Parameter<'a> {
     name: &'static str,
-    #[allow(unused)]
+    #[expect(unused)]
     flag: Option<char>,
     binding: Binding<'a>,
 }
@@ -227,7 +225,7 @@ impl<'a> Parser<'a> {
     /// # Panics
     ///
     /// Will panic if the current program name cannot be determined.
-    #[allow(clippy::similar_names)] // args, arg0
+    #[expect(clippy::similar_names)] // args, arg0
     pub fn parse<S, I>(&mut self, args: I) -> Result<(), ParseError>
     where
         S: ToString,
