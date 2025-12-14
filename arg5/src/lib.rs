@@ -188,6 +188,10 @@ impl<'a> Parameter<'a> {
     }
 }
 
+fn metavar(name: &str) -> String {
+    name.replace('-', "_").to_uppercase()
+}
+
 #[derive(Default)]
 pub struct Parser<'a> {
     parameters: HashMap<&'static str, Parameter<'a>>,
@@ -284,7 +288,7 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub fn usage(&self, arg0: &str) -> String {
         let mut text = arg0.to_string();
-        // Print nonpositional parameters first (sorted for deterministic output).
+        // Print nonpositional parameters first, sorted for deterministic order.
         let mut nonpositionals: Vec<_> = self
             .parameters
             .keys()
@@ -293,18 +297,20 @@ impl<'a> Parser<'a> {
         nonpositionals.sort();
         for name in nonpositionals {
             let parameter = &self.parameters[name];
+            let meta = metavar(name);
             text = match parameter.capacity() {
-                Capacity::Mandatory => format!("{text} --{name} <{name}>"),
-                Capacity::Optional => format!("{text} [--{name} <{name}>]"),
-                Capacity::Variadic => format!("{text} [--{name} <{name}>...]"),
+                Capacity::Mandatory => format!("{text} --{name} {meta}"),
+                Capacity::Optional => format!("{text} [--{name} {meta}]"),
+                Capacity::Variadic => format!("{text} [--{name} {meta}...]"),
             };
         }
         for name in &self.positionals {
             let parameter = &self.parameters[name];
+            let meta = metavar(name);
             text = match parameter.capacity() {
-                Capacity::Mandatory => format!("{text} <{name}>"),
-                Capacity::Optional => format!("{text} [{name}]"),
-                Capacity::Variadic => format!("{text} [{name}...]"),
+                Capacity::Mandatory => format!("{text} {meta}"),
+                Capacity::Optional => format!("{text} [{meta}]"),
+                Capacity::Variadic => format!("{text} [{meta}...]"),
             };
         }
         text

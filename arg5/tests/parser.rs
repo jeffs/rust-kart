@@ -140,7 +140,7 @@ mod a_parser {
             parser.declare_positional("count", &mut got_i32);
             parser.declare_positional("word", &mut got_str);
             parser.declare_positional("opt", &mut got_opt);
-            assert_eq!(parser.usage("repeat"), "repeat <count> <word> [opt]");
+            assert_eq!(parser.usage("repeat"), "repeat COUNT WORD [OPT]");
         }
     }
 
