@@ -284,7 +284,21 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub fn usage(&self, arg0: &str) -> String {
         let mut text = arg0.to_string();
-        // TODO: Print nonpositional parameters.
+        // Print nonpositional parameters first (sorted for deterministic output).
+        let mut nonpositionals: Vec<_> = self
+            .parameters
+            .keys()
+            .filter(|name| !self.positionals.contains(name))
+            .collect();
+        nonpositionals.sort();
+        for name in nonpositionals {
+            let parameter = &self.parameters[name];
+            text = match parameter.capacity() {
+                Capacity::Mandatory => format!("{text} --{name} <{name}>"),
+                Capacity::Optional => format!("{text} [--{name} <{name}>]"),
+                Capacity::Variadic => format!("{text} [--{name} <{name}>...]"),
+            };
+        }
         for name in &self.positionals {
             let parameter = &self.parameters[name];
             text = match parameter.capacity() {
