@@ -1,6 +1,5 @@
 use std::io;
 
-// TODO: Fix single quotes.
 fn replace_quotes(text: &str) -> String {
     text.chars()
         .map(|c| match c {
