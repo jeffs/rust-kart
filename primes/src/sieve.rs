@@ -1,6 +1,7 @@
 type Word = u64;
 
 const WORD_BITS: usize = Word::BITS as usize;
+const U32_MAX: usize = u32::MAX as usize;
 
 // The little-endian index of each 1 bit, times two and plus one, is prime.  For
 // example, the first ten bits are:
@@ -26,6 +27,7 @@ const FIRST_WORD: Word = 0x816d_129a_64b4_cb6e;
 
 pub struct Primes<'a> {
     sieve: &'a mut Sieve,
+    /// The last returned prime, or 0 if no primes have been returned yet.
     known: u32,
 }
 
@@ -123,11 +125,17 @@ impl Sieve {
         self.words[index / WORD_BITS] & (1 << (index % WORD_BITS)) != 0
     }
 
-    // TODO: Why is this a u32 rather than a usize?  Why not support 1<<32 primes?
+    /// Returns the number of values whose primalities have been checked.
+    /// This number goes up when we [`grow`][`Self::grow`].
     fn num_values(&self) -> u32 {
-        u32::try_from(self.words.len() * WORD_BITS * 2).expect("sieve max size exceeded")
+        (self.words.len() * WORD_BITS * 2)
+            .try_into()
+            .unwrap_or_else(|_| unreachable!("sieve size is capped at u32::MAX"))
     }
 
+    /// # Panics
+    ///
+    /// Will panic if this sieve already holds [`u32::MAX`] values.
     pub fn grow(&mut self) {
         if self.words.is_empty() {
             self.words.push(FIRST_WORD);
@@ -135,17 +143,18 @@ impl Sieve {
         }
 
         // Append a bunch of ones, then iterate through known primes and mark
-        // all their multiples composite by clearing bits.  We always have at
-        // least enough known primes to fill out twice the size of our table,
-        // but we cap the number of new bits added at any time to avoid
-        // overflowing our value type (since we use indexes as values).  The
-        // cap value is arbitrary.
+        // all their multiples composite by clearing bits.
         //
-        // TODO: What was I thinking when I wrote about "having at least enough primes?"
+        // Our table always contains at least enough known primes to fill out
+        // twice its size, but we cap the size to avoid overflowing our value
+        // type (since we use indexes as values). In other words: We could
+        // figure out whether values larger than `u32::MAX` are prime, but
+        // we have no interface for checking (`Self::is_prime`) or generating
+        // (`Primes::next`) such values.
         let num_old_values = self.num_values();
-
-        // TODO: This caps the total number of words, not the number of _new_ words.
-        let new_len = 1_000_000.min(self.words.len() * 2);
+        let old_len = self.words.len();
+        let new_len = (U32_MAX / WORD_BITS / 2).min(old_len * 2);
+        assert!(new_len > old_len, "sieve max size exceeded");
         self.words.resize(new_len, !0);
 
         let num_new_values = self.num_values();
@@ -236,5 +245,49 @@ mod tests {
             let got: Vec<_> = sieve.factors(arg).collect();
             assert_eq!(got, want, "factorization of {arg}");
         }
+    }
+
+    /// The maximum number of values the sieve can hold.
+    const MAX_NUM_VALUES: u32 = (U32_MAX / WORD_BITS / 2 * WORD_BITS * 2) as u32;
+
+    /// The largest value that can be checked for primality.
+    const MAX_CHECKABLE_VALUE: u32 = MAX_NUM_VALUES - 1;
+
+    #[test]
+    fn test_sieve_grow_mechanics() {
+        let mut sieve = Sieve::new();
+        // Verify we can grow to a reasonable size.
+        sieve.is_prime(1_000_000);
+        let num_values = sieve.num_values();
+        assert!(num_values > 1_000_000);
+        // Verify growing multiple times doesn't panic before max.
+        for _ in 0..5 {
+            if sieve.words.len() * 2 > U32_MAX / WORD_BITS / 2 {
+                break; // Would exceed max on next grow.
+            }
+            sieve.grow();
+        }
+    }
+
+    #[test]
+    #[ignore] // very slow and memory-intensive (~256 MB)
+    fn test_sieve_max_checkable_value() {
+        let mut sieve = Sieve::new();
+        // The sieve can hold MAX_NUM_VALUES values (0 through MAX_NUM_VALUES-1).
+        // This should work without panicking.
+        let _ = sieve.is_prime(MAX_CHECKABLE_VALUE);
+        // Verify the sieve reached max size.
+        assert_eq!(sieve.num_values(), MAX_NUM_VALUES);
+    }
+
+    #[test]
+    #[ignore] // very slow and memory-intensive (~256 MB)
+    #[should_panic(expected = "sieve max size exceeded")]
+    fn test_sieve_grow_beyond_max_panics() {
+        let mut sieve = Sieve::new();
+        // First grow to max size.
+        let _ = sieve.is_prime(MAX_CHECKABLE_VALUE);
+        // Now try to grow beyond max - this should panic.
+        sieve.grow();
     }
 }

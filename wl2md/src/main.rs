@@ -1,4 +1,4 @@
-// TODO: Report CLI errors; supprot --help.
+// TODO: Report CLI errors; support --help.
 
 use core::fmt;
 use std::fmt::Display;
