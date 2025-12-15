@@ -110,7 +110,11 @@ pub async fn merge_base_head(base: impl AsRef<OsStr>) -> Result<String> {
 /// Assuming the local `main` branch is tracking `origin/main`:
 ///
 /// ```no_run
-/// assert_eq!(upstream("main"), Some("origin/main"));
+/// use grit::git;
+///
+/// async fn assert_main() {
+///     assert_eq!(git::upstream("main").await.as_deref(), Some("origin/main"));
+/// }
 /// ```
 pub async fn upstream(branch: impl AsRef<OsStr>) -> Option<String> {
     git([
