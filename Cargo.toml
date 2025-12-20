@@ -3,6 +3,7 @@ resolver = "3"
 
 members = [
   "arg5",
+  "dgmod",
   "b2c",
   "cargo-norm",
   "csv2json",
