@@ -77,10 +77,11 @@ A developer wants to understand which modules expose items from other modules vi
 - **FR-008**: For `use` statements referencing items (not modules), the edge MUST target the module containing the item in the import path, not the item's original definition module
 - **FR-009**: System MUST ensure at most one edge exists per direction for any pair of modules
 - **FR-010**: System MUST handle cyclic dependencies without infinite loops or crashes
-- **FR-011**: System MUST output the graph in a text-based format suitable for further processing
-- **FR-012**: System MUST gracefully handle parse errors, reporting them without aborting the entire analysis
+- **FR-011**: System MUST output the graph in Mermaid diagram syntax (flowchart format)
+- **FR-012**: System MUST gracefully handle parse errors, reporting them to stderr without aborting the entire analysis (graph output goes to stdout)
 - **FR-013**: System MUST exclude dependencies on external crates (only intra-crate module relationships)
 - **FR-014**: System MUST handle `#[path = "..."]` attribute overrides on module declarations
+- **FR-015**: When given a Cargo workspace path, system MUST detect all member crates and produce a separate graph for each crate (no cross-crate edges)
 
 ### Key Entities
 
@@ -98,11 +99,19 @@ A developer wants to understand which modules expose items from other modules vi
 - **SC-004**: Tool handles malformed Rust files by reporting errors and continuing, rather than crashing
 - **SC-005**: Output format is parseable and can be piped to other tools for visualization or analysis
 
+## Clarifications
+
+### Session 2025-12-20
+
+- Q: What output format should the graph use? → A: Mermaid diagram syntax
+- Q: How should Cargo workspaces be handled? → A: Workspace-aware but isolate each crate (separate graph per crate member)
+- Q: Where should parse errors be reported? → A: Stderr (errors to stderr, graph to stdout)
+
 ## Assumptions
 
 - The tool operates on crates with source code available locally (not on compiled artifacts)
 - Standard Rust 2018/2021 edition module resolution rules apply
 - The tool is a command-line utility
-- Output format will be a simple text representation of edges (exact format to be determined in planning)
+- Output format is Mermaid diagram syntax, compatible with GitHub/GitLab markdown rendering and Mermaid Live Editor
 - The tool does not need to resolve or download external crate dependencies
 - Conditional compilation (`#[cfg(...)]`) attributes on modules will include all conditional modules in the graph (no evaluation of cfg conditions)
