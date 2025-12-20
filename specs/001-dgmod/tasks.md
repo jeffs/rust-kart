@@ -39,7 +39,7 @@ dgmod/
 
 **Purpose**: Create the dgmod crate structure and configure dependencies
 
-- [ ] T001 Create dgmod directory and Cargo.toml with dependencies (syn, clap, cargo_metadata) in dgmod/Cargo.toml
+- [ ] T001 Create dgmod directory and Cargo.toml with dependencies (syn, clap, cargo_metadata) in dgmod/Cargo.toml. Include comments explaining each dependency per constitution II: syn (Rust parsing, no stdlib alternative), clap (CLI parsing, minimal and maintained), cargo_metadata (workspace detection, FR-015)
 - [ ] T002 Add dgmod to workspace members in Cargo.toml (workspace root)
 - [ ] T003 [P] Create empty module files: dgmod/src/lib.rs, dgmod/src/main.rs
 - [ ] T004 [P] Create empty module files: dgmod/src/parser.rs, dgmod/src/graph.rs, dgmod/src/resolver.rs
@@ -196,6 +196,8 @@ dgmod/
 - [ ] T063 Run `cargo fmt -p dgmod` to ensure consistent formatting
 - [ ] T064 Verify `cargo test -p dgmod` passes all tests
 - [ ] T065 Manual validation against quickstart.md scenarios
+- [ ] T066 [P] Create or locate 100-module test crate in dgmod/tests/fixtures/large/ and verify analysis completes in under 5 seconds (SC-003)
+- [ ] T067 [P] Add test fixture with cfg-guarded module (`#[cfg(feature = "x")] mod foo;`) and verify it appears in graph in dgmod/tests/fixtures/cfg_module/
 
 ---
 
@@ -276,14 +278,14 @@ Complete T001-T042 (Setup + Foundational + US1) to get a working MVP that can an
 
 | Metric | Value |
 |--------|-------|
-| Total Tasks | 65 |
+| Total Tasks | 67 |
 | Setup (Phase 1) | 7 |
 | Foundational (Phase 2) | 10 |
 | User Story 1 (Phase 3) | 25 |
 | User Story 2 (Phase 4) | 3 |
 | User Story 3 (Phase 5) | 4 |
 | Workspace (Phase 6) | 6 |
-| Polish (Phase 7) | 10 |
+| Polish (Phase 7) | 12 |
 
 **MVP Scope**: T001-T042 (User Story 1 complete)
 
