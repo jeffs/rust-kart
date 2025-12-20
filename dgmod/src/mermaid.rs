@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::graph::ModuleGraph;
+use crate::graph::{EdgeKind, ModuleGraph};
 
 /// Sanitize a module path for use as a Mermaid node ID
 /// Replaces :: with _ since Mermaid doesn't allow :: in IDs
@@ -25,14 +25,19 @@ fn emit_nodes(graph: &ModuleGraph, output: &mut String) {
 fn emit_edges(graph: &ModuleGraph, output: &mut String) {
     let mut edges: Vec<_> = graph
         .edges()
-        .map(|(from, to)| (from.as_str(), to.as_str()))
+        .map(|(from, to, kind)| (from.as_str(), to.as_str(), kind))
         .collect();
     edges.sort_unstable();
 
-    for (from, to) in edges {
+    for (from, to, kind) in edges {
         let from_id = sanitize_id(from);
         let to_id = sanitize_id(to);
-        let _ = writeln!(output, "    {from_id} --> {to_id}");
+        // Use solid arrow for mod declarations, dashed for use imports
+        let arrow = match kind {
+            EdgeKind::ModDeclaration => "-->",
+            EdgeKind::UseImport => "-.->",
+        };
+        let _ = writeln!(output, "    {from_id} {arrow} {to_id}");
     }
 }
 

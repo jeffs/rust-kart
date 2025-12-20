@@ -14,7 +14,7 @@ pub mod workspace;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-use graph::{Module, ModuleGraph, ModuleKind, ModulePath};
+use graph::{EdgeKind, Module, ModuleGraph, ModuleKind, ModulePath};
 use parser::{extract_mod_declarations, extract_use_paths, extract_use_statements, parse_file};
 use resolver::{
     find_crate_root, is_inline_module, is_internal_path, resolve_module_file, resolve_use_target,
@@ -199,7 +199,11 @@ fn discover_modules(
         let child_path = parent_path.child(&mod_name);
 
         // Add mod declaration edge
-        graph.add_edge(parent_path.clone(), child_path.clone());
+        graph.add_edge(
+            parent_path.clone(),
+            child_path.clone(),
+            EdgeKind::ModDeclaration,
+        );
 
         if is_inline_module(item_mod) {
             // Inline module - content is in the same file
@@ -273,7 +277,7 @@ fn add_use_edges(
             }
 
             if let Some(target) = resolve_use_target(&segments, module_path, known_modules) {
-                graph.add_edge(module_path.clone(), target);
+                graph.add_edge(module_path.clone(), target, EdgeKind::UseImport);
             }
         }
     }

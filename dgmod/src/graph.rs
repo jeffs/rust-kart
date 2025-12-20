@@ -1,6 +1,6 @@
 //! Graph data structures for module dependencies
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Newtype wrapper for module paths (e.g., "crate", `alpha::delta`)
@@ -43,7 +43,7 @@ pub enum ModuleKind {
 }
 
 /// How a dependency edge was established
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum EdgeKind {
     /// Parent declares child: `mod foo;`
     ModDeclaration,
@@ -69,8 +69,10 @@ pub struct ModuleGraph {
     pub crate_name: String,
     /// All modules indexed by path
     modules: HashMap<ModulePath, Module>,
-    /// Deduplicated edges (from, to)
-    edges: HashSet<(ModulePath, ModulePath)>,
+    /// Deduplicated edges: (from, to) -> kind
+    /// If both `ModDeclaration` and `UseImport` exist for the same edge,
+    /// `ModDeclaration` takes precedence.
+    edges: HashMap<(ModulePath, ModulePath), EdgeKind>,
 }
 
 impl ModuleGraph {
@@ -80,7 +82,7 @@ impl ModuleGraph {
         Self {
             crate_name,
             modules: HashMap::new(),
-            edges: HashSet::new(),
+            edges: HashMap::new(),
         }
     }
 
@@ -90,10 +92,23 @@ impl ModuleGraph {
     }
 
     /// Add an edge between two modules (no self-edges allowed)
-    pub fn add_edge(&mut self, from: ModulePath, to: ModulePath) {
-        if from != to {
-            self.edges.insert((from, to));
+    ///
+    /// If an edge already exists between the same modules, `ModDeclaration`
+    /// takes precedence over `UseImport`.
+    pub fn add_edge(&mut self, from: ModulePath, to: ModulePath, kind: EdgeKind) {
+        if from == to {
+            return;
         }
+        let key = (from, to);
+        self.edges
+            .entry(key)
+            .and_modify(|existing| {
+                // ModDeclaration takes precedence over UseImport
+                if kind == EdgeKind::ModDeclaration {
+                    *existing = kind;
+                }
+            })
+            .or_insert(kind);
     }
 
     /// Iterate over all modules
@@ -101,8 +116,10 @@ impl ModuleGraph {
         self.modules.values()
     }
 
-    /// Iterate over all edges as (from, to) pairs
-    pub fn edges(&self) -> impl Iterator<Item = (&ModulePath, &ModulePath)> {
-        self.edges.iter().map(|(from, to)| (from, to))
+    /// Iterate over all edges as (from, to, kind) tuples
+    pub fn edges(&self) -> impl Iterator<Item = (&ModulePath, &ModulePath, EdgeKind)> {
+        self.edges
+            .iter()
+            .map(|((from, to), kind)| (from, to, *kind))
     }
 }
