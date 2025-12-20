@@ -58,28 +58,26 @@ src/
 └── gamma.rs    # use super::Root;
 ```
 
-Running `dgmod /path/to/crate` outputs:
+Running `dgmod /path/to/crate` outputs the following Markdown:
 
-```markdown
-## my-crate
+    ## my-crate
 
-```mermaid
-flowchart TD
-    crate["crate"]
-    alpha["alpha"]
-    alpha_delta["alpha::delta"]
-    beta["beta"]
-    gamma["gamma"]
+    ```mermaid
+    flowchart TD
+        crate["crate"]
+        alpha["alpha"]
+        alpha_delta["alpha::delta"]
+        beta["beta"]
+        gamma["gamma"]
 
-    crate --> alpha
-    crate --> beta
-    crate --> gamma
-    alpha --> alpha_delta
-    beta --> alpha
-    beta --> gamma
-    gamma --> crate
-```
-```
+        crate --> alpha
+        crate --> beta
+        crate --> gamma
+        alpha --> alpha_delta
+        beta --> alpha
+        beta --> gamma
+        gamma --> crate
+    ```
 
 ---
 
