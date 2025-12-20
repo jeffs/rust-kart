@@ -56,8 +56,8 @@ A developer wants to understand which modules expose items from other modules vi
 ### Edge Cases
 
 - What happens when a crate has no submodules (only the root module)? → Output shows only the `crate` node with no edges
-- What happens when a source file cannot be parsed? → Tool reports the parse error with file location and continues processing other files
-- What happens when `mod` declarations reference non-existent files? → Tool reports the missing file and continues processing
+- What happens when a source file cannot be parsed? → Tool logs the parse error with file location to stderr and exits with non-zero status
+- What happens when `mod` declarations reference non-existent files? → Tool logs the missing file to stderr and exits with non-zero status
 - What happens with `#[path = "..."]` attribute overrides on `mod` declarations? → Tool follows the specified path
 - What happens with `use` statements importing external crates? → External crates are excluded; only intra-crate dependencies are tracked
 - What happens with glob imports (`use foo::*;`)? → An edge is created to the glob's source module
@@ -78,7 +78,7 @@ A developer wants to understand which modules expose items from other modules vi
 - **FR-009**: System MUST ensure at most one edge exists per direction for any pair of modules
 - **FR-010**: System MUST handle cyclic dependencies without infinite loops or crashes
 - **FR-011**: System MUST output the graph in Mermaid diagram syntax (flowchart format)
-- **FR-012**: System MUST gracefully handle parse errors, reporting them to stderr without aborting the entire analysis (graph output goes to stdout)
+- **FR-012**: System MUST exit with non-zero status upon encountering parse errors or missing module files, after logging the error details to stderr
 - **FR-013**: System MUST exclude dependencies on external crates (only intra-crate module relationships)
 - **FR-014**: System MUST handle `#[path = "..."]` attribute overrides on module declarations
 - **FR-015**: When given a Cargo workspace path, system MUST detect all member crates and produce a separate graph for each crate (no cross-crate edges)
@@ -96,7 +96,7 @@ A developer wants to understand which modules expose items from other modules vi
 - **SC-001**: Tool correctly identifies all modules in a crate, including nested submodules
 - **SC-002**: Tool produces the exact expected graph for the reference sample crate at `/Users/jeff/sample` (7 edges: `crate→alpha`, `crate→beta`, `crate→gamma`, `alpha→alpha::delta`, `beta→alpha`, `beta→gamma`, `gamma→crate`)
 - **SC-003**: Tool completes analysis of a 100-module crate in under 5 seconds
-- **SC-004**: Tool handles malformed Rust files by reporting errors and continuing, rather than crashing
+- **SC-004**: Tool exits cleanly with non-zero status and clear error message when encountering malformed Rust files or missing modules
 - **SC-005**: Output format is parseable and can be piped to other tools for visualization or analysis
 
 ## Clarifications
@@ -106,6 +106,7 @@ A developer wants to understand which modules expose items from other modules vi
 - Q: What output format should the graph use? → A: Mermaid diagram syntax
 - Q: How should Cargo workspaces be handled? → A: Workspace-aware but isolate each crate (separate graph per crate member)
 - Q: Where should parse errors be reported? → A: Stderr (errors to stderr, graph to stdout)
+- Q: Should processing continue after parse/file errors? → A: No; log error to stderr and exit with non-zero status
 
 ## Assumptions
 
