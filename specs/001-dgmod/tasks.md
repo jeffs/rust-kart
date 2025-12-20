@@ -65,7 +65,7 @@ dgmod/
 - [ ] T013 Implement ModuleGraph::new(), add_module(), add_edge() methods in dgmod/src/graph.rs
 - [ ] T014 Implement ModuleGraph::modules() and edges() iterator methods in dgmod/src/graph.rs
 - [ ] T015 Define error types (ParseError, ResolveError) in dgmod/src/lib.rs
-- [ ] T016 Wire up lib.rs with pub mod declarations for all modules in dgmod/src/lib.rs
+- [ ] T016 Wire up lib.rs with pub mod declarations for all modules and add `#![forbid(unsafe_code)]` in dgmod/src/lib.rs
 - [ ] T017 Verify foundational code compiles with `cargo check -p dgmod`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
@@ -192,7 +192,7 @@ dgmod/
 - [ ] T059 Ensure parse errors exit with non-zero status and clear message in dgmod/src/main.rs
 - [ ] T060 Ensure missing module file errors exit with non-zero status in dgmod/src/main.rs
 - [ ] T061 Add doc comments to all public types and functions in dgmod/src/lib.rs
-- [ ] T062 Run `cargo clippy -p dgmod` and fix all warnings
+- [ ] T062 Run `cargo clippy -p dgmod -- -W clippy::pedantic` and fix all warnings (per constitution)
 - [ ] T063 Run `cargo fmt -p dgmod` to ensure consistent formatting
 - [ ] T064 Verify `cargo test -p dgmod` passes all tests
 - [ ] T065 Manual validation against quickstart.md scenarios
@@ -218,9 +218,11 @@ dgmod/
 | Story | Depends On | Can Parallelize With |
 |-------|------------|---------------------|
 | US1 (P1) | Foundational | - |
-| US2 (P2) | Foundational | US1, US3 |
-| US3 (P3) | Foundational | US1, US2 |
+| US2 (P2) | Foundational + US1 implementation | US3 |
+| US3 (P3) | Foundational + US1 implementation | US2 |
 | Workspace | US1 | - |
+
+> **Note**: US2 and US3 are validation phases that verify US1's core implementation handles cycles and re-exports correctly. They can run in parallel with each other but require US1's parsing/resolution code to exist.
 
 ### Parallel Opportunities per Phase
 
