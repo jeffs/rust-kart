@@ -15,6 +15,10 @@ struct Args {
     /// Path to the Rust crate or workspace to analyze
     #[arg(default_value = ".")]
     path: PathBuf,
+
+    /// Exclude `tests` modules from the output
+    #[arg(long)]
+    exclude_tests: bool,
 }
 
 fn main() -> ExitCode {
@@ -26,7 +30,10 @@ fn main() -> ExitCode {
             // Workspace with multiple members - analyze each
             for member in members {
                 match dgmod::analyze_crate(&member.path, &member.name) {
-                    Ok(graph) => {
+                    Ok(mut graph) => {
+                        if args.exclude_tests {
+                            graph.exclude_tests_modules();
+                        }
                         println!("## {}\n", graph.crate_name);
                         println!("```mermaid");
                         print!("{}", graph.to_mermaid());
@@ -43,7 +50,7 @@ fn main() -> ExitCode {
         Ok(members) if members.len() == 1 => {
             // Single-member workspace - analyze it
             let member = &members[0];
-            analyze_single_crate(&member.path, &member.name)
+            analyze_single_crate(&member.path, &member.name, args.exclude_tests)
         }
         Ok(_) | Err(_) => {
             // Not a workspace or failed to detect - try as single crate
@@ -52,14 +59,17 @@ fn main() -> ExitCode {
                 .file_name()
                 .and_then(|s| s.to_str())
                 .unwrap_or("crate");
-            analyze_single_crate(&args.path, crate_name)
+            analyze_single_crate(&args.path, crate_name, args.exclude_tests)
         }
     }
 }
 
-fn analyze_single_crate(path: &std::path::Path, name: &str) -> ExitCode {
+fn analyze_single_crate(path: &std::path::Path, name: &str, exclude_tests: bool) -> ExitCode {
     match dgmod::analyze_crate(path, name) {
-        Ok(graph) => {
+        Ok(mut graph) => {
+            if exclude_tests {
+                graph.exclude_tests_modules();
+            }
             println!("## {}\n", graph.crate_name);
             println!("```mermaid");
             print!("{}", graph.to_mermaid());

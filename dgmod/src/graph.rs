@@ -29,6 +29,14 @@ impl ModulePath {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    /// Check if this path represents a tests module
+    ///
+    /// Returns true if the path is "tests" or ends with `::tests`
+    #[must_use]
+    pub fn is_tests_module(&self) -> bool {
+        self.0 == "tests" || self.0.ends_with("::tests")
+    }
 }
 
 /// The kind of module
@@ -121,5 +129,28 @@ impl ModuleGraph {
         self.edges
             .iter()
             .map(|((from, to), kind)| (from, to, *kind))
+    }
+
+    /// Remove all `tests` modules and their associated edges from the graph
+    ///
+    /// This removes any module whose path is "tests" or ends with `::tests`,
+    /// along with any edges to or from those modules.
+    pub fn exclude_tests_modules(&mut self) {
+        // Collect paths to remove
+        let tests_paths: Vec<ModulePath> = self
+            .modules
+            .keys()
+            .filter(|path| path.is_tests_module())
+            .cloned()
+            .collect();
+
+        // Remove the modules
+        for path in &tests_paths {
+            self.modules.remove(path);
+        }
+
+        // Remove edges to/from tests modules
+        self.edges
+            .retain(|(from, to), _| !from.is_tests_module() && !to.is_tests_module());
     }
 }
