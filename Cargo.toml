@@ -23,6 +23,7 @@ members = [
   "pangram",
   "perpetuity",
   "primes", "rot13",
+  "save-context",
   "snitty",
   "stop-once",
   "sum-of-products",
