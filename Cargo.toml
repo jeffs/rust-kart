@@ -5,6 +5,7 @@ members = [
   "arg5",
   "dgmod",
   "b2c",
+  "gh-prs",
   "cargo-norm",
   "csv2json",
   "days",
