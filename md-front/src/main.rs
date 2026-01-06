@@ -1,4 +1,7 @@
-//! Extracts front matter (such as Obsidian YAML) from Markdown files.
+//! Extracts front matter from Markdown files.
+//!
+//! TODO: Recognize and parse YAML. Obsidian notes and Claude skills both use
+//!  YAML front matter.
 
 fn main() {
     let stdin = std::io::stdin();
