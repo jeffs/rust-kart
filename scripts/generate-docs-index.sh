@@ -78,12 +78,9 @@ generate_html() {
         h1 { margin-bottom: 0.25rem; }
         .subtitle { color: #666; margin-bottom: 1rem; }
         .crates {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
+            flex-direction: column;
             gap: 0.5rem;
-        }
-        @media (max-width: 700px) {
-            .crates { grid-template-columns: 1fr; }
         }
         .crate {
             border: 1px solid var(--border);
