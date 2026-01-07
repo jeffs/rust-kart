@@ -1,6 +1,6 @@
 # dgmod
 
-A command-line tool that analyzes Rust crates and generates Mermaid diagrams of module dependencies.
+Generates Mermaid diagrams of Rust module dependencies.
 
 ## Installation
 

@@ -1,6 +1,6 @@
 # iter-utils
 
-Iterator utilities: infinite sequences, lazy creation, and inclusive termination.
+Iterator utilities for infinite sequences, lazy creation, and termination.
 
 ## Features
 

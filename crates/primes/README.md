@@ -1,6 +1,8 @@
-# Primes
+# primes
 
-This is a simple library for generating small prime numbers.  A command-line interface to generate the first N numbers is provided:
+Simple library for generating prime numbers.
+
+## CLI
 
 ```sh
 $ primes 4

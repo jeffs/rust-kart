@@ -1,10 +1,11 @@
-# Gitup
+# grit
 
-The `gitup` command pulls the trunk branch of the repo whence it is called, then
-deletes any local branches that are behind that trunk.
+Git utilities for trunk-based development.
 
-The `since` command lists commmits reachable from HEAD, but not from a specified
-base branch (which defaults to the local trunk).
+## Commands
+
+- `gitup` — Pulls trunk and deletes local branches that are behind it.
+- `since` — Lists commits reachable from HEAD but not from a base branch.
 
 ## To Do
 
