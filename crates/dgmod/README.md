@@ -48,7 +48,7 @@ dgmod --exclude-tests
 
 Given a crate with this structure:
 
-```
+```text
 src/
 ├── lib.rs       # pub mod alpha; pub mod beta;
 ├── alpha/
@@ -59,7 +59,7 @@ src/
 
 Running `dgmod` produces:
 
-~~~
+~~~markdown
 ## my-crate
 
 ```mermaid
