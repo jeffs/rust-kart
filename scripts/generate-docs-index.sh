@@ -9,19 +9,15 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DOC_DIR="${REPO_ROOT}/target/doc"
 
-# Extract workspace members from Cargo.toml
+# Extract workspace members from crates/ directory
 get_members() {
-    grep -A 100 '^\[workspace\]' "${REPO_ROOT}/Cargo.toml" \
-        | grep -A 100 '^members' \
-        | sed '/^]/q' \
-        | grep '"' \
-        | sed 's/.*"\([^"]*\)".*/\1/'
+    ls -1 "${REPO_ROOT}/crates"
 }
 
 # Get first meaningful line from README as description
 get_description() {
     local crate="$1"
-    local readme="${REPO_ROOT}/${crate}/README.md"
+    local readme="${REPO_ROOT}/crates/${crate}/README.md"
     if [[ -f "$readme" ]]; then
         # Skip title line (starts with #), get first non-empty paragraph
         sed -n '/^[^#]/p' "$readme" | head -1 | sed 's/^ *//'
@@ -33,7 +29,7 @@ get_description() {
 # Check if crate has library documentation
 has_lib_docs() {
     local crate="$1"
-    [[ -f "${REPO_ROOT}/${crate}/src/lib.rs" ]]
+    [[ -f "${REPO_ROOT}/crates/${crate}/src/lib.rs" ]]
 }
 
 # Convert crate name to rustdoc directory name (replace - with _)

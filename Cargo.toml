@@ -1,32 +1,7 @@
 [workspace]
 resolver = "3"
 
-members = [
-  "b2c",
-  "cargo-norm",
-  "csv2json",
-  "days",
-  "dgmod",
-  "gh-prs",
-  "grit",
-  "head1",
-  "iter-utils",
-  "kcal",
-  "leap",
-  "lev",
-  "module-from-path",
-  "netmask",
-  "pangram",
-  "primes",
-  "save-context",
-  "sum-of-products",
-  "text-utils",
-  "trim-end",
-  "tmux-send",
-  "utf",
-  "vimod",
-  "wl2md",
-]
+members = ["crates/*"]
 
 [workspace.lints.clippy]
 pedantic = "deny"
