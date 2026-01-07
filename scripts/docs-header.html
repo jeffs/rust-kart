@@ -3,12 +3,12 @@ import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.mi
 mermaid.initialize({ startOnLoad: false });
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('code.language-mermaid').forEach((el) => {
-    const pre = el.parentElement;
+  document.querySelectorAll('pre.language-mermaid').forEach((pre) => {
+    const code = pre.querySelector('code');
     const container = document.createElement('div');
     container.className = 'mermaid';
-    container.textContent = el.textContent;
-    pre.replaceWith(container);
+    container.textContent = code ? code.textContent : pre.textContent;
+    pre.parentElement.replaceWith(container);
   });
   mermaid.run();
 });
