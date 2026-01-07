@@ -24,7 +24,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Build documentation
-        run: cargo doc --workspace --no-deps
+        run: RUSTDOCFLAGS="--html-in-header scripts/docs-header.html" cargo doc --workspace --no-deps
 
       - name: Generate index page
         run: ./scripts/generate-docs-index.sh
