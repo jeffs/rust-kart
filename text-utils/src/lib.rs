@@ -1,4 +1,4 @@
-//! Text transformation utilities: ROT13, quote normalization, hex conversion.
+#![doc = include_str!("../README.md")]
 
 use std::fmt::Write;
 

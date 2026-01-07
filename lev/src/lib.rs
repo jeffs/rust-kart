@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 /// Returns the [Levenshtein distance][1] between `a` and `b`.
 ///
 /// [1]: https://en.wikipedia.org/wiki/Levenshtein_distance#Definition

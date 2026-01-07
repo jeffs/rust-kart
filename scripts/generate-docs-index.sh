@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# Generate an index.html for the rustdoc workspace documentation
+#
+# This script parses the workspace Cargo.toml, extracts crate descriptions
+# from READMEs, and generates a styled index page linking to all crates.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DOC_DIR="${REPO_ROOT}/target/doc"
+
+# Extract workspace members from Cargo.toml
+get_members() {
+    grep -A 100 '^\[workspace\]' "${REPO_ROOT}/Cargo.toml" \
+        | grep -A 100 '^members' \
+        | sed '/^]/q' \
+        | grep '"' \
+        | sed 's/.*"\([^"]*\)".*/\1/'
+}
+
+# Get first meaningful line from README as description
+get_description() {
+    local crate="$1"
+    local readme="${REPO_ROOT}/${crate}/README.md"
+    if [[ -f "$readme" ]]; then
+        # Skip title line (starts with #), get first non-empty paragraph
+        sed -n '/^[^#]/p' "$readme" | head -1 | sed 's/^ *//'
+    else
+        echo "No description available"
+    fi
+}
+
+# Check if crate has library documentation
+has_lib_docs() {
+    local crate="$1"
+    [[ -f "${REPO_ROOT}/${crate}/src/lib.rs" ]]
+}
+
+# Convert crate name to rustdoc directory name (replace - with _)
+doc_name() {
+    echo "$1" | tr '-' '_'
+}
+
+# Generate the HTML
+generate_html() {
+    cat <<'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>rust-kart Documentation</title>
+    <style>
+        :root {
+            --bg: #fff;
+            --fg: #000;
+            --link: #4b6cb7;
+            --border: #e0e0e0;
+            --card-bg: #f9f9f9;
+            --lib-badge: #4b6cb7;
+            --bin-badge: #6b7280;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a;
+                --fg: #e0e0e0;
+                --link: #8ab4f8;
+                --border: #333;
+                --card-bg: #252525;
+                --lib-badge: #5c7cba;
+                --bin-badge: #6b7280;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+        }
+        h1 { margin-bottom: 0.5rem; }
+        .subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .crates {
+            display: grid;
+            gap: 1rem;
+        }
+        .crate {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+        }
+        .crate-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .crate-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .crate-name a {
+            color: var(--link);
+            text-decoration: none;
+        }
+        .crate-name a:hover { text-decoration: underline; }
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            color: #fff;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .badge-lib { background: var(--lib-badge); }
+        .badge-bin { background: var(--bin-badge); }
+        .crate-desc {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        @media (prefers-color-scheme: dark) {
+            .subtitle, .crate-desc { color: #999; }
+        }
+        footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>rust-kart</h1>
+    <p class="subtitle">A collection of Rust utilities and tools</p>
+    <div class="crates">
+EOF
+
+    while read -r crate; do
+        local desc
+        desc=$(get_description "$crate")
+        local doc_dir
+        doc_dir=$(doc_name "$crate")
+
+        if has_lib_docs "$crate"; then
+            # Library crate - link to rustdoc
+            cat <<EOF
+        <div class="crate">
+            <div class="crate-header">
+                <span class="crate-name"><a href="${doc_dir}/index.html">${crate}</a></span>
+                <span class="badge badge-lib">lib</span>
+            </div>
+            <div class="crate-desc">${desc}</div>
+        </div>
+EOF
+        else
+            # Binary-only crate - no rustdoc link
+            cat <<EOF
+        <div class="crate">
+            <div class="crate-header">
+                <span class="crate-name">${crate}</span>
+                <span class="badge badge-bin">bin</span>
+            </div>
+            <div class="crate-desc">${desc}</div>
+        </div>
+EOF
+        fi
+    done
+
+    cat <<'EOF'
+    </div>
+    <footer>
+        Generated by <a href="https://doc.rust-lang.org/rustdoc/">rustdoc</a>
+    </footer>
+</body>
+</html>
+EOF
+}
+
+main() {
+    if [[ ! -d "$DOC_DIR" ]]; then
+        echo "Error: Documentation not found at ${DOC_DIR}" >&2
+        echo "Run 'cargo doc --workspace --no-deps' first" >&2
+        exit 1
+    fi
+
+    get_members | generate_html > "${DOC_DIR}/index.html"
+    echo "Generated ${DOC_DIR}/index.html"
+}
+
+main "$@"

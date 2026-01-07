@@ -1,4 +1,4 @@
-//! Iterator utilities: infinite sequences, lazy creation, and inclusive termination.
+#![doc = include_str!("../README.md")]
 
 mod delay;
 mod perpetuity;

@@ -1,8 +1,4 @@
-//! dgmod: Rust module dependency graph generator
-//!
-//! Analyzes Rust source code to generate directed graphs of module dependencies
-//! in Mermaid diagram format.
-
+#![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 
 pub mod graph;
