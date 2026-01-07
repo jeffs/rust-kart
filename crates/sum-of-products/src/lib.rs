@@ -4,14 +4,18 @@ mod rendering;
 
 use std::{error::Error, io, iter};
 
+/// Result of computing products and their sum.
 pub struct SumOfProducts {
+    /// The product of each input row.
     pub products: Vec<f64>,
+    /// The sum of all products.
     pub sum: f64,
 }
 
 const EQ: &str = " = ";
 const SEP: &str = "----";
 
+/// Computes the product of each row and the sum of all products.
 #[must_use]
 pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
     let products: Vec<f64> = parsed
@@ -22,10 +26,11 @@ pub fn compute(parsed: &[Vec<f64>]) -> SumOfProducts {
     SumOfProducts { products, sum }
 }
 
+/// Parses lines of whitespace-separated numbers into rows of f64 values.
+///
 /// # Errors
 ///
-/// Will return any `Err` from `lines`, or an `Err` if any word cannot be parsed
-/// as an f64.
+/// Returns an error if reading fails or any word cannot be parsed as f64.
 pub fn parse<I: Iterator<Item = io::Result<String>>>(
     lines: I,
 ) -> Result<Vec<Vec<f64>>, Box<dyn Error>> {
@@ -41,6 +46,7 @@ pub fn parse<I: Iterator<Item = io::Result<String>>>(
         .collect()
 }
 
+/// Formats the computation as aligned formulas with a sum line.
 #[must_use]
 pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> String {
     let SumOfProducts { products, sum } = output;

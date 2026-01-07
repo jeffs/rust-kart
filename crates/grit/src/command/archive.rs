@@ -56,11 +56,11 @@ async fn archive_imp(branch: &ffi::OsStr, policy: RemovalPolicy) -> Result<()> {
     Ok(())
 }
 
-/// Prints the name of the local trunk branch, if any is identified.
+/// Archives branches by moving them to refs/archive/.
 ///
 /// # Errors
 ///
-/// Returns an error if `args` is nonempty, or no local trunk can be identified.
+/// Returns an error if no branch name is provided, or git fails.
 pub async fn archive(args: env::ArgsOs) -> Result<()> {
     let mut policy = RemovalPolicy::None;
 

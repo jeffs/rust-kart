@@ -5,6 +5,8 @@ use crate::{
     git::git,
 };
 
+/// Prints the repository root directory.
+///
 /// # Errors
 ///
 /// Returns an error if Git fails, or if `args` is nonempty.

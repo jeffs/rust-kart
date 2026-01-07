@@ -53,7 +53,7 @@ where
 ///
 /// # Errors
 ///
-/// Returns [`Error::Git`] if the `git` command fails.
+/// Returns an error if the `git` command fails.
 pub async fn git_loud<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
@@ -70,9 +70,11 @@ where
     Ok(stderr + &stdout)
 }
 
+/// Runs a git command and returns its combined output.
+///
 /// # Errors
 ///
-/// Returns [`Error::Git`] if the `git` command fails.
+/// Returns an error if the `git` command fails.
 pub async fn git<S, I>(args: I) -> Result<String>
 where
     I: IntoIterator<Item = S>,
@@ -85,18 +87,22 @@ where
     Ok(stderr + &stdout)
 }
 
+/// Returns the merge base of two refs.
+///
 /// # Errors
 ///
-/// Returns [`Error::Git`] if `git merge-base` fails.
+/// Returns an error if `git merge-base` fails.
 pub async fn merge_base(ref1: impl AsRef<OsStr>, ref2: impl AsRef<OsStr>) -> Result<String> {
     let mut base = git(["merge-base".as_ref(), ref1.as_ref(), ref2.as_ref()]).await?;
     base.truncate(base.trim_end().len());
     Ok(base)
 }
 
+/// Returns the merge base of a ref and HEAD.
+///
 /// # Errors
 ///
-/// Returns [`Error::Git`] if `git merge-base` fails.
+/// Returns an error if `git merge-base` fails.
 pub async fn merge_base_head(base: impl AsRef<OsStr>) -> Result<String> {
     merge_base(base, HEAD).await
 }
