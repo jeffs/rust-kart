@@ -157,11 +157,11 @@ EOF
         </div>
 EOF
         else
-            # Binary-only crate - no rustdoc link
+            # Binary-only crate - link to GitHub README
             cat <<EOF
         <div class="crate">
             <div class="crate-header">
-                <span class="crate-name">${crate}</span>
+                <span class="crate-name"><a href="https://github.com/jeffs/rust-kart/blob/main/crates/${crate}/README.md">${crate}</a></span>
                 <span class="badge badge-bin">bin</span>
             </div>
             <div class="crate-desc">${desc}</div>
