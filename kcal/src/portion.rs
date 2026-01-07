@@ -68,3 +68,37 @@ impl FromStr for Portion {
         Ok(Portion { number, unit })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_portion_parsing() {
+        let p: Portion = "100g".parse().unwrap();
+        assert_eq!(p.number, 100.0);
+        assert_eq!(p.unit, Unit::Gram);
+
+        let p: Portion = "8oz".parse().unwrap();
+        assert_eq!(p.number, 8.0);
+        assert_eq!(p.unit, Unit::Ounce);
+
+        let p: Portion = "1.5lb".parse().unwrap();
+        assert_eq!(p.number, 1.5);
+        assert_eq!(p.unit, Unit::Pound);
+    }
+
+    #[test]
+    fn test_portion_conversion() {
+        let p: Portion = "1oz".parse().unwrap();
+        let grams = p.convert_to(Unit::Gram);
+        assert!((grams.number - 28.35).abs() < 0.1);
+        assert_eq!(grams.unit, Unit::Gram);
+    }
+
+    #[test]
+    fn test_portion_display() {
+        let p = Portion { number: 100.0, unit: Unit::Gram };
+        assert_eq!(p.to_string(), "100g");
+    }
+}

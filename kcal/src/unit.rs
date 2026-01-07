@@ -6,6 +6,7 @@ const OUNCES_PER_POUND: f64 = 16.0;
 const GRAMS_PER_OUNCE: f64 = GRAMS_PER_POUND / OUNCES_PER_POUND;
 const OUNCES_PER_GRAM: f64 = OUNCES_PER_POUND / GRAMS_PER_POUND;
 
+#[derive(Debug)]
 pub struct BadUnit;
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -66,5 +67,40 @@ impl FromStr for Unit {
             "oz" => Ok(Unit::Ounce),
             _ => Err(BadUnit),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unit_parsing() {
+        assert_eq!("g".parse::<Unit>().unwrap(), Unit::Gram);
+        assert_eq!("oz".parse::<Unit>().unwrap(), Unit::Ounce);
+        assert_eq!("lb".parse::<Unit>().unwrap(), Unit::Pound);
+        assert_eq!("lbs".parse::<Unit>().unwrap(), Unit::Pound);
+        assert!("invalid".parse::<Unit>().is_err());
+    }
+
+    #[test]
+    fn test_unit_display() {
+        assert_eq!(Unit::Gram.to_string(), "g");
+        assert_eq!(Unit::Ounce.to_string(), "oz");
+        assert_eq!(Unit::Pound.to_string(), "lb");
+    }
+
+    #[test]
+    fn test_unit_conversion() {
+        // 1 oz should be ~28.35g
+        let grams_per_oz = Unit::Gram.per(Unit::Ounce);
+        assert!((grams_per_oz - 28.35).abs() < 0.1);
+
+        // 1 lb should be ~453.6g
+        let grams_per_lb = Unit::Gram.per(Unit::Pound);
+        assert!((grams_per_lb - 453.6).abs() < 0.1);
+
+        // Identity conversions
+        assert_eq!(Unit::Gram.per(Unit::Gram), 1.0);
     }
 }

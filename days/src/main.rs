@@ -27,23 +27,20 @@ fn print_parts(parts: &[String]) {
     }
 }
 
-fn parse_args() -> Result<NaiveDate, arg5::ParseError> {
-    let mut parameters = arg5::Parser::new();
-    let mut year = 0;
-    let mut month = 0;
-    let mut day = 0;
-    parameters.declare_positional("year", &mut year);
-    parameters.declare_positional("month", &mut month);
-    parameters.declare_positional("day", &mut day);
-    parameters.parse(env::args())?;
-    NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| arg5::ParseError {
-        what: String::from("bad date"),
-    })
+fn parse_args() -> Result<NaiveDate, String> {
+    let args: Vec<String> = env::args().skip(1).collect();
+    if args.len() != 3 {
+        return Err(String::from("usage: days YEAR MONTH DAY"));
+    }
+    let year: i32 = args[0].parse().map_err(|_| "invalid year")?;
+    let month: u32 = args[1].parse().map_err(|_| "invalid month")?;
+    let day: u32 = args[2].parse().map_err(|_| "invalid day")?;
+    NaiveDate::from_ymd_opt(year, month, day).ok_or_else(|| String::from("invalid date"))
 }
 
 fn main() {
     let date = parse_args().unwrap_or_else(|error| {
-        eprintln!("Error: {}", error.what);
+        eprintln!("Error: {error}");
         process::exit(1);
     });
     let duration = date.and_hms_opt(0, 0, 0).unwrap() - Local::now().naive_local();

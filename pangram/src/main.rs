@@ -48,18 +48,15 @@ struct Args {
     words_file: String,
 }
 
-fn parse_args() -> Result<Args, arg5::ParseError> {
-    let mut letters = String::new();
-    let mut words_file = None;
-    let mut parameters = arg5::Parser::new();
-    parameters.declare_positional("letters", &mut letters);
-    parameters.declare_positional("words-file", &mut words_file);
-    parameters.parse(env::args())?;
+fn parse_args() -> Result<Args, String> {
+    let mut args = env::args().skip(1);
+    let letters = args.next().ok_or("usage: pangram LETTERS [WORDS_FILE]")?;
+    let words_file = args.next().unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string());
     Ok(Args {
         min_length: DEFAULT_MIN_LENGTH,
         mandatory: to_charset(letters.chars().filter(|c| c.is_uppercase())),
         available: to_charset(letters.chars()),
-        words_file: words_file.unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string()),
+        words_file,
     })
 }
 

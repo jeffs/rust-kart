@@ -1,0 +1,23 @@
+[package]
+name = "text-utils"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "rot13"
+path = "src/bin/rot13.rs"
+
+[[bin]]
+name = "fix-quotes"
+path = "src/bin/fix-quotes.rs"
+
+[[bin]]
+name = "hexify"
+path = "src/bin/hexify.rs"
+
+[[bin]]
+name = "hexwords"
+path = "src/bin/hexwords.rs"
+
+[lints]
+workspace = true

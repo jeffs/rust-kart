@@ -53,3 +53,30 @@ pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compute() {
+        let input = vec![vec![2.0, 3.0], vec![4.0, 5.0]];
+        let result = compute(&input);
+        assert_eq!(result.products, vec![6.0, 20.0]);
+        assert_eq!(result.sum, 26.0);
+    }
+
+    #[test]
+    fn test_parse() {
+        let lines = vec![Ok("2 3".to_string()), Ok("4 5".to_string())];
+        let result = parse(lines.into_iter()).unwrap();
+        assert_eq!(result, vec![vec![2.0, 3.0], vec![4.0, 5.0]]);
+    }
+
+    #[test]
+    fn test_parse_skips_empty_lines() {
+        let lines = vec![Ok("2 3".to_string()), Ok("".to_string()), Ok("4 5".to_string())];
+        let result = parse(lines.into_iter()).unwrap();
+        assert_eq!(result, vec![vec![2.0, 3.0], vec![4.0, 5.0]]);
+    }
+}
