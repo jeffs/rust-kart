@@ -52,7 +52,6 @@ generate_html() {
             --fg: #000;
             --link: #4b6cb7;
             --border: #e0e0e0;
-            --card-bg: #f9f9f9;
             --lib-badge: #4b6cb7;
             --bin-badge: #6b7280;
         }
@@ -62,7 +61,6 @@ generate_html() {
                 --fg: #e0e0e0;
                 --link: #8ab4f8;
                 --border: #333;
-                --card-bg: #252525;
                 --lib-badge: #5c7cba;
                 --bin-badge: #6b7280;
             }
@@ -70,37 +68,34 @@ generate_html() {
         * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1.5rem;
             background: var(--bg);
             color: var(--fg);
-            line-height: 1.6;
+            line-height: 1.4;
         }
-        h1 { margin-bottom: 0.5rem; }
-        .subtitle {
-            color: #666;
-            margin-bottom: 2rem;
-        }
+        h1 { margin-bottom: 0.25rem; }
+        .subtitle { color: #666; margin-bottom: 1rem; }
         .crates {
             display: grid;
-            gap: 1rem;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        @media (max-width: 700px) {
+            .crates { grid-template-columns: 1fr; }
         }
         .crate {
-            background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem 1.25rem;
-        }
-        .crate-header {
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
             display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.5rem;
+            align-items: baseline;
+            gap: 0.5rem;
         }
         .crate-name {
-            font-size: 1.1rem;
             font-weight: 600;
+            white-space: nowrap;
         }
         .crate-name a {
             color: var(--link);
@@ -108,27 +103,31 @@ generate_html() {
         }
         .crate-name a:hover { text-decoration: underline; }
         .badge {
-            font-size: 0.7rem;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
+            font-size: 0.6rem;
+            padding: 0.1rem 0.3rem;
+            border-radius: 3px;
             color: #fff;
             text-transform: uppercase;
             font-weight: 500;
+            white-space: nowrap;
         }
         .badge-lib { background: var(--lib-badge); }
         .badge-bin { background: var(--bin-badge); }
         .crate-desc {
             color: #666;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         @media (prefers-color-scheme: dark) {
             .subtitle, .crate-desc { color: #999; }
         }
         footer {
-            margin-top: 3rem;
-            padding-top: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 0.75rem;
             border-top: 1px solid var(--border);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #666;
         }
     </style>
@@ -146,25 +145,19 @@ EOF
         doc_dir=$(doc_name "$crate")
 
         if has_lib_docs "$crate"; then
-            # Library crate - link to rustdoc
             cat <<EOF
         <div class="crate">
-            <div class="crate-header">
-                <span class="crate-name"><a href="${doc_dir}/index.html">${crate}</a></span>
-                <span class="badge badge-lib">lib</span>
-            </div>
-            <div class="crate-desc">${desc}</div>
+            <span class="crate-name"><a href="${doc_dir}/index.html">${crate}</a></span>
+            <span class="badge badge-lib">lib</span>
+            <span class="crate-desc">${desc}</span>
         </div>
 EOF
         else
-            # Binary-only crate - link to GitHub README
             cat <<EOF
         <div class="crate">
-            <div class="crate-header">
-                <span class="crate-name"><a href="https://github.com/jeffs/rust-kart/blob/main/crates/${crate}/README.md">${crate}</a></span>
-                <span class="badge badge-bin">bin</span>
-            </div>
-            <div class="crate-desc">${desc}</div>
+            <span class="crate-name"><a href="https://github.com/jeffs/rust-kart/blob/main/crates/${crate}/README.md">${crate}</a></span>
+            <span class="badge badge-bin">bin</span>
+            <span class="crate-desc">${desc}</span>
         </div>
 EOF
         fi
