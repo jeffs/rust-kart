@@ -54,14 +54,12 @@ fn derive_ci_emoji(checks: &[StatusCheck]) -> String {
         return String::new();
     }
 
+    let mut has_pending = false;
+
     for check in checks {
+        // Check for actual failures first
         if let Some(state) = &check.state
-            && matches!(state.as_str(), "PENDING" | "FAILURE" | "ERROR")
-        {
-            return "❌".to_string();
-        }
-        if let Some(status) = &check.status
-            && status != "COMPLETED"
+            && matches!(state.as_str(), "FAILURE" | "ERROR")
         {
             return "❌".to_string();
         }
@@ -73,9 +71,25 @@ fn derive_ci_emoji(checks: &[StatusCheck]) -> String {
         {
             return "❌".to_string();
         }
+
+        // Track pending/in-progress checks
+        if let Some(state) = &check.state
+            && state == "PENDING"
+        {
+            has_pending = true;
+        }
+        if let Some(status) = &check.status
+            && status != "COMPLETED"
+        {
+            has_pending = true;
+        }
     }
 
-    "✅".to_string()
+    if has_pending {
+        "⏳".to_string()
+    } else {
+        "✅".to_string()
+    }
 }
 
 fn search_open_prs() -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
