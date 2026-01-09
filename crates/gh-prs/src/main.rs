@@ -20,9 +20,19 @@ struct Repository {
 struct PrDetails {
     title: String,
     url: String,
-    comments: Vec<serde_json::Value>,
+    comments: Vec<Comment>,
     review_decision: Option<String>,
     status_check_rollup: Vec<StatusCheck>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Comment {
+    author: Option<Author>,
+}
+
+#[derive(Debug, Deserialize)]
+struct Author {
+    login: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,6 +49,40 @@ struct OutputPr {
     comments: usize,
     review: String,
     ci: String,
+}
+
+fn is_bot(login: &str) -> bool {
+    const BOT_NAMES: &[&str] = &[
+        "github-actions",
+        "dependabot",
+        "renovate",
+        "codecov",
+        "netlify",
+        "vercel",
+        "semantic-release-bot",
+        "snyk-bot",
+        "imgbot",
+        "allcontributors",
+        "greenkeeper",
+        "linear",
+    ];
+
+    let login_lower = login.to_lowercase();
+    login_lower.ends_with("[bot]")
+        || login_lower.ends_with("-bot")
+        || BOT_NAMES.contains(&login_lower.as_str())
+}
+
+fn count_human_comments(comments: &[Comment]) -> usize {
+    comments
+        .iter()
+        .filter(|c| {
+            c.author
+                .as_ref()
+                .map(|a| !is_bot(&a.login))
+                .unwrap_or(false)
+        })
+        .count()
 }
 
 fn derive_review_emoji(review_decision: Option<&str>) -> String {
@@ -148,7 +192,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         prs.push(OutputPr {
             title: details.title,
             index: details.url,
-            comments: details.comments.len(),
+            comments: count_human_comments(&details.comments),
             review: derive_review_emoji(details.review_decision.as_deref()),
             ci: derive_ci_emoji(&details.status_check_rollup),
         });
