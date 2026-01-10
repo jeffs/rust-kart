@@ -13,7 +13,7 @@ use rmcp::handler::server::tool::ToolCallContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
     CallToolRequestParam, CallToolResult, Content, ListToolsResult, PaginatedRequestParam,
-    ServerInfo,
+    ServerCapabilities, ServerInfo,
 };
 use rmcp::schemars::JsonSchema;
 use rmcp::service::{RequestContext, RoleServer};
@@ -274,6 +274,7 @@ impl TaskMcpServer {
 impl ServerHandler for TaskMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
+            capabilities: ServerCapabilities::builder().enable_tools().build(),
             instructions: Some(
                 "Background task manager. Use task_ensure to start tasks, \
                  task_stop to terminate them, task_list to see all tasks, \
