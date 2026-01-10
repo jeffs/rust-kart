@@ -9,9 +9,14 @@ mod process;
 mod state;
 
 use rmcp::handler::server::router::tool::ToolRouter;
+use rmcp::handler::server::tool::ToolCallContext;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content, ServerInfo};
+use rmcp::model::{
+    CallToolRequestParam, CallToolResult, Content, ListToolsResult, PaginatedRequestParam,
+    ServerInfo,
+};
 use rmcp::schemars::JsonSchema;
+use rmcp::service::{RequestContext, RoleServer};
 use rmcp::{tool, tool_router, ErrorData as McpError, ServerHandler};
 use serde::{Deserialize, Serialize};
 
@@ -126,7 +131,6 @@ fn task_to_status(info: &TaskInfo) -> TaskStatus {
 #[derive(Clone)]
 pub struct TaskMcpServer {
     manager: TaskManager,
-    #[expect(dead_code)]
     tool_router: ToolRouter<Self>,
 }
 
@@ -278,5 +282,28 @@ impl ServerHandler for TaskMcpServer {
             ),
             ..Default::default()
         }
+    }
+
+    fn call_tool(
+        &self,
+        request: CallToolRequestParam,
+        context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = std::result::Result<CallToolResult, McpError>> + Send + '_
+    {
+        let tool_context = ToolCallContext::new(self, request, context);
+        async move { self.tool_router.call(tool_context).await }
+    }
+
+    fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParam>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = std::result::Result<ListToolsResult, McpError>> + Send + '_
+    {
+        std::future::ready(Ok(ListToolsResult {
+            tools: self.tool_router.list_all(),
+            next_cursor: None,
+            meta: None,
+        }))
     }
 }
