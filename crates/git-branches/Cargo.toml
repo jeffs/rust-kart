@@ -1,0 +1,11 @@
+[package]
+name = "git-branches"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+grit = { path = "../grit" }
+tokio = { version = "1.29.1", features = ["macros", "process", "rt-multi-thread"] }
+
+[lints]
+workspace = true
