@@ -1,41 +1,67 @@
-use crate::branch::{Branch, Topology};
+use crate::branch::{Node, Topology};
 
 /// Render the branch topology as ASCII art.
 #[must_use]
 pub fn render(topology: &Topology) -> String {
-    if topology.branches.is_empty() {
-        return format!("{} (no other branches)\n", topology.trunk);
-    }
-
     let mut lines = Vec::new();
-    lines.push(topology.trunk.clone());
 
-    render_branches(&topology.branches, &mut lines, "");
+    // Render root node.
+    render_node(&topology.root, &mut lines, "", true);
 
     lines.join("\n") + "\n"
 }
 
-fn render_branches(branches: &[Branch], lines: &mut Vec<String>, prefix: &str) {
-    let count = branches.len();
-    for (i, branch) in branches.iter().enumerate() {
+fn render_node(node: &Node, lines: &mut Vec<String>, prefix: &str, is_root: bool) {
+    // Format this node.
+    let node_text = format_node(node);
+
+    if is_root {
+        lines.push(node_text);
+    } else {
+        // This is handled by the parent's render_children call.
+        unreachable!()
+    }
+
+    // Render children.
+    render_children(&node.children, lines, prefix);
+}
+
+fn render_children(children: &[Node], lines: &mut Vec<String>, prefix: &str) {
+    let count = children.len();
+    for (i, node) in children.iter().enumerate() {
         let is_last = i == count - 1;
         let connector = if is_last { "└─ " } else { "├─ " };
         let child_prefix = if is_last { "   " } else { "│  " };
 
-        let stats = format_stats(branch.ahead, branch.behind);
-        lines.push(format!("{prefix}{connector}{}{stats}", branch.name));
+        lines.push(format!("{prefix}{connector}{}", format_node(node)));
 
-        if !branch.children.is_empty() {
-            render_branches(&branch.children, lines, &format!("{prefix}{child_prefix}"));
+        if !node.children.is_empty() {
+            render_children(&node.children, lines, &format!("{prefix}{child_prefix}"));
         }
     }
 }
 
-fn format_stats(ahead: usize, behind: usize) -> String {
-    match (ahead, behind) {
-        (0, 0) => String::new(),
-        (a, 0) => format!(" (+{a})"),
-        (0, b) => format!(" (-{b})"),
-        (a, b) => format!(" (+{a}, -{b})"),
+/// Format a node for display.
+fn format_node(node: &Node) -> String {
+    if node.branches.is_empty() {
+        // Pure commit node: show hash in brackets.
+        format!("[{}]", node.commit)
+    } else if node.branches.len() == 1 {
+        // Single branch: show name and ahead count.
+        let info = &node.branches[0];
+        if info.ahead > 0 {
+            format!("{} (+{})", info.name, info.ahead)
+        } else {
+            info.name.clone()
+        }
+    } else {
+        // Multiple branches at same commit: show all names, ahead count once at end.
+        let names: Vec<&str> = node.branches.iter().map(|info| info.name.as_str()).collect();
+        let ahead = node.branches[0].ahead;
+        if ahead > 0 {
+            format!("{} (+{})", names.join(", "), ahead)
+        } else {
+            names.join(", ")
+        }
     }
 }

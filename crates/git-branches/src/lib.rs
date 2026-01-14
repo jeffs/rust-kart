@@ -2,7 +2,7 @@ mod branch;
 mod rebase;
 mod render;
 
-pub use branch::{Branch, Topology};
+pub use branch::{BranchInfo, Node, Topology};
 pub use render::render;
 
 use grit::trunk;
@@ -26,23 +26,28 @@ pub async fn rebase(branch_name: &str) -> Result<(), Error> {
     let trunk = trunk::local().await.map_err(Error::Trunk)?;
     let topology = branch::collect(&trunk).await.map_err(Error::Git)?;
 
-    // Find the branch in the topology tree.
-    let Some(branch) = find_branch(&topology.branches, branch_name) else {
+    // Find the node containing the branch in the topology tree.
+    let Some(node) = find_branch_node(&topology.root, branch_name) else {
         return Err(Error::BranchNotFound(branch_name.to_owned()));
     };
 
-    rebase::rebase_stack(&trunk, branch).await.map_err(Error::Git)
+    rebase::rebase_stack(&trunk, node).await.map_err(Error::Git)
 }
 
-fn find_branch<'a>(branches: &'a [Branch], name: &str) -> Option<&'a Branch> {
-    for branch in branches {
-        if branch.name == name {
-            return Some(branch);
-        }
-        if let Some(found) = find_branch(&branch.children, name) {
+/// Find a node by branch name in the tree.
+fn find_branch_node<'a>(node: &'a Node, name: &str) -> Option<&'a Node> {
+    // Check if this node contains the branch we're looking for.
+    if node.branches.iter().any(|info| info.name == name) {
+        return Some(node);
+    }
+
+    // Search children.
+    for child in &node.children {
+        if let Some(found) = find_branch_node(child, name) {
             return Some(found);
         }
     }
+
     None
 }
 

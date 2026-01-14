@@ -1,134 +1,201 @@
 use grit::git::{self, git};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-/// A branch node in the topology tree.
+/// A node in the topology tree. Every node is a commit; branches add metadata.
 #[derive(Debug)]
-pub struct Branch {
+pub struct Node {
+    pub commit: String,           // commit SHA (short, 7 chars)
+    pub branches: Vec<BranchInfo>, // branches pointing to this commit (may be empty)
+    pub children: Vec<Node>,
+}
+
+/// Branch metadata attached to a node.
+#[derive(Debug)]
+pub struct BranchInfo {
     pub name: String,
-    pub tip: String,
-    pub ahead: usize,  // commits ahead of parent
-    pub behind: usize, // commits behind trunk (always relative to trunk)
-    pub children: Vec<Branch>,
+    pub ahead: usize, // commits from parent node to this tip
 }
 
 /// The topology of all local branches.
 #[derive(Debug)]
 pub struct Topology {
-    pub trunk: String,
-    pub trunk_tip: String,
-    pub branches: Vec<Branch>, // branches forking directly from trunk
+    pub trunk: String, // trunk branch name
+    pub root: Node,    // root node (common ancestor of all branches)
 }
 
-/// Collect all local branches and build the topology tree.
+/// Collect all local branches and build the topology tree with merge-base commits
+/// as first-class nodes.
 pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
+    // Phase 1: Collect all branch tips (including trunk).
     let output = git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"]).await?;
-    let branch_names: Vec<&str> = output.lines().filter(|s| *s != trunk).collect();
+    let all_branches: Vec<&str> = output.lines().collect();
 
-    if branch_names.is_empty() {
-        let trunk_tip = git(["rev-parse", trunk]).await?.trim().to_owned();
-        return Ok(Topology {
-            trunk: trunk.to_owned(),
-            trunk_tip,
-            branches: vec![],
-        });
-    }
-
-    // Get tip commit for each branch.
     let mut tips: HashMap<&str, String> = HashMap::new();
-    for name in &branch_names {
-        let tip = git(["rev-parse", name]).await?.trim().to_owned();
+    for name in &all_branches {
+        let tip = git(["rev-parse", "--short=7", name]).await?.trim().to_owned();
         tips.insert(name, tip);
     }
 
-    let trunk_tip = git(["rev-parse", trunk]).await?.trim().to_owned();
+    // Handle empty repo or trunk-only case.
+    if all_branches.len() <= 1 {
+        let trunk_tip = tips.get(trunk).cloned().unwrap_or_default();
+        return Ok(Topology {
+            trunk: trunk.to_owned(),
+            root: Node {
+                commit: trunk_tip.clone(),
+                branches: vec![BranchInfo {
+                    name: trunk.to_owned(),
+                    ahead: 0,
+                }],
+                children: vec![],
+            },
+        });
+    }
 
-    // For each branch, find its parent (trunk or another branch).
-    // Parent is the branch/trunk whose tip is an ancestor and closest to this branch.
-    let mut parents: HashMap<&str, Option<&str>> = HashMap::new();
+    // Phase 2: Find all merge-bases (fork points).
+    let mut commits: HashSet<String> = HashSet::new();
 
-    for name in &branch_names {
-        let mut best_parent: Option<&str> = None;
+    // Add all branch tips.
+    for tip in tips.values() {
+        commits.insert(tip.clone());
+    }
+
+    // Compute merge-base of each non-trunk branch with trunk.
+    let mut trunk_merge_bases: HashMap<&str, String> = HashMap::new();
+    for name in &all_branches {
+        if *name == trunk {
+            continue;
+        }
+        let mb = git(["merge-base", trunk, name]).await?;
+        let mb_short = git(["rev-parse", "--short=7", mb.trim()]).await?.trim().to_owned();
+        trunk_merge_bases.insert(name, mb_short.clone());
+        commits.insert(mb_short);
+    }
+
+    // Group branches by their trunk merge-base to find those that need pairwise comparison.
+    let mut by_merge_base: HashMap<&str, Vec<&str>> = HashMap::new();
+    for (branch, mb) in &trunk_merge_bases {
+        by_merge_base.entry(mb.as_str()).or_default().push(branch);
+    }
+
+    // For branches sharing a trunk merge-base, compute pairwise merge-bases.
+    for (_mb, branches) in &by_merge_base {
+        if branches.len() > 1 {
+            for i in 0..branches.len() {
+                for j in (i + 1)..branches.len() {
+                    let mb = git(["merge-base", branches[i], branches[j]]).await?;
+                    let mb_short = git(["rev-parse", "--short=7", mb.trim()]).await?.trim().to_owned();
+                    commits.insert(mb_short);
+                }
+            }
+        }
+    }
+
+    // Phase 3: Build parent relationships.
+    // For each commit, find its parent (closest ancestor in our commit set).
+    let commits_vec: Vec<String> = commits.into_iter().collect();
+    let mut parents: HashMap<String, Option<String>> = HashMap::new();
+
+    for commit in &commits_vec {
+        let mut best_parent: Option<String> = None;
         let mut best_distance = usize::MAX;
-        let branch_tip = tips.get(name).unwrap();
 
-        // Check each other branch as potential parent.
-        // A branch B is a valid parent if B's tip is an ancestor of this branch.
-        for other in &branch_names {
-            if other == name {
+        for other in &commits_vec {
+            if other == commit {
                 continue;
             }
-            let other_tip = tips.get(other).unwrap();
 
-            // Is other's tip an ancestor of this branch?
-            let is_ancestor =
-                git(["merge-base", "--is-ancestor", other_tip, branch_tip]).await;
+            // Is other an ancestor of commit?
+            let is_ancestor = git(["merge-base", "--is-ancestor", other, commit]).await;
             if is_ancestor.is_ok() {
-                let dist = count_commits(other_tip, branch_tip).await?;
-                if dist < best_distance {
+                let dist = count_commits(other, commit).await?;
+                if dist < best_distance && dist > 0 {
                     best_distance = dist;
-                    best_parent = Some(other);
+                    best_parent = Some(other.clone());
                 }
             }
         }
 
-        // If no branch is a closer parent, trunk is the parent (None).
-        parents.insert(name, best_parent);
+        parents.insert(commit.clone(), best_parent);
     }
 
-    // Build the tree recursively.
-    let mut root_branches = Vec::new();
-    for name in &branch_names {
-        if parents.get(name) == Some(&None) {
-            // This branch forks from trunk.
-            let branch = build_branch(name, trunk, &tips, &parents, &branch_names).await?;
-            root_branches.push(branch);
-        }
+    // Phase 4: Build tree from root.
+    // Find root (commit with no parent in our set).
+    let root_commit = commits_vec
+        .iter()
+        .find(|c| parents.get(*c) == Some(&None))
+        .cloned()
+        .unwrap_or_else(|| tips.get(trunk).cloned().unwrap_or_default());
+
+    // Build a map from commit to branch names (multiple branches may point to same commit).
+    let mut commit_to_branches: HashMap<String, Vec<&str>> = HashMap::new();
+    for (name, tip) in &tips {
+        commit_to_branches.entry(tip.clone()).or_default().push(name);
     }
 
-    // Sort root branches alphabetically.
-    root_branches.sort_by(|a, b| a.name.cmp(&b.name));
+    let root = build_node(
+        &root_commit,
+        &commits_vec,
+        &parents,
+        &commit_to_branches,
+    )
+    .await?;
 
     Ok(Topology {
         trunk: trunk.to_owned(),
-        trunk_tip,
-        branches: root_branches,
+        root,
     })
 }
 
-/// Recursively build a branch node with its children.
-async fn build_branch(
-    name: &str,
-    trunk: &str,
-    tips: &HashMap<&str, String>,
-    parents: &HashMap<&str, Option<&str>>,
-    all_branches: &[&str],
-) -> Result<Branch, git::Error> {
-    let tip = tips.get(name).unwrap().clone();
+/// Recursively build a node and its children.
+async fn build_node(
+    commit: &str,
+    all_commits: &[String],
+    parents: &HashMap<String, Option<String>>,
+    commit_to_branches: &HashMap<String, Vec<&str>>,
+) -> Result<Node, git::Error> {
+    // Find children (commits whose parent is this commit).
+    let mut child_commits: Vec<&String> = all_commits
+        .iter()
+        .filter(|c| parents.get(*c) == Some(&Some(commit.to_owned())))
+        .collect();
 
-    // Find parent ref to calculate ahead count.
-    let parent_ref = match parents.get(name).and_then(|p| *p) {
-        Some(parent_branch) => tips.get(parent_branch).unwrap().clone(),
-        None => git::merge_base(trunk, name).await?, // Fork point from trunk
+    // Sort children for deterministic output.
+    child_commits.sort();
+
+    // Build children recursively.
+    let mut children = Vec::new();
+    for child in child_commits {
+        let child_node = Box::pin(build_node(child, all_commits, parents, commit_to_branches)).await?;
+        children.push(child_node);
+    }
+
+    // Calculate ahead count (distance from parent).
+    let ahead = if let Some(Some(parent)) = parents.get(commit) {
+        count_commits(parent, commit).await?
+    } else {
+        0
     };
 
-    let ahead = count_commits(&parent_ref, &tip).await?;
-    let behind = count_commits(&tip, trunk).await?;
+    // Get all branches pointing to this commit.
+    let branches = commit_to_branches
+        .get(commit)
+        .map(|names| {
+            let mut infos: Vec<BranchInfo> = names
+                .iter()
+                .map(|name| BranchInfo {
+                    name: (*name).to_owned(),
+                    ahead,
+                })
+                .collect();
+            infos.sort_by(|a, b| a.name.cmp(&b.name));
+            infos
+        })
+        .unwrap_or_default();
 
-    // Find children (branches whose parent is this branch).
-    let mut children = Vec::new();
-    for other in all_branches {
-        if parents.get(other) == Some(&Some(name)) {
-            let child = Box::pin(build_branch(other, trunk, tips, parents, all_branches)).await?;
-            children.push(child);
-        }
-    }
-    children.sort_by(|a, b| a.name.cmp(&b.name));
-
-    Ok(Branch {
-        name: name.to_owned(),
-        tip,
-        ahead,
-        behind,
+    Ok(Node {
+        commit: commit.to_owned(),
+        branches,
         children,
     })
 }
