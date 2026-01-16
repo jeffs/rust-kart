@@ -13,7 +13,8 @@ pub struct Node {
 #[derive(Debug)]
 pub struct BranchInfo {
     pub name: String,
-    pub ahead: usize, // commits from parent node to this tip
+    pub ahead: usize,    // commits from parent node to this tip
+    pub pr: Option<u32>, // PR number if branch has an open PR
 }
 
 /// The topology of all local branches.
@@ -23,9 +24,51 @@ pub struct Topology {
     pub root: Node,    // root node (common ancestor of all branches)
 }
 
+/// Fetch open PRs and return a map from branch name to PR number.
+async fn fetch_prs() -> HashMap<String, u32> {
+    let output = tokio::process::Command::new("gh")
+        .args(["pr", "list", "--json", "headRefName,number"])
+        .output()
+        .await;
+    let Ok(output) = output else {
+        return HashMap::new();
+    };
+    if !output.status.success() {
+        return HashMap::new();
+    }
+    let json = String::from_utf8_lossy(&output.stdout);
+
+    // Parse JSON: [{"headRefName": "branch", "number": 123}, ...]
+    let mut prs = HashMap::new();
+    // Simple JSON parsing without adding a dependency.
+    for line in json.split('{') {
+        let Some(name_start) = line.find("\"headRefName\":\"") else {
+            continue;
+        };
+        let rest = &line[name_start + 15..];
+        let Some(name_end) = rest.find('"') else {
+            continue;
+        };
+        let name = &rest[..name_end];
+
+        let Some(num_start) = line.find("\"number\":") else {
+            continue;
+        };
+        let rest = &line[num_start + 9..];
+        let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        if let Ok(num) = num_str.parse() {
+            prs.insert(name.to_owned(), num);
+        }
+    }
+    prs
+}
+
 /// Collect all local branches and build the topology tree with merge-base commits
 /// as first-class nodes.
 pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
+    // Fetch open PRs.
+    let prs = fetch_prs().await;
+
     // Get HEAD commit.
     let head_commit = git(["rev-parse", "--short=7", "HEAD"])
         .await
@@ -48,11 +91,13 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
         let mut branches = vec![BranchInfo {
             name: trunk.to_owned(),
             ahead: 0,
+            pr: prs.get(trunk).copied(),
         }];
         if head_commit.as_deref() == Some(trunk_tip.as_str()) {
             branches.push(BranchInfo {
                 name: "[HEAD]".to_owned(),
                 ahead: 0,
+                pr: None,
             });
         }
         return Ok(Topology {
@@ -162,7 +207,7 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
             .push("[HEAD]".to_owned());
     }
 
-    let root = build_node(&root_commit, &commits_vec, &parents, &commit_to_branches).await?;
+    let root = build_node(&root_commit, &commits_vec, &parents, &commit_to_branches, &prs).await?;
 
     Ok(Topology {
         trunk: trunk.to_owned(),
@@ -176,6 +221,7 @@ async fn build_node(
     all_commits: &[String],
     parents: &HashMap<String, Option<String>>,
     commit_to_branches: &HashMap<String, Vec<String>>,
+    prs: &HashMap<String, u32>,
 ) -> Result<Node, git::Error> {
     // Find children (commits whose parent is this commit).
     let mut child_commits: Vec<&String> = all_commits
@@ -190,7 +236,7 @@ async fn build_node(
     let mut children = Vec::new();
     for child in child_commits {
         let child_node =
-            Box::pin(build_node(child, all_commits, parents, commit_to_branches)).await?;
+            Box::pin(build_node(child, all_commits, parents, commit_to_branches, prs)).await?;
         children.push(child_node);
     }
 
@@ -212,6 +258,7 @@ async fn build_node(
                 .map(|name| BranchInfo {
                     name: name.clone(),
                     ahead,
+                    pr: prs.get(name).copied(),
                 })
                 .collect();
             infos.sort_by(|a, b| a.name.cmp(&b.name));
@@ -220,6 +267,7 @@ async fn build_node(
                 infos.push(BranchInfo {
                     name: "[HEAD]".to_owned(),
                     ahead,
+                    pr: None,
                 });
             }
             infos

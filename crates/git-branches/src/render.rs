@@ -1,4 +1,4 @@
-use crate::branch::{Node, Topology};
+use crate::branch::{BranchInfo, Node, Topology};
 
 /// Render the branch topology as ASCII art.
 #[must_use]
@@ -41,6 +41,14 @@ fn render_children(children: &[Node], lines: &mut Vec<String>, prefix: &str) {
     }
 }
 
+/// Format a branch name, including PR number if present.
+fn format_branch(info: &BranchInfo) -> String {
+    match info.pr {
+        Some(pr) => format!("{} #{pr}", info.name),
+        None => info.name.clone(),
+    }
+}
+
 /// Format a node for display.
 fn format_node(node: &Node) -> String {
     if node.branches.is_empty() {
@@ -50,13 +58,13 @@ fn format_node(node: &Node) -> String {
         // Single branch: show name and ahead count.
         let info = &node.branches[0];
         if info.ahead > 0 {
-            format!("{} (+{})", info.name, info.ahead)
+            format!("{} (+{})", format_branch(info), info.ahead)
         } else {
-            info.name.clone()
+            format_branch(info)
         }
     } else {
         // Multiple branches at same commit: show all names, ahead count once at end.
-        let names: Vec<&str> = node.branches.iter().map(|info| info.name.as_str()).collect();
+        let names: Vec<String> = node.branches.iter().map(format_branch).collect();
         let ahead = node.branches[0].ahead;
         if ahead > 0 {
             format!("{} (+{})", names.join(" "), ahead)
