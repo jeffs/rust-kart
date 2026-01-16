@@ -59,9 +59,9 @@ fn format_node(node: &Node) -> String {
         let names: Vec<&str> = node.branches.iter().map(|info| info.name.as_str()).collect();
         let ahead = node.branches[0].ahead;
         if ahead > 0 {
-            format!("{} (+{})", names.join(", "), ahead)
+            format!("{} (+{})", names.join(" "), ahead)
         } else {
-            names.join(", ")
+            names.join(" ")
         }
     }
 }

@@ -26,6 +26,12 @@ pub struct Topology {
 /// Collect all local branches and build the topology tree with merge-base commits
 /// as first-class nodes.
 pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
+    // Get HEAD commit.
+    let head_commit = git(["rev-parse", "--short=7", "HEAD"])
+        .await
+        .map(|s| s.trim().to_owned())
+        .ok();
+
     // Phase 1: Collect all branch tips (including trunk).
     let output = git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"]).await?;
     let all_branches: Vec<&str> = output.lines().collect();
@@ -39,14 +45,21 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
     // Handle empty repo or trunk-only case.
     if all_branches.len() <= 1 {
         let trunk_tip = tips.get(trunk).cloned().unwrap_or_default();
+        let mut branches = vec![BranchInfo {
+            name: trunk.to_owned(),
+            ahead: 0,
+        }];
+        if head_commit.as_deref() == Some(trunk_tip.as_str()) {
+            branches.push(BranchInfo {
+                name: "[HEAD]".to_owned(),
+                ahead: 0,
+            });
+        }
         return Ok(Topology {
             trunk: trunk.to_owned(),
             root: Node {
                 commit: trunk_tip.clone(),
-                branches: vec![BranchInfo {
-                    name: trunk.to_owned(),
-                    ahead: 0,
-                }],
+                branches,
                 children: vec![],
             },
         });
@@ -58,6 +71,11 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
     // Add all branch tips.
     for tip in tips.values() {
         commits.insert(tip.clone());
+    }
+
+    // Add HEAD commit so it appears even when detached.
+    if let Some(ref head) = head_commit {
+        commits.insert(head.clone());
     }
 
     // Compute merge-base of each non-trunk branch with trunk.
@@ -128,18 +146,23 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
         .unwrap_or_else(|| tips.get(trunk).cloned().unwrap_or_default());
 
     // Build a map from commit to branch names (multiple branches may point to same commit).
-    let mut commit_to_branches: HashMap<String, Vec<&str>> = HashMap::new();
+    let mut commit_to_branches: HashMap<String, Vec<String>> = HashMap::new();
     for (name, tip) in &tips {
-        commit_to_branches.entry(tip.clone()).or_default().push(name);
+        commit_to_branches
+            .entry(tip.clone())
+            .or_default()
+            .push((*name).to_owned());
     }
 
-    let root = build_node(
-        &root_commit,
-        &commits_vec,
-        &parents,
-        &commit_to_branches,
-    )
-    .await?;
+    // Add [HEAD] as a pseudo-branch at its commit.
+    if let Some(ref head) = head_commit {
+        commit_to_branches
+            .entry(head.clone())
+            .or_default()
+            .push("[HEAD]".to_owned());
+    }
+
+    let root = build_node(&root_commit, &commits_vec, &parents, &commit_to_branches).await?;
 
     Ok(Topology {
         trunk: trunk.to_owned(),
@@ -152,7 +175,7 @@ async fn build_node(
     commit: &str,
     all_commits: &[String],
     parents: &HashMap<String, Option<String>>,
-    commit_to_branches: &HashMap<String, Vec<&str>>,
+    commit_to_branches: &HashMap<String, Vec<String>>,
 ) -> Result<Node, git::Error> {
     // Find children (commits whose parent is this commit).
     let mut child_commits: Vec<&String> = all_commits
@@ -166,7 +189,8 @@ async fn build_node(
     // Build children recursively.
     let mut children = Vec::new();
     for child in child_commits {
-        let child_node = Box::pin(build_node(child, all_commits, parents, commit_to_branches)).await?;
+        let child_node =
+            Box::pin(build_node(child, all_commits, parents, commit_to_branches)).await?;
         children.push(child_node);
     }
 
@@ -177,18 +201,27 @@ async fn build_node(
         0
     };
 
-    // Get all branches pointing to this commit.
+    // Get all branches pointing to this commit. Branches sorted alphabetically,
+    // with [HEAD] always last.
     let branches = commit_to_branches
         .get(commit)
         .map(|names| {
             let mut infos: Vec<BranchInfo> = names
                 .iter()
+                .filter(|name| *name != "[HEAD]")
                 .map(|name| BranchInfo {
-                    name: (*name).to_owned(),
+                    name: name.clone(),
                     ahead,
                 })
                 .collect();
             infos.sort_by(|a, b| a.name.cmp(&b.name));
+            // Append [HEAD] at the end if present.
+            if names.iter().any(|n| n == "[HEAD]") {
+                infos.push(BranchInfo {
+                    name: "[HEAD]".to_owned(),
+                    ahead,
+                });
+            }
             infos
         })
         .unwrap_or_default();
