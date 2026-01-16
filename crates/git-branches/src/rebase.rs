@@ -6,7 +6,14 @@ use crate::branch::Node;
 ///
 /// The node must have at least one branch.
 pub async fn rebase_stack(trunk: &str, node: &Node) -> Result<(), git::Error> {
-    if node.branches.is_empty() {
+    // Filter out [HEAD] pseudo-branch - it's not a real git branch.
+    let branches: Vec<_> = node
+        .branches
+        .iter()
+        .filter(|b| b.name != "[HEAD]")
+        .collect();
+
+    if branches.is_empty() {
         // Can't rebase a pure commit node.
         return Ok(());
     }
@@ -15,7 +22,7 @@ pub async fn rebase_stack(trunk: &str, node: &Node) -> Result<(), git::Error> {
 
     // Rebase all branches at this commit onto trunk.
     // Use the first branch as the "main" one for rebasing.
-    let first_branch = &node.branches[0].name;
+    let first_branch = &branches[0].name;
     println!("Rebasing {first_branch} onto {trunk}...");
     git(["rebase", trunk, first_branch]).await?;
 
@@ -23,7 +30,7 @@ pub async fn rebase_stack(trunk: &str, node: &Node) -> Result<(), git::Error> {
     let new_tip = git(["rev-parse", first_branch]).await?.trim().to_owned();
 
     // Reset other branches at this commit to the new tip.
-    for info in &node.branches[1..] {
+    for info in &branches[1..] {
         git(["branch", "-f", &info.name, &new_tip]).await?;
     }
 
@@ -43,9 +50,16 @@ async fn rebase_child(
 ) -> Result<(), git::Error> {
     let old_tip = node.commit.clone();
 
+    // Filter out [HEAD] pseudo-branch - it's not a real git branch.
+    let branches: Vec<_> = node
+        .branches
+        .iter()
+        .filter(|b| b.name != "[HEAD]")
+        .collect();
+
     // If this node has branches, rebase them.
-    if !node.branches.is_empty() {
-        let first_branch = &node.branches[0].name;
+    if !branches.is_empty() {
+        let first_branch = &branches[0].name;
         println!(
             "Rebasing {} onto {}...",
             first_branch,
@@ -64,7 +78,7 @@ async fn rebase_child(
         let new_tip = git(["rev-parse", first_branch]).await?.trim().to_owned();
 
         // Reset other branches at this commit to the new tip.
-        for info in &node.branches[1..] {
+        for info in &branches[1..] {
             git(["branch", "-f", &info.name, &new_tip]).await?;
         }
 
