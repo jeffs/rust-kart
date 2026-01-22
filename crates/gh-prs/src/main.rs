@@ -66,6 +66,7 @@ struct PrDetails {
     url: String,
     updated_at: DateTime<Utc>,
     comments: Vec<Comment>,
+    reviews: Vec<Review>,
     review_decision: Option<String>,
     status_check_rollup: Vec<StatusCheck>,
 }
@@ -78,6 +79,12 @@ struct Comment {
 #[derive(Debug, Deserialize)]
 struct Author {
     login: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct Review {
+    author: Option<Author>,
+    body: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -127,6 +134,19 @@ fn count_human_comments(comments: &[Comment]) -> usize {
                 .as_ref()
                 .map(|a| !is_bot(&a.login))
                 .unwrap_or(false)
+        })
+        .count()
+}
+
+fn count_review_body_comments(reviews: &[Review]) -> usize {
+    reviews
+        .iter()
+        .filter(|r| {
+            !r.body.trim().is_empty()
+                && r.author
+                    .as_ref()
+                    .map(|a| !is_bot(&a.login))
+                    .unwrap_or(false)
         })
         .count()
 }
@@ -214,7 +234,7 @@ fn fetch_pr_details(repo: &str, number: u64) -> Result<PrDetails, Box<dyn std::e
             "--repo",
             repo,
             "--json",
-            "title,url,updatedAt,comments,reviewDecision,statusCheckRollup",
+            "title,url,updatedAt,comments,reviews,reviewDecision,statusCheckRollup",
         ])
         .output()?;
 
@@ -270,7 +290,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             title: details.title,
             index: details.url,
             updated_at: details.updated_at,
-            comments: count_human_comments(&details.comments),
+            comments: count_human_comments(&details.comments)
+                + count_review_body_comments(&details.reviews),
             review: derive_review_emoji(details.review_decision.as_deref()),
             ci: derive_ci_emoji(&details.status_check_rollup),
         });
