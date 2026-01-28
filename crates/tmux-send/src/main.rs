@@ -1,4 +1,5 @@
-//! Sends standard input to the bottom-right tmux, or next zellij, pane.
+//! Copies stdin to the bottom right tmux pane, or the "next" wezterm or zellij
+//! pane.
 
 use std::env;
 use std::io::{self, Read};
