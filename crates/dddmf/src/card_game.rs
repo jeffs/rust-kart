@@ -8,7 +8,9 @@ struct Card(Suit, Rank);
 
 struct Hand(Vec<Card>);
 struct Deck(Vec<Card>);
+
 struct ShuffledDeck(Vec<Card>);
+type Shuffle = fn(Deck) -> ShuffledDeck;
 
 #[rustfmt::skip]
 struct Player { name: String, hand: Hand }
