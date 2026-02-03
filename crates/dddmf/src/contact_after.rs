@@ -23,9 +23,19 @@ enum EmailContactInfo {
     Verified(VerifiedEmail),
 }
 
+struct PostalContactinfo;
+
+enum ContactInfo {
+    EmailOnly(EmailContactInfo),
+    AddrOnly(PostalContactinfo),
+    EmailAndAddr(EmailContactInfo, PostalContactinfo),
+}
+
 struct Contact {
     name: PersonalName,
     email: EmailContactInfo,
+    // Wlaschin's field name "contact info" wouldn't be idiomatic Rust.
+    info: ContactInfo,
 }
 
 /// Constraints code points, not characters, as in Wlaschin's F# example.
