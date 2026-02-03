@@ -2,7 +2,7 @@
 enum Suit { Club, Diamond, Spade, Heart }
 
 #[rustfmt::skip]
-enum Rank { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King }
+enum Rank { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace }
 
 struct Card(Suit, Rank);
 
