@@ -2,3 +2,4 @@
 
 mod card_game;
 mod contact;
+mod fruit;
