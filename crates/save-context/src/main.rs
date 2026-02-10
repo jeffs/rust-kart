@@ -16,6 +16,9 @@ use tokio::fs;
 const USAGE: &str = "
 save-context - Claude Code context manager
 
+Manages both project-scope and user-scope items. Each item is tagged
+[project] or [user] in list output. Scope is auto-detected by name.
+
 USAGE:
     save-context [OPTIONS] <COMMAND>
 
@@ -25,18 +28,18 @@ OPTIONS:
 
 COMMANDS:
     status                  Show current context configuration summary
-    skill                   Manage project skills
-    mcp                     Manage MCP servers
+    skill                   Manage skills (project and user)
+    mcp                     Manage MCP servers (project and user)
 
 SKILL SUBCOMMANDS:
-    save-context skill list                   List all skills with enabled/disabled status
+    save-context skill list                   List all skills with scope and status
     save-context skill disable <NAME>...      Disable one or more skills
     save-context skill enable <NAME>...       Re-enable one or more skills
     save-context skill disable-all            Disable all project skills
-    save-context skill enable-all             Re-enable all disabled skills
+    save-context skill enable-all             Re-enable all disabled project skills
 
 MCP SUBCOMMANDS:
-    save-context mcp list                     List all MCP servers with enabled/disabled status
+    save-context mcp list                     List all MCP servers with scope and status
     save-context mcp disable <NAME>...        Disable one or more MCP servers
     save-context mcp enable <NAME>...         Re-enable one or more MCP servers";
 
@@ -71,6 +74,23 @@ impl fmt::Display for Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
+// --- Scope ---
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Scope {
+    User,
+    Project,
+}
+
+impl fmt::Display for Scope {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::User => write!(f, "user"),
+            Self::Project => write!(f, "project"),
+        }
+    }
+}
+
 // --- JSON structures for settings ---
 
 #[derive(Debug, Default, Deserialize, Serialize)]
@@ -91,6 +111,7 @@ struct Skill {
     name: String,
     enabled: bool,
     tokens: usize,
+    scope: Scope,
 }
 
 // --- MCP server info ---
@@ -99,6 +120,7 @@ struct Skill {
 struct McpServer {
     name: String,
     enabled: bool,
+    scope: Scope,
 }
 
 // --- Token estimation ---
@@ -123,7 +145,21 @@ fn format_tokens(tokens: usize) -> String {
     }
 }
 
+fn strip_frontmatter(content: &str) -> &str {
+    if let Some(rest) = content.strip_prefix("---")
+        && let Some(end) = rest.find("\n---")
+    {
+        let after = &rest[end + 4..];
+        return after.strip_prefix('\n').unwrap_or(after);
+    }
+    content
+}
+
 // --- Project detection ---
+
+fn user_claude_dir() -> Option<PathBuf> {
+    dirs::home_dir().map(|h| h.join(".claude"))
+}
 
 fn find_claude_dir(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
@@ -140,79 +176,19 @@ fn find_claude_dir(start: &Path) -> Option<PathBuf> {
 
 // --- Skill operations ---
 
-async fn list_skills(claude_dir: &Path) -> Result<Vec<Skill>> {
+async fn list_project_skills(claude_dir: &Path) -> Result<Vec<Skill>> {
     let commands_dir = claude_dir.join("commands");
     let disabled_dir = claude_dir.join("commands.disabled");
-
-    let mut skills = Vec::new();
-
-    // Read enabled skills
-    if commands_dir.is_dir() {
-        let mut entries = fs::read_dir(&commands_dir)
-            .await
-            .map_err(|e| Error::Io(commands_dir.clone(), e))?;
-
-        while let Some(entry) = entries
-            .next_entry()
-            .await
-            .map_err(|e| Error::Io(commands_dir.clone(), e))?
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "md") {
-                let name = path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_string();
-                let content = fs::read_to_string(&path)
-                    .await
-                    .map_err(|e| Error::Io(path.clone(), e))?;
-                let tokens = estimate_tokens(&content);
-                skills.push(Skill {
-                    name,
-                    enabled: true,
-                    tokens,
-                });
-            }
-        }
-    }
-
-    // Read disabled skills
-    if disabled_dir.is_dir() {
-        let mut entries = fs::read_dir(&disabled_dir)
-            .await
-            .map_err(|e| Error::Io(disabled_dir.clone(), e))?;
-
-        while let Some(entry) = entries
-            .next_entry()
-            .await
-            .map_err(|e| Error::Io(disabled_dir.clone(), e))?
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "md") {
-                let name = path
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_string();
-                let content = fs::read_to_string(&path)
-                    .await
-                    .map_err(|e| Error::Io(path.clone(), e))?;
-                let tokens = estimate_tokens(&content);
-                skills.push(Skill {
-                    name,
-                    enabled: false,
-                    tokens,
-                });
-            }
-        }
-    }
-
+    let mut skills =
+        read_skill_dir(&commands_dir, true, Scope::Project).await?;
+    skills.extend(
+        read_skill_dir(&disabled_dir, false, Scope::Project).await?,
+    );
     skills.sort_by(|a, b| a.name.cmp(&b.name));
     Ok(skills)
 }
 
-async fn disable_skill(claude_dir: &Path, name: &str) -> Result<()> {
+async fn disable_project_skill(claude_dir: &Path, name: &str) -> Result<()> {
     let src = claude_dir.join("commands").join(format!("{name}.md"));
     let dst_dir = claude_dir.join("commands.disabled");
     let dst = dst_dir.join(format!("{name}.md"));
@@ -234,7 +210,7 @@ async fn disable_skill(claude_dir: &Path, name: &str) -> Result<()> {
     Ok(())
 }
 
-async fn enable_skill(claude_dir: &Path, name: &str) -> Result<()> {
+async fn enable_project_skill(claude_dir: &Path, name: &str) -> Result<()> {
     let src = claude_dir.join("commands.disabled").join(format!("{name}.md"));
     let dst = claude_dir.join("commands").join(format!("{name}.md"));
 
@@ -242,6 +218,123 @@ async fn enable_skill(claude_dir: &Path, name: &str) -> Result<()> {
         return Err(Error::SkillNotFound(name.to_string()));
     }
 
+    fs::rename(&src, &dst)
+        .await
+        .map_err(|e| Error::Io(src, e))?;
+    Ok(())
+}
+
+async fn read_skill_dir(
+    dir: &Path,
+    enabled: bool,
+    scope: Scope,
+) -> Result<Vec<Skill>> {
+    let mut skills = Vec::new();
+    if !dir.is_dir() {
+        return Ok(skills);
+    }
+    let mut entries = fs::read_dir(dir)
+        .await
+        .map_err(|e| Error::Io(dir.to_path_buf(), e))?;
+    while let Some(entry) = entries
+        .next_entry()
+        .await
+        .map_err(|e| Error::Io(dir.to_path_buf(), e))?
+    {
+        let path = entry.path();
+        // User skills: directory with SKILL.md inside
+        let skill_file = if path.is_dir() {
+            let f = path.join("SKILL.md");
+            if f.exists() { Some(f) } else { None }
+        } else if path.extension().is_some_and(|e| e == "md") {
+            // Project skills: flat .md files
+            Some(path.clone())
+        } else {
+            None
+        };
+        let Some(skill_file) = skill_file else {
+            continue;
+        };
+        let name = match scope {
+            Scope::User => path
+                .file_name()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_string(),
+            Scope::Project => path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_string(),
+        };
+        let content = fs::read_to_string(&skill_file)
+            .await
+            .map_err(|e| Error::Io(skill_file.clone(), e))?;
+        let body = strip_frontmatter(&content);
+        let tokens = estimate_tokens(body);
+        skills.push(Skill {
+            name,
+            enabled,
+            tokens,
+            scope,
+        });
+    }
+    Ok(skills)
+}
+
+async fn list_user_skills() -> Result<Vec<Skill>> {
+    let Some(claude_dir) = user_claude_dir() else {
+        return Ok(Vec::new());
+    };
+    let enabled_dir = claude_dir.join("skills");
+    let disabled_dir = claude_dir.join("skills.disabled");
+    let mut skills = read_skill_dir(&enabled_dir, true, Scope::User).await?;
+    skills.extend(
+        read_skill_dir(&disabled_dir, false, Scope::User).await?,
+    );
+    skills.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(skills)
+}
+
+async fn list_all_skills(claude_dir: &Path) -> Result<Vec<Skill>> {
+    let mut skills = list_project_skills(claude_dir).await?;
+    skills.extend(list_user_skills().await?);
+    skills.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(skills)
+}
+
+async fn disable_user_skill(name: &str) -> Result<()> {
+    let Some(claude_dir) = user_claude_dir() else {
+        return Err(Error::SkillNotFound(name.to_string()));
+    };
+    let src = claude_dir.join("skills").join(name);
+    let dst_dir = claude_dir.join("skills.disabled");
+    let dst = dst_dir.join(name);
+
+    if !src.exists() {
+        return Err(Error::SkillNotFound(name.to_string()));
+    }
+    if !dst_dir.exists() {
+        fs::create_dir_all(&dst_dir)
+            .await
+            .map_err(|e| Error::Io(dst_dir.clone(), e))?;
+    }
+    fs::rename(&src, &dst)
+        .await
+        .map_err(|e| Error::Io(src, e))?;
+    Ok(())
+}
+
+async fn enable_user_skill(name: &str) -> Result<()> {
+    let Some(claude_dir) = user_claude_dir() else {
+        return Err(Error::SkillNotFound(name.to_string()));
+    };
+    let src = claude_dir.join("skills.disabled").join(name);
+    let dst = claude_dir.join("skills").join(name);
+
+    if !src.exists() {
+        return Err(Error::SkillNotFound(name.to_string()));
+    }
     fs::rename(&src, &dst)
         .await
         .map_err(|e| Error::Io(src, e))?;
@@ -271,7 +364,7 @@ async fn write_settings(path: &Path, settings: &Settings) -> Result<()> {
     Ok(())
 }
 
-async fn list_mcp_servers(claude_dir: &Path) -> Result<Vec<McpServer>> {
+async fn list_project_mcp_servers(claude_dir: &Path) -> Result<Vec<McpServer>> {
     let project_root = claude_dir.parent().unwrap_or(claude_dir);
 
     // Collect all MCP server names from various sources
@@ -346,7 +439,11 @@ async fn list_mcp_servers(claude_dir: &Path) -> Result<Vec<McpServer>> {
         .into_iter()
         .map(|name| {
             let enabled = !disabled.contains(&name);
-            McpServer { name, enabled }
+            McpServer {
+                name,
+                enabled,
+                scope: Scope::Project,
+            }
         })
         .collect();
 
@@ -354,12 +451,12 @@ async fn list_mcp_servers(claude_dir: &Path) -> Result<Vec<McpServer>> {
     Ok(servers)
 }
 
-async fn disable_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
+async fn disable_project_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
     let settings_path = claude_dir.join("settings.local.json");
     let mut settings = read_settings(&settings_path).await?.unwrap_or_default();
 
     // Verify the server exists
-    let servers = list_mcp_servers(claude_dir).await?;
+    let servers = list_project_mcp_servers(claude_dir).await?;
     if !servers.iter().any(|s| s.name == name) {
         return Err(Error::McpNotFound(name.to_string()));
     }
@@ -373,12 +470,12 @@ async fn disable_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
     Ok(())
 }
 
-async fn enable_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
+async fn enable_project_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
     let settings_path = claude_dir.join("settings.local.json");
     let mut settings = read_settings(&settings_path).await?.unwrap_or_default();
 
     // Verify the server exists
-    let servers = list_mcp_servers(claude_dir).await?;
+    let servers = list_project_mcp_servers(claude_dir).await?;
     if !servers.iter().any(|s| s.name == name) {
         return Err(Error::McpNotFound(name.to_string()));
     }
@@ -389,7 +486,249 @@ async fn enable_mcp_server(claude_dir: &Path, name: &str) -> Result<()> {
     Ok(())
 }
 
+async fn list_user_mcp_servers() -> Result<Vec<McpServer>> {
+    let Some(home) = dirs::home_dir() else {
+        return Ok(Vec::new());
+    };
+    let config_path = home.join(".claude.json");
+    if !config_path.exists() {
+        return Ok(Vec::new());
+    }
+    let content = fs::read_to_string(&config_path)
+        .await
+        .map_err(|e| Error::Io(config_path.clone(), e))?;
+    let value: serde_json::Value =
+        serde_json::from_str(&content)
+            .map_err(|e| Error::Json(config_path.clone(), e))?;
+
+    let mut all_servers: HashSet<String> = HashSet::new();
+    let mut disabled: HashSet<String> = HashSet::new();
+
+    if let Some(servers) =
+        value.get("mcpServers").and_then(|v| v.as_object())
+    {
+        all_servers.extend(servers.keys().cloned());
+    }
+    if let Some(disabled_list) = value
+        .get("disabledMcpjsonServers")
+        .and_then(|v| v.as_array())
+    {
+        for item in disabled_list {
+            if let Some(name) = item.as_str() {
+                disabled.insert(name.to_string());
+            }
+        }
+    }
+
+    let mut servers: Vec<McpServer> = all_servers
+        .into_iter()
+        .map(|name| {
+            let enabled = !disabled.contains(&name);
+            McpServer {
+                name,
+                enabled,
+                scope: Scope::User,
+            }
+        })
+        .collect();
+    servers.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(servers)
+}
+
+async fn list_all_mcp_servers(
+    claude_dir: &Path,
+) -> Result<Vec<McpServer>> {
+    let mut servers = list_project_mcp_servers(claude_dir).await?;
+    servers.extend(list_user_mcp_servers().await?);
+    servers.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(servers)
+}
+
+async fn disable_user_mcp_server(name: &str) -> Result<()> {
+    let Some(home) = dirs::home_dir() else {
+        return Err(Error::McpNotFound(name.to_string()));
+    };
+    let config_path = home.join(".claude.json");
+
+    let servers = list_user_mcp_servers().await?;
+    if !servers.iter().any(|s| s.name == name) {
+        return Err(Error::McpNotFound(name.to_string()));
+    }
+
+    let content = fs::read_to_string(&config_path)
+        .await
+        .map_err(|e| Error::Io(config_path.clone(), e))?;
+    let mut value: serde_json::Value =
+        serde_json::from_str(&content)
+            .map_err(|e| Error::Json(config_path.clone(), e))?;
+
+    let disabled = value
+        .as_object_mut()
+        .unwrap()
+        .entry("disabledMcpjsonServers")
+        .or_insert_with(|| serde_json::Value::Array(Vec::new()));
+    if let Some(arr) = disabled.as_array_mut() {
+        let name_val = serde_json::Value::String(name.to_string());
+        if !arr.contains(&name_val) {
+            arr.push(name_val);
+            arr.sort_by(|a, b| a.as_str().cmp(&b.as_str()));
+        }
+    }
+
+    let output = serde_json::to_string_pretty(&value)
+        .map_err(|e| Error::Json(config_path.clone(), e))?;
+    fs::write(&config_path, output)
+        .await
+        .map_err(|e| Error::Io(config_path, e))?;
+    Ok(())
+}
+
+async fn enable_user_mcp_server(name: &str) -> Result<()> {
+    let Some(home) = dirs::home_dir() else {
+        return Err(Error::McpNotFound(name.to_string()));
+    };
+    let config_path = home.join(".claude.json");
+
+    let servers = list_user_mcp_servers().await?;
+    if !servers.iter().any(|s| s.name == name) {
+        return Err(Error::McpNotFound(name.to_string()));
+    }
+
+    let content = fs::read_to_string(&config_path)
+        .await
+        .map_err(|e| Error::Io(config_path.clone(), e))?;
+    let mut value: serde_json::Value =
+        serde_json::from_str(&content)
+            .map_err(|e| Error::Json(config_path.clone(), e))?;
+
+    if let Some(arr) = value
+        .get_mut("disabledMcpjsonServers")
+        .and_then(|v| v.as_array_mut())
+    {
+        arr.retain(|v| v.as_str() != Some(name));
+    }
+
+    let output = serde_json::to_string_pretty(&value)
+        .map_err(|e| Error::Json(config_path.clone(), e))?;
+    fs::write(&config_path, output)
+        .await
+        .map_err(|e| Error::Io(config_path, e))?;
+    Ok(())
+}
+
+// --- Scope resolution ---
+
+fn resolve_skill_scope(
+    name: &str,
+    all_skills: &[Skill],
+) -> Result<Scope> {
+    let matches: Vec<_> = all_skills
+        .iter()
+        .filter(|s| s.name == name)
+        .collect();
+    match matches.len() {
+        0 => Err(Error::SkillNotFound(name.to_string())),
+        1 => Ok(matches[0].scope),
+        _ => {
+            let scopes: Vec<_> =
+                matches.iter().map(|s| s.scope).collect();
+            if scopes.iter().all(|s| *s == scopes[0]) {
+                Ok(scopes[0])
+            } else {
+                eprintln!(
+                    "Ambiguous skill '{name}' exists in both \
+                     user and project scope"
+                );
+                exit(1)
+            }
+        }
+    }
+}
+
+fn resolve_mcp_scope(
+    name: &str,
+    all_servers: &[McpServer],
+) -> Result<Scope> {
+    let matches: Vec<_> = all_servers
+        .iter()
+        .filter(|s| s.name == name)
+        .collect();
+    match matches.len() {
+        0 => Err(Error::McpNotFound(name.to_string())),
+        1 => Ok(matches[0].scope),
+        _ => {
+            let scopes: Vec<_> =
+                matches.iter().map(|s| s.scope).collect();
+            if scopes.iter().all(|s| *s == scopes[0]) {
+                Ok(scopes[0])
+            } else {
+                eprintln!(
+                    "Ambiguous MCP server '{name}' exists in both \
+                     user and project scope"
+                );
+                exit(1)
+            }
+        }
+    }
+}
+
 // --- Command handlers ---
+
+fn print_scope_section(
+    scope: Scope,
+    enabled: &[&Skill],
+    disabled: &[&Skill],
+    quiet: bool,
+) {
+    let enabled_tokens: usize =
+        enabled.iter().map(|s| s.tokens).sum();
+    println!(
+        "[{scope}] Skills: {} enabled (~{} tokens)",
+        enabled.len(),
+        format_tokens(enabled_tokens)
+    );
+    if !quiet {
+        for skill in enabled {
+            println!(
+                "  {} {} tokens",
+                skill.name,
+                format_tokens(skill.tokens)
+            );
+        }
+        if !disabled.is_empty() {
+            println!(
+                "[{scope}] Disabled skills: {}",
+                disabled.len()
+            );
+            for skill in disabled {
+                println!("  {} (disabled)", skill.name);
+            }
+        }
+    }
+}
+
+fn print_mcp_scope_section(
+    scope: Scope,
+    enabled: &[&McpServer],
+    disabled: &[&McpServer],
+    quiet: bool,
+) {
+    println!("[{scope}] MCP servers: {} enabled", enabled.len());
+    if !quiet {
+        for server in enabled {
+            println!("  {}", server.name);
+        }
+        if !disabled.is_empty() {
+            println!(
+                "[{scope}] Disabled MCP servers: {}",
+                disabled.len()
+            );
+            for server in disabled {
+                println!("  {} (disabled)", server.name);
+            }
+        }
+    }
+}
 
 async fn cmd_status(claude_dir: &Path, quiet: bool) -> Result<()> {
     let project_root = claude_dir.parent().unwrap_or(claude_dir);
@@ -399,57 +738,46 @@ async fn cmd_status(claude_dir: &Path, quiet: bool) -> Result<()> {
         println!();
     }
 
-    // Skills summary
-    let skills = list_skills(claude_dir).await?;
-    let enabled_skills: Vec<_> = skills.iter().filter(|s| s.enabled).collect();
-    let disabled_skills: Vec<_> = skills.iter().filter(|s| !s.enabled).collect();
-    let enabled_tokens: usize = enabled_skills.iter().map(|s| s.tokens).sum();
-
-    println!(
-        "Skills: {} enabled (~{} tokens)",
-        enabled_skills.len(),
-        format_tokens(enabled_tokens)
-    );
-
-    if !quiet {
-        for skill in &enabled_skills {
-            println!("  {} {} tokens", skill.name, format_tokens(skill.tokens));
+    for (scope, skills) in [
+        (Scope::Project, list_project_skills(claude_dir).await?),
+        (Scope::User, list_user_skills().await?),
+    ] {
+        if scope == Scope::User && skills.is_empty() {
+            continue;
         }
-        if !disabled_skills.is_empty() {
-            println!();
-            println!("Disabled skills: {}", disabled_skills.len());
-            for skill in &disabled_skills {
-                println!("  {} (disabled)", skill.name);
-            }
-        }
+        let enabled: Vec<_> =
+            skills.iter().filter(|s| s.enabled).collect();
+        let disabled: Vec<_> =
+            skills.iter().filter(|s| !s.enabled).collect();
+        print_scope_section(scope, &enabled, &disabled, quiet);
     }
 
     println!();
 
-    // MCP summary
-    let servers = list_mcp_servers(claude_dir).await?;
-    let enabled_servers: Vec<_> = servers.iter().filter(|s| s.enabled).collect();
-    let disabled_servers: Vec<_> = servers.iter().filter(|s| !s.enabled).collect();
-
-    println!("MCP servers: {} enabled", enabled_servers.len());
-    if !quiet {
-        for server in &enabled_servers {
-            println!("  {}", server.name);
+    for (scope, servers) in [
+        (
+            Scope::Project,
+            list_project_mcp_servers(claude_dir).await?,
+        ),
+        (Scope::User, list_user_mcp_servers().await?),
+    ] {
+        if scope == Scope::User && servers.is_empty() {
+            continue;
         }
-        if !disabled_servers.is_empty() {
-            println!();
-            println!("Disabled MCP servers: {}", disabled_servers.len());
-            for server in &disabled_servers {
-                println!("  {} (disabled)", server.name);
-            }
-        }
+        let enabled: Vec<_> =
+            servers.iter().filter(|s| s.enabled).collect();
+        let disabled: Vec<_> =
+            servers.iter().filter(|s| !s.enabled).collect();
+        print_mcp_scope_section(
+            scope, &enabled, &disabled, quiet,
+        );
     }
 
     Ok(())
 }
 
 async fn cmd_skill_list(claude_dir: &Path) -> Result<()> {
-    let skills = list_skills(claude_dir).await?;
+    let skills = list_all_skills(claude_dir).await?;
 
     if skills.is_empty() {
         println!("No skills found");
@@ -459,7 +787,8 @@ async fn cmd_skill_list(claude_dir: &Path) -> Result<()> {
     for skill in &skills {
         let status = if skill.enabled { "" } else { " (disabled)" };
         println!(
-            "{}{} - {} tokens",
+            "[{}] {}{} - {} tokens",
+            skill.scope,
             skill.name,
             status,
             format_tokens(skill.tokens)
@@ -469,24 +798,42 @@ async fn cmd_skill_list(claude_dir: &Path) -> Result<()> {
     Ok(())
 }
 
-async fn cmd_skill_disable(claude_dir: &Path, names: &[String]) -> Result<()> {
+async fn cmd_skill_disable(
+    claude_dir: &Path,
+    names: &[String],
+) -> Result<()> {
+    let all = list_all_skills(claude_dir).await?;
     for name in names {
-        disable_skill(claude_dir, name).await?;
+        match resolve_skill_scope(name, &all)? {
+            Scope::Project => {
+                disable_project_skill(claude_dir, name).await?;
+            }
+            Scope::User => disable_user_skill(name).await?,
+        }
         println!("Disabled: {name}");
     }
     Ok(())
 }
 
-async fn cmd_skill_enable(claude_dir: &Path, names: &[String]) -> Result<()> {
+async fn cmd_skill_enable(
+    claude_dir: &Path,
+    names: &[String],
+) -> Result<()> {
+    let all = list_all_skills(claude_dir).await?;
     for name in names {
-        enable_skill(claude_dir, name).await?;
+        match resolve_skill_scope(name, &all)? {
+            Scope::Project => {
+                enable_project_skill(claude_dir, name).await?;
+            }
+            Scope::User => enable_user_skill(name).await?,
+        }
         println!("Enabled: {name}");
     }
     Ok(())
 }
 
 async fn cmd_skill_disable_all(claude_dir: &Path) -> Result<()> {
-    let skills = list_skills(claude_dir).await?;
+    let skills = list_project_skills(claude_dir).await?;
     let enabled: Vec<_> = skills.iter().filter(|s| s.enabled).collect();
 
     if enabled.is_empty() {
@@ -496,24 +843,28 @@ async fn cmd_skill_disable_all(claude_dir: &Path) -> Result<()> {
     let total_tokens: usize = enabled.iter().map(|s| s.tokens).sum();
 
     for skill in &enabled {
-        disable_skill(claude_dir, &skill.name).await?;
+        disable_project_skill(claude_dir, &skill.name).await?;
     }
 
     println!("Disabled {} skills", enabled.len());
-    println!("Estimated savings: ~{} tokens", format_tokens(total_tokens));
+    println!(
+        "Estimated savings: ~{} tokens",
+        format_tokens(total_tokens)
+    );
     Ok(())
 }
 
 async fn cmd_skill_enable_all(claude_dir: &Path) -> Result<()> {
-    let skills = list_skills(claude_dir).await?;
-    let disabled: Vec<_> = skills.iter().filter(|s| !s.enabled).collect();
+    let skills = list_project_skills(claude_dir).await?;
+    let disabled: Vec<_> =
+        skills.iter().filter(|s| !s.enabled).collect();
 
     if disabled.is_empty() {
         return Err(Error::NoSkillsToEnable);
     }
 
     for skill in &disabled {
-        enable_skill(claude_dir, &skill.name).await?;
+        enable_project_skill(claude_dir, &skill.name).await?;
     }
 
     println!("Enabled {} skills", disabled.len());
@@ -521,7 +872,7 @@ async fn cmd_skill_enable_all(claude_dir: &Path) -> Result<()> {
 }
 
 async fn cmd_mcp_list(claude_dir: &Path) -> Result<()> {
-    let servers = list_mcp_servers(claude_dir).await?;
+    let servers = list_all_mcp_servers(claude_dir).await?;
 
     if servers.is_empty() {
         println!("No MCP servers found");
@@ -530,23 +881,41 @@ async fn cmd_mcp_list(claude_dir: &Path) -> Result<()> {
 
     for server in &servers {
         let status = if server.enabled { "" } else { " (disabled)" };
-        println!("{}{status}", server.name);
+        println!("[{}] {}{status}", server.scope, server.name);
     }
 
     Ok(())
 }
 
-async fn cmd_mcp_disable(claude_dir: &Path, names: &[String]) -> Result<()> {
+async fn cmd_mcp_disable(
+    claude_dir: &Path,
+    names: &[String],
+) -> Result<()> {
+    let all = list_all_mcp_servers(claude_dir).await?;
     for name in names {
-        disable_mcp_server(claude_dir, name).await?;
+        match resolve_mcp_scope(name, &all)? {
+            Scope::Project => {
+                disable_project_mcp_server(claude_dir, name).await?;
+            }
+            Scope::User => disable_user_mcp_server(name).await?,
+        }
         println!("Disabled: {name}");
     }
     Ok(())
 }
 
-async fn cmd_mcp_enable(claude_dir: &Path, names: &[String]) -> Result<()> {
+async fn cmd_mcp_enable(
+    claude_dir: &Path,
+    names: &[String],
+) -> Result<()> {
+    let all = list_all_mcp_servers(claude_dir).await?;
     for name in names {
-        enable_mcp_server(claude_dir, name).await?;
+        match resolve_mcp_scope(name, &all)? {
+            Scope::Project => {
+                enable_project_mcp_server(claude_dir, name).await?;
+            }
+            Scope::User => enable_user_mcp_server(name).await?,
+        }
         println!("Enabled: {name}");
     }
     Ok(())
