@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 // TODO: Report CLI errors; support --help.
 
 use core::fmt;

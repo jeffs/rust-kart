@@ -1,4 +1,4 @@
-//! Converts a Rust source file path to a binary name for use with cargo.
+#![doc = include_str!("../README.md")]
 
 use std::env;
 use std::path::Path;

@@ -1,8 +1,4 @@
-//! Firefox Bookmark Manager library.
-//!
-//! Provides functionality for managing Firefox bookmarks through a
-//! version-control-friendly workflow.
-
+#![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 
 mod db;

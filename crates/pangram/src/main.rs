@@ -1,29 +1,8 @@
-//! NY Times Spelling Bee solver.
-//!
-//! # Usage
-//! ```sh
-//! pangram LETTERS [WORDS_FILE]
-//! ```
-//!
-//! Any uppercase `LETTERS` are considered mandatory.  Each solution is printed
-//! on a separate line, and pangrams (that is, words that use all available
-//! `LETTERS`) are prefixed with asterisks.
-//!
-//! The default `WORDS_FILE` is /usr/share/dict/words.  Note that this file may
-//! not match the New York Times' word list.  In particular, it may contain
-//! proper nouns, which you can grep out, as in the following example.
-//!
-//! # Example
-//! ```sh
-//! $ pangram Eachkmn |rg -v '[A-Z]' |tail -3
-//!   nankeen
-//! * checkman
-//!   henchman
-//! ```
-//!
-//! # To Do
-//! * [ ] `[-m|--min-length=<N>]`
-//! * [ ] `[-p|--omit-proper]`
+#![doc = include_str!("../README.md")]
+
+// TODO:
+// * [-m|--min-length=<N>]
+// * [-p|--omit-proper]
 
 mod main_error;
 

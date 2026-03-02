@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::{io, process::exit};
 
 type Error = Box<dyn std::error::Error>;

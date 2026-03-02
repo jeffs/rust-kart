@@ -1,5 +1,4 @@
-//! Removes trailing whitespace from each line in the specified files, in place;
-//! or from stdin if no files are specified, writing the results to stdout.
+#![doc = include_str!("../README.md")]
 
 use std::{
     env, fmt, mem,

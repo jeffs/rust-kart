@@ -1,5 +1,4 @@
-//! Copies stdin to the bottom right tmux pane, or the "next" wezterm or zellij
-//! pane.
+#![doc = include_str!("../README.md")]
 
 use std::env;
 use std::io::{self, Read};

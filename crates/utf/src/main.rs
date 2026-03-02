@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 // # TODO
 //
 // * [] Support [emoticons](https://gist.github.com/jordanorelli/11229304)

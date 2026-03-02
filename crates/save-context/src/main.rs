@@ -1,7 +1,4 @@
-//! `save-context` - Claude Code context manager
-//!
-//! A CLI tool to reduce Claude Code context overhead by enabling/disabling
-//! skills and MCP servers per-project.
+#![doc = include_str!("../README.md")]
 
 use std::{
     collections::HashSet,

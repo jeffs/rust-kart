@@ -1,7 +1,4 @@
-//! MCP server for managing background tasks.
-//!
-//! Provides tools to start, stop, list, and inspect background processes.
-
+#![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 
 mod error;

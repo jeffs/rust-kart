@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use chrono::{DateTime, Duration, Utc};
 use clap::Parser;
 use serde::Deserialize;

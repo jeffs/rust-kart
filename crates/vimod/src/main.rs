@@ -1,4 +1,4 @@
-//! Opens any modified files from the current Git working copy in ${EDITOR:-vi}.
+#![doc = include_str!("../README.md")]
 
 use std::ffi::OsStr;
 use std::io::Write;

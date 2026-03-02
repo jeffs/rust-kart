@@ -1,7 +1,4 @@
-//! Aligns Markdown tables read from stdin, writing the result to stdout.
-//!
-//! Contiguous runs of lines starting with `|` are treated as tables.
-//! All other lines pass through unchanged.
+#![doc = include_str!("../README.md")]
 
 use std::io::{self, Read, Write};
 

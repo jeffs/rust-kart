@@ -1,5 +1,4 @@
-//! This program prints the time remaining until a specified date.  Run it with
-//! watch(1) to see a countdown.
+#![doc = include_str!("../README.md")]
 
 use chrono::prelude::*;
 use std::env;

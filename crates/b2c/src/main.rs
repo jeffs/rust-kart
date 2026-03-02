@@ -1,4 +1,4 @@
-//! Parses binary numbers as ASCII and prints the resulting text.
+#![doc = include_str!("../README.md")]
 
 use std::error::Error;
 use std::io::{self, BufRead as _};
