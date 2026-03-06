@@ -12,11 +12,10 @@ fn command_dirs() -> Vec<PathBuf> {
     if let Some(home) = env::var_os("HOME") {
         dirs.push(PathBuf::from(home).join(".kart/commands"));
     }
-    if let Ok(exe) = env::current_exe() {
-        if let Some(dir) = exe.parent() {
+    if let Ok(exe) = env::current_exe()
+        && let Some(dir) = exe.parent() {
             dirs.push(dir.join("../libexec/kart"));
         }
-    }
     dirs
 }
 
