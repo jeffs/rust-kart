@@ -76,7 +76,7 @@ pub fn is_internal_path(segments: &[String]) -> bool {
 /// Resolve a use path to its target module path
 /// Returns None if the path refers to an external crate or cannot be resolved
 #[must_use]
-#[allow(clippy::implicit_hasher)]
+#[expect(clippy::implicit_hasher)]
 pub fn resolve_use_target(
     segments: &[String],
     current_module: &ModulePath,

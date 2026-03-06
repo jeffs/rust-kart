@@ -79,7 +79,7 @@ fn build_position_map(index: Option<&FolderIndex>) -> HashMap<String, i32> {
         for (i, name) in idx.order.iter().enumerate() {
             // Strip trailing `/` from folder names
             let key = name.strip_suffix('/').unwrap_or(name).to_string();
-            #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
             map.insert(key, i as i32);
         }
     }
@@ -263,7 +263,7 @@ fn read_folder_structure(dir: &Path, parent_path: &str) -> Result<FolderData> {
 /// # Errors
 ///
 /// Returns an error if the database cannot be modified or files cannot be read.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn import_bookmarks(db_path: &Path, import_dir: &Path) -> Result<ImportStats> {
     let mut conn = db::open_readwrite(db_path)?;
     let tx = conn.transaction()?;
@@ -337,7 +337,7 @@ pub fn import_bookmarks(db_path: &Path, import_dir: &Path) -> Result<ImportStats
             let unlisted = unlisted_counters.entry(parent_id).or_insert(0);
             let position = get_position(folder_name, &position_map, unlisted);
 
-            #[allow(clippy::cast_possible_truncation)]
+            #[expect(clippy::cast_possible_truncation)]
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .map(|d| d.as_micros() as i64)

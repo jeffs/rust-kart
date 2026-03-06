@@ -63,72 +63,22 @@ async fn fetch_prs() -> HashMap<String, u32> {
     prs
 }
 
-/// Collect all local branches and build the topology tree with merge-base commits
-/// as first-class nodes.
-pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
-    // Fetch open PRs.
-    let prs = fetch_prs().await;
+/// Find all relevant commits: branch tips, HEAD, and merge-base fork points.
+async fn find_commits<'a>(
+    all_branches: &[&'a str],
+    trunk: &str,
+    tips: &HashMap<&str, String>,
+    head_commit: Option<&String>,
+) -> Result<HashSet<String>, git::Error> {
+    let mut commits: HashSet<String> = tips.values().cloned().collect();
 
-    // Get HEAD commit.
-    let head_commit = git(["rev-parse", "--short=7", "HEAD"])
-        .await
-        .map(|s| s.trim().to_owned())
-        .ok();
-
-    // Phase 1: Collect all branch tips (including trunk).
-    let output = git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"]).await?;
-    let all_branches: Vec<&str> = output.lines().collect();
-
-    let mut tips: HashMap<&str, String> = HashMap::new();
-    for name in &all_branches {
-        let tip = git(["rev-parse", "--short=7", name])
-            .await?
-            .trim()
-            .to_owned();
-        tips.insert(name, tip);
-    }
-
-    // Handle empty repo or trunk-only case.
-    if all_branches.len() <= 1 {
-        let trunk_tip = tips.get(trunk).cloned().unwrap_or_default();
-        let mut branches = vec![BranchInfo {
-            name: trunk.to_owned(),
-            ahead: 0,
-            pr: prs.get(trunk).copied(),
-        }];
-        if head_commit.as_deref() == Some(trunk_tip.as_str()) {
-            branches.push(BranchInfo {
-                name: "[HEAD]".to_owned(),
-                ahead: 0,
-                pr: None,
-            });
-        }
-        return Ok(Topology {
-            trunk: trunk.to_owned(),
-            root: Node {
-                commit: trunk_tip.clone(),
-                branches,
-                children: vec![],
-            },
-        });
-    }
-
-    // Phase 2: Find all merge-bases (fork points).
-    let mut commits: HashSet<String> = HashSet::new();
-
-    // Add all branch tips.
-    for tip in tips.values() {
-        commits.insert(tip.clone());
-    }
-
-    // Add HEAD commit so it appears even when detached.
-    if let Some(ref head) = head_commit {
+    if let Some(head) = head_commit {
         commits.insert(head.clone());
     }
 
     // Compute merge-base of each non-trunk branch with trunk.
-    let mut trunk_merge_bases: HashMap<&str, String> = HashMap::new();
-    for name in &all_branches {
+    let mut trunk_merge_bases: HashMap<&'a str, String> = HashMap::new();
+    for name in all_branches {
         if *name == trunk {
             continue;
         }
@@ -163,21 +113,24 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
         }
     }
 
-    // Phase 3: Build parent relationships.
-    // For each commit, find its parent (closest ancestor in our commit set).
-    let commits_vec: Vec<String> = commits.into_iter().collect();
+    Ok(commits)
+}
+
+/// For each commit, find its parent (closest ancestor in the commit set).
+async fn find_parents(
+    commits: &[String],
+) -> Result<HashMap<String, Option<String>>, git::Error> {
     let mut parents: HashMap<String, Option<String>> = HashMap::new();
 
-    for commit in &commits_vec {
+    for commit in commits {
         let mut best_parent: Option<String> = None;
         let mut best_distance = usize::MAX;
 
-        for other in &commits_vec {
+        for other in commits {
             if other == commit {
                 continue;
             }
 
-            // Is other an ancestor of commit?
             let is_ancestor = git(["merge-base", "--is-ancestor", other, commit]).await;
             if is_ancestor.is_ok() {
                 let dist = count_commits(other, commit).await?;
@@ -191,15 +144,66 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
         parents.insert(commit.clone(), best_parent);
     }
 
-    // Phase 4: Build tree from root.
-    // Find root (commit with no parent in our set).
+    Ok(parents)
+}
+
+/// Collect all local branches and build the topology tree with merge-base commits
+/// as first-class nodes.
+pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
+    let prs = fetch_prs().await;
+
+    let head_commit = git(["rev-parse", "--short=7", "HEAD"])
+        .await
+        .map(|s| s.trim().to_owned())
+        .ok();
+
+    let output = git(["for-each-ref", "--format=%(refname:short)", "refs/heads/"]).await?;
+    let all_branches: Vec<&str> = output.lines().collect();
+
+    let mut tips: HashMap<&str, String> = HashMap::new();
+    for name in &all_branches {
+        let tip = git(["rev-parse", "--short=7", name])
+            .await?
+            .trim()
+            .to_owned();
+        tips.insert(name, tip);
+    }
+
+    if all_branches.len() <= 1 {
+        let trunk_tip = tips.get(trunk).cloned().unwrap_or_default();
+        let mut branches = vec![BranchInfo {
+            name: trunk.to_owned(),
+            ahead: 0,
+            pr: prs.get(trunk).copied(),
+        }];
+        if head_commit.as_deref() == Some(trunk_tip.as_str()) {
+            branches.push(BranchInfo {
+                name: "[HEAD]".to_owned(),
+                ahead: 0,
+                pr: None,
+            });
+        }
+        return Ok(Topology {
+            trunk: trunk.to_owned(),
+            root: Node {
+                commit: trunk_tip.clone(),
+                branches,
+                children: vec![],
+            },
+        });
+    }
+
+    let commits: HashSet<String> =
+        find_commits(&all_branches, trunk, &tips, head_commit.as_ref()).await?;
+    let commits_vec: Vec<String> = commits.into_iter().collect();
+    let parents = find_parents(&commits_vec).await?;
+
     let root_commit = commits_vec
         .iter()
         .find(|c| parents.get(*c) == Some(&None))
         .cloned()
         .unwrap_or_else(|| tips.get(trunk).cloned().unwrap_or_default());
 
-    // Build a map from commit to branch names (multiple branches may point to same commit).
     let mut commit_to_branches: HashMap<String, Vec<String>> = HashMap::new();
     for (name, tip) in &tips {
         commit_to_branches
@@ -207,8 +211,6 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
             .or_default()
             .push((*name).to_owned());
     }
-
-    // Add [HEAD] as a pseudo-branch at its commit.
     if let Some(ref head) = head_commit {
         commit_to_branches
             .entry(head.clone())

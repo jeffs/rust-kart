@@ -300,7 +300,7 @@ pub fn insert_folder(
 /// # Errors
 ///
 /// Returns an error if the insert fails.
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 pub fn insert_bookmark(
     tx: &Transaction<'_>,
     parent: i64,
@@ -383,7 +383,7 @@ pub fn get_or_create_tag_folder(tx: &Transaction<'_>, tag_name: &str) -> Result<
         .unwrap_or(0);
 
     // Create new tag folder
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_micros() as i64)
@@ -431,7 +431,7 @@ pub fn add_tag(tx: &Transaction<'_>, place_id: i64, tag_name: &str) -> Result<()
         )
         .unwrap_or(0);
 
-    #[allow(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation)]
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_micros() as i64)

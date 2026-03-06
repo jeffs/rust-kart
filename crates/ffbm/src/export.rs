@@ -80,7 +80,7 @@ struct IndexItem {
 /// # Errors
 ///
 /// Returns an error if the database cannot be read or files cannot be written.
-#[allow(clippy::too_many_lines)]
+#[expect(clippy::too_many_lines)]
 pub fn export_bookmarks(db_path: &Path, export_dir: &Path) -> Result<ExportStats> {
     let conn = db::open_readonly(db_path)?;
 

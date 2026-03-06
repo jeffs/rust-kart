@@ -124,7 +124,7 @@ struct McpServer {
 
 fn estimate_tokens(content: &str) -> usize {
     let words = content.split_whitespace().count();
-    #[allow(
+    #[expect(
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss,
         clippy::cast_precision_loss
@@ -133,7 +133,7 @@ fn estimate_tokens(content: &str) -> usize {
     tokens
 }
 
-#[allow(clippy::cast_precision_loss)]
+#[expect(clippy::cast_precision_loss)]
 fn format_tokens(tokens: usize) -> String {
     if tokens >= 1000 {
         format!("{:.1}k", tokens as f64 / 1000.0)

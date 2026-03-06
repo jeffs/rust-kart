@@ -248,7 +248,7 @@ mod tests {
     }
 
     /// The maximum number of values the sieve can hold.
-    const MAX_NUM_VALUES: u32 = (U32_MAX / WORD_BITS / 2 * WORD_BITS * 2) as u32;
+    const MAX_NUM_VALUES: u32 = u32::MAX / (Word::BITS * 2) * (Word::BITS * 2);
 
     /// The largest value that can be checked for primality.
     const MAX_CHECKABLE_VALUE: u32 = MAX_NUM_VALUES - 1;
@@ -270,7 +270,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // very slow and memory-intensive (~256 MB)
+    #[ignore = "very slow and memory-intensive (~256 MB)"]
     fn test_sieve_max_checkable_value() {
         let mut sieve = Sieve::new();
         // The sieve can hold MAX_NUM_VALUES values (0 through MAX_NUM_VALUES-1).
@@ -281,7 +281,7 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // very slow and memory-intensive (~256 MB)
+    #[ignore = "very slow and memory-intensive (~256 MB)"]
     #[should_panic(expected = "sieve max size exceeded")]
     fn test_sieve_grow_beyond_max_panics() {
         let mut sieve = Sieve::new();

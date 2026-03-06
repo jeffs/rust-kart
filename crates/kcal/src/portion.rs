@@ -76,15 +76,15 @@ mod tests {
     #[test]
     fn test_portion_parsing() {
         let p: Portion = "100g".parse().unwrap();
-        assert_eq!(p.number, 100.0);
+        assert!((p.number - 100.0).abs() < f64::EPSILON);
         assert_eq!(p.unit, Unit::Gram);
 
         let p: Portion = "8oz".parse().unwrap();
-        assert_eq!(p.number, 8.0);
+        assert!((p.number - 8.0).abs() < f64::EPSILON);
         assert_eq!(p.unit, Unit::Ounce);
 
         let p: Portion = "1.5lb".parse().unwrap();
-        assert_eq!(p.number, 1.5);
+        assert!((p.number - 1.5).abs() < f64::EPSILON);
         assert_eq!(p.unit, Unit::Pound);
     }
 

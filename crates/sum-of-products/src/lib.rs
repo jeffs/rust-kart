@@ -71,7 +71,7 @@ mod tests {
         let input = vec![vec![2.0, 3.0], vec![4.0, 5.0]];
         let result = compute(&input);
         assert_eq!(result.products, vec![6.0, 20.0]);
-        assert_eq!(result.sum, 26.0);
+        assert!((result.sum - 26.0).abs() < f64::EPSILON);
     }
 
     #[test]

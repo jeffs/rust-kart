@@ -101,6 +101,6 @@ mod tests {
         assert!((grams_per_lb - 453.6).abs() < 0.1);
 
         // Identity conversions
-        assert_eq!(Unit::Gram.per(Unit::Gram), 1.0);
+        assert!((Unit::Gram.per(Unit::Gram) - 1.0).abs() < f64::EPSILON);
     }
 }
