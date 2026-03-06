@@ -217,11 +217,7 @@ fn main() {
             generate_completions(shell);
         }
         Some("--complete") => {
-            let rest: Vec<String> = args
-                .into_iter()
-                .skip(1)
-                .skip_while(|a| a == "--")
-                .collect();
+            let rest: Vec<String> = args.into_iter().skip(1).skip_while(|a| a == "--").collect();
             complete(&rest);
         }
         Some(subcmd) => {

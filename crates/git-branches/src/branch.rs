@@ -117,9 +117,7 @@ async fn find_commits<'a>(
 }
 
 /// For each commit, find its parent (closest ancestor in the commit set).
-async fn find_parents(
-    commits: &[String],
-) -> Result<HashMap<String, Option<String>>, git::Error> {
+async fn find_parents(commits: &[String]) -> Result<HashMap<String, Option<String>>, git::Error> {
     let mut parents: HashMap<String, Option<String>> = HashMap::new();
 
     for commit in commits {

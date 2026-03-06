@@ -131,11 +131,7 @@ fn is_bot(login: &str) -> bool {
 fn count_human_comments(comments: &[Comment]) -> usize {
     comments
         .iter()
-        .filter(|c| {
-            c.author
-                .as_ref()
-                .is_some_and(|a| !is_bot(&a.login))
-        })
+        .filter(|c| c.author.as_ref().is_some_and(|a| !is_bot(&a.login)))
         .count()
 }
 
@@ -143,10 +139,7 @@ fn count_review_body_comments(reviews: &[Review]) -> usize {
     reviews
         .iter()
         .filter(|r| {
-            !r.body.trim().is_empty()
-                && r.author
-                    .as_ref()
-                    .is_some_and(|a| !is_bot(&a.login))
+            !r.body.trim().is_empty() && r.author.as_ref().is_some_and(|a| !is_bot(&a.login))
         })
         .count()
 }
@@ -281,9 +274,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // Filter by --since if specified
         if let Some(since_time) = since
-            && details.updated_at < since_time {
-                continue;
-            }
+            && details.updated_at < since_time
+        {
+            continue;
+        }
 
         prs.push(OutputPr {
             title: details.title,
