@@ -150,10 +150,7 @@ pub fn check_firefox_not_running(profile_path: &Path) -> Result<()> {
         let places = profile_path.join("places.sqlite");
         if places.exists() {
             // Try to open with exclusive access
-            match Connection::open_with_flags(
-                &places,
-                rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-            ) {
+            match Connection::open_with_flags(&places, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY) {
                 Ok(conn) => {
                     // Try a simple query to see if we get SQLITE_BUSY
                     match conn.execute_batch("SELECT 1 FROM moz_bookmarks LIMIT 1") {

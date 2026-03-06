@@ -9,7 +9,7 @@ use crate::db::{
     db_separator_to_export,
 };
 use crate::error::Result;
-use crate::types::{root_dir_name, roots, Folder, FolderIndex};
+use crate::types::{Folder, FolderIndex, root_dir_name, roots};
 
 /// Sanitize a title for use as a filename.
 ///
@@ -140,9 +140,7 @@ pub fn export_bookmarks(db_path: &Path, export_dir: &Path) -> Result<ExportStats
     // Build map from folder ID to its position within parent (from DB)
     // We need to query positions for folders
     let folder_positions: HashMap<i64, i32> = {
-        let mut stmt = conn.prepare(
-            "SELECT id, position FROM moz_bookmarks WHERE type = 2",
-        )?;
+        let mut stmt = conn.prepare("SELECT id, position FROM moz_bookmarks WHERE type = 2")?;
         stmt.query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i32>(1)?)))?
             .filter_map(std::result::Result::ok)
             .collect()
@@ -252,13 +250,10 @@ pub fn export_bookmarks(db_path: &Path, export_dir: &Path) -> Result<ExportStats
         stats.bookmarks_exported += 1;
 
         // Add to folder index
-        folder_indices
-            .entry(dir_path)
-            .or_default()
-            .push(IndexItem {
-                name: index_name,
-                position: db_bm.position,
-            });
+        folder_indices.entry(dir_path).or_default().push(IndexItem {
+            name: index_name,
+            position: db_bm.position,
+        });
     }
 
     // Export separators
@@ -317,13 +312,10 @@ pub fn export_bookmarks(db_path: &Path, export_dir: &Path) -> Result<ExportStats
         stats.separators_exported += 1;
 
         // Add to folder index
-        folder_indices
-            .entry(dir_path)
-            .or_default()
-            .push(IndexItem {
-                name: index_name,
-                position: db_sep.position,
-            });
+        folder_indices.entry(dir_path).or_default().push(IndexItem {
+            name: index_name,
+            position: db_sep.position,
+        });
     }
 
     // Write __index.toml for each folder with content

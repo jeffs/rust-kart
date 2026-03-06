@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 
 use clap::{Args, Parser, Subcommand};
 use ffbm::{
-    check_firefox_not_running, export_bookmarks, find_profile, import_bookmarks, list_profiles,
-    Error, Result,
+    Error, Result, check_firefox_not_running, export_bookmarks, find_profile, import_bookmarks,
+    list_profiles,
 };
 
 /// Files to copy during save/restore operations.

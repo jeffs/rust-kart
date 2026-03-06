@@ -4,6 +4,6 @@ mod delay;
 mod perpetuity;
 mod stop_once;
 
-pub use delay::{delay, Delay, Delayed};
-pub use perpetuity::{assimilate, Perpetuity, Successors, Take};
+pub use delay::{Delay, Delayed, delay};
+pub use perpetuity::{Perpetuity, Successors, Take, assimilate};
 pub use stop_once::{StopOnce, Stopper};

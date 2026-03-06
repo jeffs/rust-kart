@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 /// A node in the topology tree. Every node is a commit; branches add metadata.
 #[derive(Debug)]
 pub struct Node {
-    pub commit: String,           // commit SHA (short, 7 chars)
+    pub commit: String,            // commit SHA (short, 7 chars)
     pub branches: Vec<BranchInfo>, // branches pointing to this commit (may be empty)
     pub children: Vec<Node>,
 }
@@ -81,7 +81,10 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
 
     let mut tips: HashMap<&str, String> = HashMap::new();
     for name in &all_branches {
-        let tip = git(["rev-parse", "--short=7", name]).await?.trim().to_owned();
+        let tip = git(["rev-parse", "--short=7", name])
+            .await?
+            .trim()
+            .to_owned();
         tips.insert(name, tip);
     }
 
@@ -130,7 +133,10 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
             continue;
         }
         let mb = git(["merge-base", trunk, name]).await?;
-        let mb_short = git(["rev-parse", "--short=7", mb.trim()]).await?.trim().to_owned();
+        let mb_short = git(["rev-parse", "--short=7", mb.trim()])
+            .await?
+            .trim()
+            .to_owned();
         trunk_merge_bases.insert(name, mb_short.clone());
         commits.insert(mb_short);
     }
@@ -147,7 +153,10 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
             for i in 0..branches.len() {
                 for j in (i + 1)..branches.len() {
                     let mb = git(["merge-base", branches[i], branches[j]]).await?;
-                    let mb_short = git(["rev-parse", "--short=7", mb.trim()]).await?.trim().to_owned();
+                    let mb_short = git(["rev-parse", "--short=7", mb.trim()])
+                        .await?
+                        .trim()
+                        .to_owned();
                     commits.insert(mb_short);
                 }
             }
@@ -207,7 +216,14 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
             .push("[HEAD]".to_owned());
     }
 
-    let root = build_node(&root_commit, &commits_vec, &parents, &commit_to_branches, &prs).await?;
+    let root = build_node(
+        &root_commit,
+        &commits_vec,
+        &parents,
+        &commit_to_branches,
+        &prs,
+    )
+    .await?;
 
     Ok(Topology {
         trunk: trunk.to_owned(),
@@ -235,8 +251,14 @@ async fn build_node(
     // Build children recursively.
     let mut children = Vec::new();
     for child in child_commits {
-        let child_node =
-            Box::pin(build_node(child, all_commits, parents, commit_to_branches, prs)).await?;
+        let child_node = Box::pin(build_node(
+            child,
+            all_commits,
+            parents,
+            commit_to_branches,
+            prs,
+        ))
+        .await?;
         children.push(child_node);
     }
 

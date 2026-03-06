@@ -35,18 +35,16 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::FirefoxRunning => write!(
-                f,
-                "Firefox is running; close it before modifying bookmarks"
-            ),
+            Self::FirefoxRunning => {
+                write!(f, "Firefox is running; close it before modifying bookmarks")
+            }
             Self::FirefoxDirNotFound => write!(
                 f,
                 "Firefox directory not found (expected ~/Library/Application Support/Firefox)"
             ),
-            Self::NoProfileGroups => write!(
-                f,
-                "no Profile Groups databases found in Firefox directory"
-            ),
+            Self::NoProfileGroups => {
+                write!(f, "no Profile Groups databases found in Firefox directory")
+            }
             Self::ProfileNotFound { name } => {
                 write!(f, "profile not found: {name}")
             }

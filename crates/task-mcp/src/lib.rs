@@ -14,7 +14,7 @@ use rmcp::model::{
 };
 use rmcp::schemars::JsonSchema;
 use rmcp::service::{RequestContext, RoleServer};
-use rmcp::{tool, tool_router, ErrorData as McpError, ServerHandler};
+use rmcp::{ErrorData as McpError, ServerHandler, tool, tool_router};
 use serde::{Deserialize, Serialize};
 
 pub use error::{Error, Result};
@@ -154,7 +154,9 @@ impl TaskMcpServer {
     ///
     /// Idempotent: succeeds whether the task was started fresh or was already running.
     /// If the task exists but the process is dead, it will be restarted.
-    #[tool(description = "Ensure a background task is running. Idempotent: succeeds whether task was started fresh or was already running.")]
+    #[tool(
+        description = "Ensure a background task is running. Idempotent: succeeds whether task was started fresh or was already running."
+    )]
     async fn task_ensure(
         &self,
         Parameters(args): Parameters<TaskEnsureArgs>,
@@ -203,9 +205,11 @@ impl TaskMcpServer {
     ) -> std::result::Result<CallToolResult, McpError> {
         let TaskStopArgs { name } = args;
 
-        let info = self.manager.remove(&name).await.ok_or_else(|| {
-            McpError::invalid_params(format!("task not found: {name}"), None)
-        })?;
+        let info = self
+            .manager
+            .remove(&name)
+            .await
+            .ok_or_else(|| McpError::invalid_params(format!("task not found: {name}"), None))?;
 
         // Terminate process if alive
         if process::is_alive(info.pid) {
@@ -244,9 +248,11 @@ impl TaskMcpServer {
     ) -> std::result::Result<CallToolResult, McpError> {
         let TaskLogsArgs { name, tail } = args;
 
-        let info = self.manager.get(&name).await.ok_or_else(|| {
-            McpError::invalid_params(format!("task not found: {name}"), None)
-        })?;
+        let info = self
+            .manager
+            .get(&name)
+            .await
+            .ok_or_else(|| McpError::invalid_params(format!("task not found: {name}"), None))?;
 
         let tail = tail.unwrap_or(50);
 

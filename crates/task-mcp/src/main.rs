@@ -1,7 +1,7 @@
 //! MCP server for managing background tasks.
 
-use rmcp::transport::stdio;
 use rmcp::ServiceExt;
+use rmcp::transport::stdio;
 use task_mcp::TaskMcpServer;
 
 #[tokio::main]

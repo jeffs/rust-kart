@@ -98,7 +98,10 @@ mod tests {
 
     #[test]
     fn test_portion_display() {
-        let p = Portion { number: 100.0, unit: Unit::Gram };
+        let p = Portion {
+            number: 100.0,
+            unit: Unit::Gram,
+        };
         assert_eq!(p.to_string(), "100g");
     }
 }

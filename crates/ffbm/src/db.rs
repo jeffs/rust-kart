@@ -3,10 +3,10 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use rusqlite::{params, Connection, Transaction};
+use rusqlite::{Connection, Transaction, params};
 
 use crate::error::Result;
-use crate::types::{item_types, roots, Bookmark, DbBookmark, DbSeparator, Folder, Separator};
+use crate::types::{Bookmark, DbBookmark, DbSeparator, Folder, Separator, item_types, roots};
 
 /// Characters used for GUID generation.
 const GUID_CHARS: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-";
@@ -119,10 +119,16 @@ pub fn get_keyword(conn: &Connection, place_id: i64) -> Result<Option<String>> {
 /// Returns an error if the database operations fail.
 pub fn set_keyword(conn: &Connection, place_id: i64, keyword: &str) -> Result<()> {
     if keyword.is_empty() {
-        conn.execute("DELETE FROM moz_keywords WHERE place_id = ?", params![place_id])?;
+        conn.execute(
+            "DELETE FROM moz_keywords WHERE place_id = ?",
+            params![place_id],
+        )?;
     } else {
         // Delete any existing keyword for this place
-        conn.execute("DELETE FROM moz_keywords WHERE place_id = ?", params![place_id])?;
+        conn.execute(
+            "DELETE FROM moz_keywords WHERE place_id = ?",
+            params![place_id],
+        )?;
         // Delete any existing entry with this keyword
         conn.execute(
             "DELETE FROM moz_keywords WHERE keyword = ?",
@@ -383,7 +389,15 @@ pub fn get_or_create_tag_folder(tx: &Transaction<'_>, tag_name: &str) -> Result<
         .map(|d| d.as_micros() as i64)
         .unwrap_or(0);
 
-    insert_folder(tx, roots::TAGS, tag_name, position, &generate_guid(), now, now)
+    insert_folder(
+        tx,
+        roots::TAGS,
+        tag_name,
+        position,
+        &generate_guid(),
+        now,
+        now,
+    )
 }
 
 /// Add a tag to a bookmark (via `place_id`).
@@ -395,12 +409,14 @@ pub fn add_tag(tx: &Transaction<'_>, place_id: i64, tag_name: &str) -> Result<()
     let tag_folder_id = get_or_create_tag_folder(tx, tag_name)?;
 
     // Check if already tagged
-    let mut stmt = tx.prepare_cached(
-        "SELECT 1 FROM moz_bookmarks WHERE parent = ? AND fk = ? AND type = ?",
-    )?;
+    let mut stmt =
+        tx.prepare_cached("SELECT 1 FROM moz_bookmarks WHERE parent = ? AND fk = ? AND type = ?")?;
 
     if stmt
-        .query_row(params![tag_folder_id, place_id, item_types::BOOKMARK], |_| Ok(()))
+        .query_row(
+            params![tag_folder_id, place_id, item_types::BOOKMARK],
+            |_| Ok(()),
+        )
         .is_ok()
     {
         return Ok(());
@@ -444,10 +460,7 @@ pub fn add_tag(tx: &Transaction<'_>, place_id: i64, tag_name: &str) -> Result<()
 /// # Errors
 ///
 /// Returns an error if the URL or tags cannot be retrieved.
-pub fn db_bookmark_to_export(
-    conn: &Connection,
-    db_bm: &DbBookmark,
-) -> Result<Option<Bookmark>> {
+pub fn db_bookmark_to_export(conn: &Connection, db_bm: &DbBookmark) -> Result<Option<Bookmark>> {
     let Some(place_id) = db_bm.place_id else {
         return Ok(None);
     };

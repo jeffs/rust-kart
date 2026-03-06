@@ -83,7 +83,11 @@ mod tests {
 
     #[test]
     fn test_parse_skips_empty_lines() {
-        let lines = vec![Ok("2 3".to_string()), Ok("".to_string()), Ok("4 5".to_string())];
+        let lines = vec![
+            Ok("2 3".to_string()),
+            Ok("".to_string()),
+            Ok("4 5".to_string()),
+        ];
         let result = parse(lines.into_iter()).unwrap();
         assert_eq!(result, vec![vec![2.0, 3.0], vec![4.0, 5.0]]);
     }

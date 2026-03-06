@@ -30,7 +30,9 @@ struct Args {
 fn parse_args() -> Result<Args, String> {
     let mut args = env::args().skip(1);
     let letters = args.next().ok_or("usage: pangram LETTERS [WORDS_FILE]")?;
-    let words_file = args.next().unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string());
+    let words_file = args
+        .next()
+        .unwrap_or_else(|| DEFAULT_WORDS_FILE.to_string());
     Ok(Args {
         min_length: DEFAULT_MIN_LENGTH,
         mandatory: to_charset(letters.chars().filter(|c| c.is_uppercase())),

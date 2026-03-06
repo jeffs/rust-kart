@@ -6,7 +6,7 @@ use std::path::Path;
 
 use crate::db::{self, get_or_create_place_id, set_keyword};
 use crate::error::Result;
-use crate::types::{dir_name_to_root, Bookmark, FolderIndex, Separator};
+use crate::types::{Bookmark, FolderIndex, Separator, dir_name_to_root};
 
 /// Position assigned to items not listed in the index.
 /// They appear after all indexed items.
@@ -212,9 +212,7 @@ fn read_folder_structure(dir: &Path, parent_path: &str) -> Result<FolderData> {
             .order
             .iter()
             .enumerate()
-            .filter_map(|(i, name)| {
-                name.strip_suffix('/').map(|n| (n, i))
-            })
+            .filter_map(|(i, name)| name.strip_suffix('/').map(|n| (n, i)))
             .collect();
 
         // Separate indexed and unlisted subdirs
@@ -329,8 +327,7 @@ pub fn import_bookmarks(db_path: &Path, import_dir: &Path) -> Result<ImportStats
             let (parent_id, parent_key) = if parts.len() == 1 {
                 (root_id, root_name.to_string())
             } else {
-                let parent_path =
-                    format!("{root_name}/{}", parts[..parts.len() - 1].join("/"));
+                let parent_path = format!("{root_name}/{}", parts[..parts.len() - 1].join("/"));
                 let pid = *folder_ids.get(&parent_path).unwrap_or(&root_id);
                 (pid, parent_path)
             };
@@ -349,15 +346,8 @@ pub fn import_bookmarks(db_path: &Path, import_dir: &Path) -> Result<ImportStats
             // Generate a GUID for the folder
             let guid = generate_guid();
 
-            let folder_id = db::insert_folder(
-                &tx,
-                parent_id,
-                folder_name,
-                position,
-                &guid,
-                now,
-                now,
-            )?;
+            let folder_id =
+                db::insert_folder(&tx, parent_id, folder_name, position, &guid, now, now)?;
 
             let full_path = format!("{root_name}/{folder_path}");
             folder_ids.insert(full_path, folder_id);
