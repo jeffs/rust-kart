@@ -6,7 +6,7 @@ Iterator utilities for infinite sequences, lazy creation, and termination.
 
 - **Perpetuity**: A trait for infinite sequences where `next_item()` returns `T` directly (no `Option`).
 - **delay**: Lazy iterator creation for recursive patterns (e.g., Fibonacci).
-- **stop_once**: Like `take_while`, but includes the terminal item.
+- **`stop_once`**: Like `take_while`, but includes the terminal item.
 
 ## Usage
 

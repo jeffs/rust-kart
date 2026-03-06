@@ -5,7 +5,7 @@ to the bottom rightmost tmux pane.  This is useful when binding keys in a text
 editor to send snippets of code to a live shell or REPL; e.g., in [Vim][vim]
 or [Helix][hx].
 
-In addition to tmux, this tool supports WezTerm and Zellij. Zellij's notion
+In addition to tmux, this tool supports `WezTerm` and Zellij. Zellij's notion
 of "next" pane is a little wacky when it comes to stacked panes: It goes in
 _increasing_ Z order, which corresponds to upward vertical ordering; so if you
 want to send text from a stacked pane on the left to a pane on the right, the

@@ -55,7 +55,7 @@ async fn fetch_prs() -> HashMap<String, u32> {
             continue;
         };
         let rest = &line[num_start + 9..];
-        let num_str: String = rest.chars().take_while(|c| c.is_ascii_digit()).collect();
+        let num_str: String = rest.chars().take_while(char::is_ascii_digit).collect();
         if let Ok(num) = num_str.parse() {
             prs.insert(name.to_owned(), num);
         }
@@ -148,7 +148,7 @@ pub async fn collect(trunk: &str) -> Result<Topology, git::Error> {
     }
 
     // For branches sharing a trunk merge-base, compute pairwise merge-bases.
-    for (_mb, branches) in &by_merge_base {
+    for branches in by_merge_base.values() {
         if branches.len() > 1 {
             for i in 0..branches.len() {
                 for j in (i + 1)..branches.len() {

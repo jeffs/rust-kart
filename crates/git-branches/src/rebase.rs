@@ -58,7 +58,13 @@ async fn rebase_child(
         .collect();
 
     // If this node has branches, rebase them.
-    if !branches.is_empty() {
+    if branches.is_empty() {
+        // This is a pure commit node - just pass through to children.
+        // They still need to rebase from the same old_parent_tip.
+        for child in &node.children {
+            Box::pin(rebase_child(child, old_parent_tip, new_parent_tip)).await?;
+        }
+    } else {
         let first_branch = &branches[0].name;
         println!(
             "Rebasing {} onto {}...",
@@ -85,12 +91,6 @@ async fn rebase_child(
         // Rebase children using this branch's new tip as their parent.
         for child in &node.children {
             Box::pin(rebase_child(child, &old_tip, &new_tip)).await?;
-        }
-    } else {
-        // This is a pure commit node - just pass through to children.
-        // They still need to rebase from the same old_parent_tip.
-        for child in &node.children {
-            Box::pin(rebase_child(child, old_parent_tip, new_parent_tip)).await?;
         }
     }
 

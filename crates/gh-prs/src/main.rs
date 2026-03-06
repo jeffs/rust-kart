@@ -134,8 +134,7 @@ fn count_human_comments(comments: &[Comment]) -> usize {
         .filter(|c| {
             c.author
                 .as_ref()
-                .map(|a| !is_bot(&a.login))
-                .unwrap_or(false)
+                .is_some_and(|a| !is_bot(&a.login))
         })
         .count()
 }
@@ -147,8 +146,7 @@ fn count_review_body_comments(reviews: &[Review]) -> usize {
             !r.body.trim().is_empty()
                 && r.author
                     .as_ref()
-                    .map(|a| !is_bot(&a.login))
-                    .unwrap_or(false)
+                    .is_some_and(|a| !is_bot(&a.login))
         })
         .count()
 }
@@ -282,11 +280,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let details = fetch_pr_details(repo, result.number)?;
 
         // Filter by --since if specified
-        if let Some(since_time) = since {
-            if details.updated_at < since_time {
+        if let Some(since_time) = since
+            && details.updated_at < since_time {
                 continue;
             }
-        }
 
         prs.push(OutputPr {
             title: details.title,

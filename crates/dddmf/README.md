@@ -1,3 +1,3 @@
 # Domain Modeling Made Functional
 
-Notes on Scott Wlaschin's presentation at DevTernity.
+Notes on Scott Wlaschin's presentation at `DevTernity`.
