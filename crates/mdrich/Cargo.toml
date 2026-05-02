@@ -1,0 +1,13 @@
+[package]
+name = "mdrich"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+comrak = { version = "0.52", default-features = false }
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "NSPasteboard"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSArray"] }
+
+[lints]
+workspace = true
