@@ -4,7 +4,7 @@ use std::process::{Command, ExitStatus};
 use std::str;
 use std::sync::Once;
 
-const BINARY: &str = "../target/debug/cargo-norm";
+const BINARY: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../target/debug/cargo-norm");
 
 static BUILD_FIXTURE: Once = Once::new();
 
@@ -13,7 +13,7 @@ fn pass(arg: &str) -> (ExitStatus, String) {
     let output = Command::new(BINARY)
         .arg(arg)
         .output()
-        .expect("can't get output");
+        .unwrap_or_else(|e| panic!("can't get output from {BINARY}: {e}"));
     let stdout = str::from_utf8(&output.stdout).expect("non-UTF-8 output");
     (output.status, stdout.trim_end().to_string())
 }
