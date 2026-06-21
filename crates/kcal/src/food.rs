@@ -25,7 +25,7 @@ pub struct Food {
 /// * Support non-identifier names, such as "matcha-cake".
 /// * Support singular and plural (e.g., egg and eggs) in a single row.
 macro_rules! food {
-    ($name: ident, $kcal: expr_2021, $protein: expr_2021, $per: expr_2021) => {
+    ($name: ident, $kcal: expr, $protein: expr, $per: expr) => {
         (
             stringify!($name),
             Food {
