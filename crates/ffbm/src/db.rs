@@ -17,8 +17,7 @@ fn generate_guid() -> String {
 
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_nanos());
 
     let mut guid = String::with_capacity(12);
     let mut val = timestamp;
@@ -386,8 +385,7 @@ pub fn get_or_create_tag_folder(tx: &Transaction<'_>, tag_name: &str) -> Result<
     #[expect(clippy::cast_possible_truncation)]
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_micros() as i64)
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_micros() as i64);
 
     insert_folder(
         tx,
@@ -434,8 +432,7 @@ pub fn add_tag(tx: &Transaction<'_>, place_id: i64, tag_name: &str) -> Result<()
     #[expect(clippy::cast_possible_truncation)]
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_micros() as i64)
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_micros() as i64);
 
     // Create tag entry (a bookmark under the tag folder pointing to the place)
     tx.execute(

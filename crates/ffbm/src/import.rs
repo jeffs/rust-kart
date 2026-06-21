@@ -21,8 +21,7 @@ fn generate_guid() -> String {
 
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
+        .map_or(0, |d| d.as_nanos());
 
     let mut guid = String::with_capacity(12);
     let mut val = timestamp;
@@ -340,8 +339,7 @@ pub fn import_bookmarks(db_path: &Path, import_dir: &Path) -> Result<ImportStats
             #[expect(clippy::cast_possible_truncation)]
             let now = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_micros() as i64)
-                .unwrap_or(0);
+                .map_or(0, |d| d.as_micros() as i64);
 
             // Generate a GUID for the folder
             let guid = generate_guid();
