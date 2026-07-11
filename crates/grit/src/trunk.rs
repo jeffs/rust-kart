@@ -19,6 +19,11 @@ pub const DEFAULT_TRUNKS: [&str; 2] = ["main", "master"];
 
 /// Environment variable to check for comma-separated list of local trunk branch
 /// names.  If the variable is unset, the value defaults to [`DEFAULT_TRUNKS`].
+///
+/// TODO: In Jujutsu repos, use JJ's notion of trunk:
+///  ```sh
+///  jj log --no-graph --revision 'trunk()' --template 'bookmarks'
+///  ```
 pub const GRIT_TRUNKS: &str = "GRIT_TRUNKS";
 
 /// Returns the names of potential trunk branches, per [`GRIT_TRUNKS`] (if set)
