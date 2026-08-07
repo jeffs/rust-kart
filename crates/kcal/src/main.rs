@@ -104,7 +104,8 @@ impl Args {
 
 fn scale(size: Portion, food: &Food) -> (f64, f64) {
     let grams = size.convert_to(Unit::Gram);
-    let [kcal, protein] = [food.kcal, food.protein].map(|f| (f * grams.number / 100.0).round());
+    // Stored values are per 100g of food.
+    let [kcal, protein] = [food.kcal, food.protein].map(|f| f * grams.number / 100.0);
     (kcal, protein)
 }
 
@@ -123,7 +124,7 @@ fn main_imp() -> Result<()> {
         }
         Args::Both(size, food) => {
             let (kcal, protein) = scale(size, &food);
-            println!("{kcal} {protein}");
+            println!("{kcal:.0} {protein:.1}");
         }
     }
     Ok(())
