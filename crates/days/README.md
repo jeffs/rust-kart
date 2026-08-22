@@ -6,5 +6,10 @@ Prints the time remaining until a specified date. Run with `watch(1)` for a coun
 
 ```sh
 days 2025 12 31
-# Output: 51 weeks, 3 days, 14 hours, 23 minutes, and 5 seconds
+```
+
+Output looks like:
+
+```
+51 weeks, 3 days, 14 hours, 23 minutes, and 5 seconds
 ```
