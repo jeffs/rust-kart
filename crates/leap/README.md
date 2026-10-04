@@ -12,9 +12,9 @@ Proleptic Gregorian calendar date library with leap year support.
 ## Usage
 
 ```rust
-use leap::Date;
+use leap::{Date, week::Day};
 
 let date = Date::from_ymd(2024, 2, 29).unwrap();
 assert!(date.is_leap_day());
-println!("{}", date.day_of_week()); // Thursday
+assert_eq!(date.day_of_week(), Day::Thu);
 ```
