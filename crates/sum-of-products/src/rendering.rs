@@ -15,9 +15,8 @@ fn compute_value_widths(parsed: &[Vec<f64>]) -> Vec<usize> {
         .collect()
 }
 
-pub fn formula_width(formulas: &[String]) -> usize {
-    debug_assert!(!formulas.is_empty());
-    let formula_width = formulas[0].len();
+pub fn formula_width(formula: &str, formulas: &[String]) -> usize {
+    let formula_width = formula.len();
     debug_assert!(
         formulas
             .iter()

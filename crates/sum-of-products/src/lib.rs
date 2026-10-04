@@ -52,7 +52,7 @@ pub fn render(output: SumOfProducts, input: &[Vec<f64>]) -> String {
     let SumOfProducts { products, sum } = output;
     let formulas = rendering::render_formulas(input);
     let sum_width = sum.to_string().len();
-    let width = rendering::formula_width(&formulas) + EQ.len() + sum_width;
+    let width = rendering::formula_width(&formulas[0], &formulas[1..]) + EQ.len() + sum_width;
     formulas
         .iter()
         .zip(products.iter())
