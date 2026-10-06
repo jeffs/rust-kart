@@ -4,7 +4,7 @@
 //
 // * [] Support [emoticons](https://gist.github.com/jordanorelli/11229304)
 // * [] Support both "juicy" and dry variants; e.g., 🐸 vs 𓆏, or ♟️ vs ♟
-// * [] Figure out why Wezterm doesn't support support [Egyptian hieroglyphs].
+// * [] Figure out why Wezterm doesn't support [Egyptian hieroglyphs].
 //
 // [Egyptian hieroglyphs]: https://unicode-explorer.com/b/13000
 
@@ -34,21 +34,26 @@ fn parse_codepoint(arg: &str) -> Result<char, BadCodepoint> {
     char::from_u32(codepoint).ok_or_else(|| BadCodepoint::from_arg(arg))
 }
 
-#[rustfmt::skip]
 fn parse_arg(arg: &str) -> Result<char, BadCodepoint> {
     Ok(match arg {
-        "cent" | "cents"                    => '¢',
-        "command" | "cmd"                   => '⌘',
-        "facepalm"                          => '🤦',
-        "frog"                              => '🐸',
-        "grimace" | "grim"                  => '😬',
-        "horns"                             => '🤘',
-        "lol"                               => '😂',
-        "ok"                                => '👌',
-        "shift"                             => '⇧',
-        "sob"                               => '😭',
-        "up"                                => '↑',
-        s if s.starts_with("poo")           => '💩',
+        "ap" | "apostrophe" | "right single quote" | "rsq" => '’',
+        "cent" | "cents" => '¢',
+        "command" | "cmd" => '⌘',
+        "em" | "em dash" | "emdash" => '—',
+        "en" | "en dash" | "endash" => '–',
+        "facepalm" => '🤦',
+        "frog" => '🐸',
+        "grimace" | "grim" => '😬',
+        "horns" => '🤘',
+        "left single quote" | "lsq" => '‘',
+        "ldq" | "left double quote" => '“',
+        "rdq" | "right double quote" => '”',
+        "lol" => '😂',
+        "ok" => '👌',
+        "shift" => '⇧',
+        "sob" => '😭',
+        "up" => '↑',
+        s if s.starts_with("poo") => '💩',
         _ => parse_codepoint(arg)?,
     })
 }
