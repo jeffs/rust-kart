@@ -1,8 +1,11 @@
-# primes
+# Rust Kart Primes
 
-Simple library for generating prime numbers.
+A library and CLI for generating prime numbers.
 
-## CLI
+Small primes (under 100,000) are hard-coded for fast generation. Larger primes
+are generated using a memory-efficient sieve of Eratosthenes.
+
+## Usage
 
 ```sh
 $ primes 4
@@ -15,6 +18,6 @@ $ primes 4
 To find the thousandth prime:
 
 ```sh
-$ primes | tail -1
+$ primes 1000 | tail -1
 7919
 ```
