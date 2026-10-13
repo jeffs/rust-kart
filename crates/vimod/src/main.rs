@@ -20,6 +20,7 @@ fn main() {
         .filter_map(|line| {
             line.strip_prefix("\tmodified:")
                 .or_else(|| line.strip_prefix("\tboth modified:"))
+                .or_else(|| line.strip_prefix("\tnew file:"))
                 .map(str::trim_ascii)
         })
         .collect::<Vec<_>>();
