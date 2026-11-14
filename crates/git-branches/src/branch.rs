@@ -275,7 +275,7 @@ async fn build_node(
     // with [HEAD] always last.
     let branches = commit_to_branches
         .get(commit)
-        .map(|names| {
+        .map_or_default(|names| {
             let mut infos: Vec<BranchInfo> = names
                 .iter()
                 .filter(|name| *name != "[HEAD]")
@@ -295,8 +295,7 @@ async fn build_node(
                 });
             }
             infos
-        })
-        .unwrap_or_default();
+        });
 
     Ok(Node {
         commit: commit.to_owned(),

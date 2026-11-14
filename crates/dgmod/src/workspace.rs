@@ -62,8 +62,7 @@ pub fn detect_workspace(path: &Path) -> Result<Vec<CrateMember>, WorkspaceError>
                     path: pkg
                         .manifest_path
                         .parent()
-                        .map(|p| p.to_path_buf().into_std_path_buf())
-                        .unwrap_or_default(),
+                        .map_or_default(|p| p.to_path_buf().into_std_path_buf()),
                 })
         })
         .collect();
